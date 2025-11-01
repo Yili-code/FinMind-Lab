@@ -17,7 +17,8 @@ logging.basicConfig(
     filename='./logs/visualizer.log',
     filemode='a',
     level=logging.INFO,
-    format='%(asctime)s | %(levelname)s | %(message)s'
+    format='%(asctime)s | %(levelname)s | %(message)s',
+    encoding='utf-8'
 )
 
 def plot_price_with_sma(df: pd.DataFrame, stock_id: str, savefig: bool = True) -> str:
@@ -30,21 +31,21 @@ def plot_price_with_sma(df: pd.DataFrame, stock_id: str, savefig: bool = True) -
     回傳: 圖檔路徑（如 savefig 為 True)
     """
     plt.figure(figsize=(10,6))
-    plt.plot(df['Date'], df['Close'], label='收盤價')
+    plt.plot(df['Date'], df['Close'], label='Close')
     for col in df.columns:
         if col.startswith('MA'):
             plt.plot(df['Date'], df[col], label=col)
     plt.legend()
-    plt.title(f'{stock_id} 收盤與均線')
-    plt.xlabel('日期')
-    plt.ylabel('價格')
+    plt.title(f'{stock_id} Close & Moving Averages')
+    plt.xlabel('Date')
+    plt.ylabel('Price')
     path = ''
     if savefig:
         os.makedirs('./data/reports/', exist_ok=True)
         path = f'./data/reports/{stock_id}_price_ma_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png'
         plt.savefig(path)
         plt.close()
-        logging.info(f'輸出收盤＋均線圖 {path}')
+        logging.info(f'Exported Close+MA chart: {path}')
     return path
 
 def plot_candlestick(df: pd.DataFrame, stock_id: str, savefig: bool = True) -> str:
@@ -61,7 +62,7 @@ def plot_candlestick(df: pd.DataFrame, stock_id: str, savefig: bool = True) -> s
         os.makedirs('./data/reports/', exist_ok=True)
         path = f'./data/reports/{stock_id}_candlestick_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png'
         mpf.plot(df_mpf, type='candle', volume=True, style='yahoo', savefig=path)
-        logging.info(f'輸出蠟燭圖 {path}')
+        logging.info(f'Exported candlestick chart: {path}')
     return path
 
 def generate_report(stock_id: str, charts: list) -> str:
@@ -77,7 +78,7 @@ def generate_report(stock_id: str, charts: list) -> str:
     width, height = A4
     y = height-60
     c.setFont('Helvetica', 18)
-    c.drawString(50,y, f'{stock_id} 股票報表')
+    c.drawString(50,y, f'{stock_id} Stock Report')
     c.setFont('Helvetica', 12)
     y -= 40
     for chart in charts:
@@ -89,5 +90,5 @@ def generate_report(stock_id: str, charts: list) -> str:
             c.showPage()
             y = height-60
     c.save()
-    logging.info(f'報表PDF產生 {pdf_path}')
+    logging.info(f'Generated report PDF: {pdf_path}')
     return pdf_path

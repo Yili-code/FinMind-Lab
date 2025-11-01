@@ -17,7 +17,8 @@ logging.basicConfig(
     filename='./logs/cleaner.log',
     filemode='a',
     level=logging.INFO,
-    format='%(asctime)s | %(levelname)s | %(message)s'
+    format='%(asctime)s | %(levelname)s | %(message)s',
+    encoding='utf-8'
 )
 
 def normalize_data(df: pd.DataFrame) -> pd.DataFrame:
@@ -38,7 +39,7 @@ def normalize_data(df: pd.DataFrame) -> pd.DataFrame:
     df = df[main_cols]
     df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
     df = df.sort_values('Date').reset_index(drop=True)
-    logging.info("欄位標準化完成")
+    logging.info("Column normalization completed")
     return df
 
 def fill_missing_prices(df: pd.DataFrame) -> pd.DataFrame:
@@ -54,7 +55,7 @@ def fill_missing_prices(df: pd.DataFrame) -> pd.DataFrame:
         df[c] = pd.to_numeric(df[c], errors='coerce')
         df[c] = df[c].interpolate(method='linear')
     df['Volume'] = pd.to_numeric(df['Volume'], errors='coerce').fillna(0)
-    logging.info("遺漏值處理完成")
+    logging.info("Missing values interpolation completed")
     return df
 
 def save_to_sqlite(df: pd.DataFrame, db_path: Optional[str] = './data/cleaned/stocks.db') -> None:
@@ -68,6 +69,6 @@ def save_to_sqlite(df: pd.DataFrame, db_path: Optional[str] = './data/cleaned/st
     conn = sqlite3.connect(db_path)
     try:
         df.to_sql('stocks', conn, if_exists='append', index=False)
-        logging.info(f'儲存至 SQLite：{db_path}')
+        logging.info(f'Saved to SQLite: {db_path}')
     finally:
         conn.close()

@@ -14,7 +14,8 @@ logging.basicConfig(
     filename='./logs/analyzer.log',
     filemode='a',
     level=logging.INFO,
-    format='%(asctime)s | %(levelname)s | %(message)s'
+    format='%(asctime)s | %(levelname)s | %(message)s',
+    encoding='utf-8'
 )
 
 def calculate_indicators(df: pd.DataFrame, indicators_list: List[str]) -> pd.DataFrame:
@@ -40,7 +41,7 @@ def calculate_indicators(df: pd.DataFrame, indicators_list: List[str]) -> pd.Dat
             rs = gain / loss
             result[f'RSI{n}'] = 100 - (100 / (1 + rs))
         # (可擴充更多)
-    logging.info(f'技術指標計算完成: {indicators_list}')
+    logging.info(f'Indicator calculation completed: {indicators_list}')
     return result
 
 def save_analysis(df: pd.DataFrame, stock_id: str, fmt: str = 'csv') -> str:
@@ -61,8 +62,8 @@ def save_analysis(df: pd.DataFrame, stock_id: str, fmt: str = 'csv') -> str:
             df.to_csv(fpath, index=False)
         else:
             df.to_json(fpath, orient='records', force_ascii=False)
-        logging.info(f'分析儲存 {fpath}')
+        logging.info(f'Analysis saved: {fpath}')
     except Exception as e:
-        logging.error(f'分析儲存失敗: {e}')
+        logging.error(f'Failed to save analysis: {e}')
         raise
     return fpath

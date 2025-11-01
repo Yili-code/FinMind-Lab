@@ -43,3 +43,4 @@ PDF報表已生成：./data/reports/2330_report_xxxx.pdf
 - `data/cleaned/`：清理後資料或 SQLite 檔
 - `data/reports/`：PNG 圖檔與 PDF 報表
 - `logs/`：各階段日誌記錄檔
+

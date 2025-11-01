@@ -21,7 +21,8 @@ logging.basicConfig(
     filename='./logs/scraper.log',
     filemode='a',
     level=logging.INFO,
-    format='%(asctime)s | %(levelname)s | %(message)s'
+    format='%(asctime)s | %(levelname)s | %(message)s',
+    encoding='utf-8'
 )
 
 def fetch_stock_data(stock_id: str, start_date: str, end_date: str, source: Literal['TWSE', 'yahoo'] = 'TWSE') -> pd.DataFrame:
@@ -40,14 +41,14 @@ def fetch_stock_data(stock_id: str, start_date: str, end_date: str, source: Lite
     elif source == 'yahoo':
         return _fetch_yahoo(stock_id, start_date, end_date)
     else:
-        raise ValueError('資料來源不支援')
+        raise ValueError('Unsupported data source')
 
 @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
 def _fetch_twse(stock_id: str, start_date: str, end_date: str) -> pd.DataFrame:
     """
     連接台灣證交所 API 擷取股票資料，並自動重試。
     """
-    logging.info(f"[TWSE] 開始抓取 {stock_id} {start_date}~{end_date}")
+    logging.info(f"[TWSE] Start fetching {stock_id} {start_date}~{end_date}")
     # 這裡僅提供參考基礎抓法，詳細 API 參數需依官方文件微調
     df_total = pd.DataFrame()
     date_iter = pd.date_range(start=start_date, end=end_date, freq='M')
@@ -60,7 +61,7 @@ def _fetch_twse(stock_id: str, start_date: str, end_date: str) -> pd.DataFrame:
         rows = payload['data']
         temp = pd.DataFrame(rows, columns=cols)
         df_total = pd.concat([df_total, temp])
-    logging.info(f"下載完成 {len(df_total)} 筆。")
+    logging.info(f"Downloaded {len(df_total)} rows.")
     return df_total
 
 @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
@@ -69,11 +70,11 @@ def _fetch_yahoo(stock_id: str, start_date: str, end_date: str) -> pd.DataFrame:
     使用 yfinance 擷取 Yahoo 股價資料
     """
     import yfinance as yf
-    logging.info(f"[Yahoo] 開始抓取 {stock_id} {start_date}~{end_date}")
+    logging.info(f"[Yahoo] Start fetching {stock_id} {start_date}~{end_date}")
     ticker = yf.Ticker(stock_id + ".TW")
     df = ticker.history(start=start_date, end=end_date)
     df = df.reset_index()
-    logging.info(f"[Yahoo] 完成 {len(df)} 筆。");
+    logging.info(f"[Yahoo] Completed with {len(df)} rows.");
     return df
 
 def save_raw_data(data: pd.DataFrame, stock_id: str, fmt: Literal['csv','json']='csv') -> str:
@@ -95,8 +96,8 @@ def save_raw_data(data: pd.DataFrame, stock_id: str, fmt: Literal['csv','json']=
             data.to_csv(fpath, index=False)
         else:
             data.to_json(fpath, orient='records', force_ascii=False)
-        logging.info(f'原始資料儲存 {fpath}')
+        logging.info(f'Raw data saved: {fpath}')
     except Exception as e:
-        logging.error(f'儲存原始資料失敗: {e}')
+        logging.error(f'Failed to save raw data: {e}')
         raise
     return fpath
