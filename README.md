@@ -1,4 +1,4 @@
-# Data-Scraper-Project
+# FinMind Lab
 
 以 Python FastAPI 作為後端，React + TypeScript + Vite 作為前端的全端範例骨架。
 
@@ -18,7 +18,7 @@ frontend/           # Vite React + TS 前端
 
 ### 1) 建立並啟動後端
 ```powershell
-cd D:\code\projects\Data-Scraper-Project
+cd D:\code\projects\FinMind Lab
 py -3 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r backend\requirements.txt
@@ -30,7 +30,7 @@ uvicorn backend.main:app --reload --port 8000
 ### 2) 啟動前端
 另開一個終端機：
 ```powershell
-cd D:\code\projects\Data-Scraper-Project\frontend
+cd D:\code\projects\FinMind Lab\frontend
 npm run dev
 ```
 

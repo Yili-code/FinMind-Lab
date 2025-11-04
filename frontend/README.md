@@ -1,4 +1,4 @@
-# React + TypeScript + Vite
+# FinMind Lab
 
 此範本提供最小化設定，讓你能在 Vite 中使用 React，並支援 HMR（熱模組替換）與部分 ESLint 規則。
 
