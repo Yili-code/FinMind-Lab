@@ -1,5 +1,0 @@
-{
-  "name": "台股即時資訊",
-  "description": "一個使用 React 和 Tailwind CSS 打造的應用程式，可以即時查詢台灣股市資訊。請注意，由於 TWSE API 的 CORS 限制，此應用程式透過公開代理伺服器獲取資料，僅供展示用途。",
-  "requestFramePermissions": []
-}
