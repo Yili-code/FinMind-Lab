@@ -62,14 +62,14 @@ function StockChart({ marketIndexData = [] }: StockChartProps) {
           />
           <Tooltip 
             contentStyle={{ 
-              backgroundColor: '#1a1a1a', 
-              border: '1px solid #333',
-              borderRadius: '4px',
-              color: '#fff'
+              backgroundColor: 'var(--bg-card)', 
+              border: '1px solid var(--border-color)',
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--text-primary)'
             }}
           />
           <Legend 
-            wrapperStyle={{ color: '#888' }}
+            wrapperStyle={{ color: 'var(--text-secondary)' }}
           />
           <Line 
             type="monotone" 
