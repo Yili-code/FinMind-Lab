@@ -26,3 +26,17 @@ export interface DailyTrade {
   changePercent: number
 }
 
+// 股票基本檔（Table 3）
+export interface StockBasic {
+  id: string
+  stockCode: string
+  stockName: string
+  industry: string
+  market: string
+  listedDate: string
+  capital: number
+  address: string
+  website: string
+  createdAt: string
+}
+

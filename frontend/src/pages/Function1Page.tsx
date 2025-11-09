@@ -1,12 +1,12 @@
-import { useState } from 'react'
 import TradeDetailTable from '../components/Function1/TradeDetailTable'
 import DailyTradeTable from '../components/Function1/DailyTradeTable'
 import StockChart from '../components/Function1/StockChart'
+import { useStock } from '../contexts/StockContext'
 import { mockTradeDetails, mockDailyTrades } from '../data/mockData'
 import './Function1Page.css'
 
 function Function1Page() {
-  const [selectedStockCode, setSelectedStockCode] = useState<string | undefined>(undefined)
+  const { selectedStockCode, setSelectedStockCode } = useStock()
 
   const handleTable1Click = (stockCode: string) => {
     setSelectedStockCode(selectedStockCode === stockCode ? undefined : stockCode)
@@ -24,7 +24,7 @@ function Function1Page() {
     <div className="function1-page">
       <div className="function1-container">
         <div className="function1-header">
-          <h1>Function 1: Data Integration</h1>
+          <h1>Data Integration</h1>
           <p className="function1-description">
             資料整合與分析平台 - 提供股票成交明細與日交易檔的整合查詢與視覺化分析
           </p>
