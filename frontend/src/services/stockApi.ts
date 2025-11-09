@@ -1,6 +1,7 @@
 // stockApi.ts - 股票數據 API 服務
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+// 在開發環境使用相對路徑（通過 Vite proxy），生產環境使用環境變數
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? '' : 'http://localhost:8000')
 
 export interface StockInfo {
   stockCode: string
@@ -74,11 +75,19 @@ export interface DailyTradeResponse {
 
 // 獲取股票基本資訊
 export async function getStockInfo(stockCode: string): Promise<StockInfo> {
-  const response = await fetch(`${API_BASE_URL}/api/stock/info/${stockCode}`)
-  if (!response.ok) {
-    throw new Error(`無法獲取股票 ${stockCode} 的資訊`)
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/stock/info/${stockCode}`)
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`無法獲取股票 ${stockCode} 的資訊: ${errorText}`)
+    }
+    return response.json()
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('無法連接到後端服務器，請確認後端是否正在運行 (http://localhost:8000)')
+    }
+    throw error
   }
-  return response.json()
 }
 
 // 獲取盤中即時數據（成交明細）
@@ -87,13 +96,21 @@ export async function getIntradayData(
   period: string = '1d',
   interval: string = '5m'
 ): Promise<TradeDetailResponse> {
-  const response = await fetch(
-    `${API_BASE_URL}/api/stock/intraday/${stockCode}?period=${period}&interval=${interval}`
-  )
-  if (!response.ok) {
-    throw new Error(`無法獲取股票 ${stockCode} 的盤中數據`)
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/stock/intraday/${stockCode}?period=${period}&interval=${interval}`
+    )
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`無法獲取股票 ${stockCode} 的盤中數據: ${errorText}`)
+    }
+    return response.json()
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('無法連接到後端服務器，請確認後端是否正在運行 (http://localhost:8000)')
+    }
+    throw error
   }
-  return response.json()
 }
 
 // 獲取日交易檔數據
@@ -101,23 +118,49 @@ export async function getDailyTradeData(
   stockCode: string,
   days: number = 5
 ): Promise<DailyTradeResponse> {
-  const response = await fetch(
-    `${API_BASE_URL}/api/stock/daily/${stockCode}?days=${days}`
-  )
-  if (!response.ok) {
-    throw new Error(`無法獲取股票 ${stockCode} 的日交易數據`)
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/stock/daily/${stockCode}?days=${days}`
+    )
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`無法獲取股票 ${stockCode} 的日交易數據: ${errorText}`)
+    }
+    return response.json()
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('無法連接到後端服務器，請確認後端是否正在運行 (http://localhost:8000)')
+    }
+    throw error
   }
-  return response.json()
 }
 
 // 批量獲取多個股票資訊
 export async function getMultipleStocks(stockCodes: string[]): Promise<StockInfo[]> {
-  const codes = stockCodes.join(',')
-  const response = await fetch(`${API_BASE_URL}/api/stock/batch?stock_codes=${codes}`)
-  if (!response.ok) {
-    throw new Error('無法批量獲取股票資訊')
+  try {
+    const codes = stockCodes.join(',')
+    const response = await fetch(`${API_BASE_URL}/api/stock/batch?stock_codes=${codes}`)
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`無法批量獲取股票資訊: ${errorText}`)
+    }
+    const result = await response.json()
+    return result.stocks || []
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('無法連接到後端服務器，請確認後端是否正在運行 (http://localhost:8000)')
+    }
+    throw error
   }
-  const result = await response.json()
-  return result.stocks || []
+}
+
+// 測試後端連接
+export async function testBackendConnection(): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/hello`)
+    return response.ok
+  } catch {
+    return false
+  }
 }
 

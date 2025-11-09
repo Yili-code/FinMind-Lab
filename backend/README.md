@@ -7,6 +7,34 @@ cd backend
 python -m uvicorn main:app --reload --port 8000
 ```
 
+服務啟動後，您應該看到：
+```
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process
+INFO:     Started server process
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+```
+
+## 測試連接
+
+### 方法 1: 使用測試腳本
+```bash
+cd backend
+python test_connection.py
+```
+
+### 方法 2: 使用瀏覽器
+打開瀏覽器訪問：
+- http://localhost:8000/ - 應該看到 `{"message":"Hello from FastAPI"}`
+- http://localhost:8000/api/hello - 應該看到 `{"message":"Successfully connected to the backend!!!"}`
+- http://localhost:8000/docs - FastAPI 自動生成的 API 文檔
+
+### 方法 3: 使用 curl
+```bash
+curl http://localhost:8000/api/hello
+```
+
 ## 常見問題
 
 ### 1. yfinance 警告訊息

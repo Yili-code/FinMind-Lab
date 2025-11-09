@@ -25,7 +25,12 @@ app = FastAPI(title="FinMind Lab API")
 # 允許前端存取後端 API: 加入 CORS 中介層設定
 app.add_middleware(
 	CORSMiddleware,
-	allow_origins=["http://localhost:5173"],
+	allow_origins=[
+		"http://localhost:5173",
+		"http://localhost:3000",
+		"http://127.0.0.1:5173",
+		"http://127.0.0.1:3000",
+	],  # 允許多個前端端口
 	allow_credentials=True,
 	allow_methods=["*"],
 	allow_headers=["*"],

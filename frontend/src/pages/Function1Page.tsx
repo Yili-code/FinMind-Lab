@@ -4,7 +4,7 @@ import DailyTradeTable from '../components/Function1/DailyTradeTable'
 import StockChart from '../components/Function1/StockChart'
 import { useStock } from '../contexts/StockContext'
 import { mockTradeDetails, mockDailyTrades } from '../data/mockData'
-import { getIntradayData, getDailyTradeData } from '../services/stockApi'
+import { getIntradayData, getDailyTradeData, testBackendConnection } from '../services/stockApi'
 import type { TradeDetail, DailyTrade } from '../types/stock'
 import './Function1Page.css'
 
@@ -21,6 +21,17 @@ function Function1Page() {
   const loadStockData = async (stockCodes: string[]) => {
     setLoading(true)
     setError(null)
+    
+    // 先測試後端連接
+    const isConnected = await testBackendConnection()
+    if (!isConnected) {
+      setError('無法連接到後端服務器。請確認：\n1. 後端服務是否正在運行 (http://localhost:8000)\n2. 運行命令: cd backend && python -m uvicorn main:app --reload --port 8000')
+      setLoading(false)
+      // 使用 mock 數據作為備用
+      setTradeDetails(mockTradeDetails)
+      setDailyTrades(mockDailyTrades)
+      return
+    }
     
     try {
       const allTradeDetails: TradeDetail[] = []
