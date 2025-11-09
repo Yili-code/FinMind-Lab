@@ -3,7 +3,6 @@ import TradeDetailTable from '../components/Function1/TradeDetailTable'
 import DailyTradeTable from '../components/Function1/DailyTradeTable'
 import StockChart from '../components/Function1/StockChart'
 import { useStock } from '../contexts/StockContext'
-import { mockTradeDetails, mockDailyTrades } from '../data/mockData'
 import { getIntradayData, getDailyTradeData, getMarketIndexData, testBackendConnection } from '../services/stockApi'
 import type { TradeDetail, DailyTrade } from '../types/stock'
 import './Function1Page.css'
@@ -15,7 +14,6 @@ function Function1Page() {
   const [marketIndexData, setMarketIndexData] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [useRealData, setUseRealData] = useState(true)
   const [stockCodeInput, setStockCodeInput] = useState('2330,2317')
 
   // 載入股票數據
@@ -28,9 +26,9 @@ function Function1Page() {
     if (!isConnected) {
       setError('無法連接到後端服務器。請確認：\n1. 後端服務是否正在運行 (http://localhost:8000)\n2. 運行命令: cd backend && python -m uvicorn main:app --reload --port 8000')
       setLoading(false)
-      // 使用 mock 數據作為備用
-      setTradeDetails(mockTradeDetails)
-      setDailyTrades(mockDailyTrades)
+      setTradeDetails([])
+      setDailyTrades([])
+      setMarketIndexData([])
       return
     }
     
@@ -111,9 +109,9 @@ function Function1Page() {
     } catch (err) {
       setError(err instanceof Error ? err.message : '載入數據時發生錯誤')
       console.error('Error loading stock data:', err)
-      // 如果 API 失敗，使用 mock 數據
-      setTradeDetails(mockTradeDetails)
-      setDailyTrades(mockDailyTrades)
+      setTradeDetails([])
+      setDailyTrades([])
+      setMarketIndexData([])
     } finally {
       setLoading(false)
     }
@@ -121,17 +119,12 @@ function Function1Page() {
 
   // 初始載入
   useEffect(() => {
-    if (useRealData) {
-      const codes = stockCodeInput.split(',').map(c => c.trim()).filter(c => c)
-      if (codes.length > 0) {
-        loadStockData(codes)
-      }
-    } else {
-      setTradeDetails(mockTradeDetails)
-      setDailyTrades(mockDailyTrades)
+    const codes = stockCodeInput.split(',').map(c => c.trim()).filter(c => c)
+    if (codes.length > 0) {
+      loadStockData(codes)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [useRealData])
+  }, [])
 
   const handleTable1Click = (stockCode: string) => {
     setSelectedStockCode(selectedStockCode === stockCode ? undefined : stockCode)
@@ -157,36 +150,38 @@ function Function1Page() {
 
         <div className="function1-controls">
           <div className="data-source-control">
-            <label>
+            <div className="stock-code-input">
+              <label htmlFor="stock-code-input" style={{ marginRight: '0.5rem', color: 'var(--text-primary)' }}>
+                股票代號：
+              </label>
               <input
-                type="checkbox"
-                checked={useRealData}
-                onChange={(e) => setUseRealData(e.target.checked)}
-              />
-              使用即時數據 (yfinance)
-            </label>
-            {useRealData && (
-              <div className="stock-code-input">
-                <input
-                  type="text"
-                  value={stockCodeInput}
-                  onChange={(e) => setStockCodeInput(e.target.value)}
-                  placeholder="輸入股票代號，用逗號分隔 (例如: 2330,2317)"
-                  style={{ padding: '0.5rem', marginLeft: '1rem', minWidth: '300px' }}
-                />
-                <button
-                  onClick={() => {
+                id="stock-code-input"
+                type="text"
+                value={stockCodeInput}
+                onChange={(e) => setStockCodeInput(e.target.value)}
+                placeholder="輸入股票代號，用逗號分隔 (例如: 2330,2317)"
+                style={{ padding: '0.5rem', minWidth: '300px' }}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
                     const codes = stockCodeInput.split(',').map(c => c.trim()).filter(c => c)
                     if (codes.length > 0) {
                       loadStockData(codes)
                     }
-                  }}
-                  style={{ padding: '0.5rem 1rem', marginLeft: '0.5rem' }}
-                >
-                  重新載入
-                </button>
-              </div>
-            )}
+                  }
+                }}
+              />
+              <button
+                onClick={() => {
+                  const codes = stockCodeInput.split(',').map(c => c.trim()).filter(c => c)
+                  if (codes.length > 0) {
+                    loadStockData(codes)
+                  }
+                }}
+                style={{ padding: '0.5rem 1rem', marginLeft: '0.5rem' }}
+              >
+                載入數據
+              </button>
+            </div>
           </div>
           {selectedStockCode && (
             <div className="filter-control">
@@ -234,11 +229,9 @@ function Function1Page() {
         <div className="function1-info">
           <div className="info-card">
             <h4>Data Source & Scraper</h4>
-            <p>{useRealData ? '使用 yfinance 即時數據' : '使用模擬資料 (Mock Data)'}</p>
+            <p>使用 yfinance 即時數據</p>
             <p className="info-note">
-              {useRealData 
-                ? '數據來源：Yahoo Finance (yfinance) - 即時股價資訊'
-                : '可切換到即時數據模式以獲取最新股價'}
+              數據來源：Yahoo Finance (yfinance) - 即時股價資訊與大盤指數數據
             </p>
           </div>
           <div className="info-card">
