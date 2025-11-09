@@ -21,7 +21,7 @@
 .navbar-logo {
   font-size: 1.5rem;
   font-weight: 700;
-  background: linear-gradient(135deg, var(--primary-color) 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, var(--primary-color) 0%, #9b8bc8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -63,7 +63,7 @@
   transform: translateX(-50%);
   width: 0;
   height: 2px;
-  background: linear-gradient(90deg, var(--primary-color), #8b5cf6);
+  background: linear-gradient(90deg, var(--primary-color), #9b8bc8);
   transition: width var(--transition-base);
 }
 

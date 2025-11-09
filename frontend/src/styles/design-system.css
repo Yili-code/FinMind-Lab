@@ -1,45 +1,45 @@
 /* Design System - 統一的設計系統 */
 
 :root {
-  /* 主色調 */
-  --primary-color: #6366f1;
-  --primary-hover: #4f46e5;
-  --primary-light: rgba(99, 102, 241, 0.1);
-  --primary-border: rgba(99, 102, 241, 0.3);
+  /* 主色調 - 更柔和的藍紫色 */
+  --primary-color: #7c7cd6;
+  --primary-hover: #6b6bc4;
+  --primary-light: rgba(124, 124, 214, 0.08);
+  --primary-border: rgba(124, 124, 214, 0.25);
   
-  /* 背景色 */
-  --bg-primary: #0f0f23;
-  --bg-secondary: #1a1a2e;
-  --bg-tertiary: #16213e;
-  --bg-card: #1e1e3f;
-  --bg-hover: #252547;
+  /* 背景色 - 更柔和的深色 */
+  --bg-primary: #1a1a2a;
+  --bg-secondary: #242435;
+  --bg-tertiary: #2a2a3a;
+  --bg-card: #2d2d3d;
+  --bg-hover: #353545;
   
   /* 文字顏色 */
-  --text-primary: rgba(255, 255, 255, 0.95);
-  --text-secondary: rgba(255, 255, 255, 0.75);
-  --text-tertiary: rgba(255, 255, 255, 0.6);
-  --text-muted: rgba(255, 255, 255, 0.5);
+  --text-primary: rgba(255, 255, 255, 0.9);
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-tertiary: rgba(255, 255, 255, 0.55);
+  --text-muted: rgba(255, 255, 255, 0.45);
   
   /* 邊框 */
-  --border-color: rgba(99, 102, 241, 0.2);
-  --border-hover: rgba(99, 102, 241, 0.4);
+  --border-color: rgba(124, 124, 214, 0.15);
+  --border-hover: rgba(124, 124, 214, 0.3);
   
-  /* 狀態顏色 */
-  --success: #10b981;
-  --success-light: rgba(16, 185, 129, 0.1);
-  --error: #ef4444;
-  --error-light: rgba(239, 68, 68, 0.1);
-  --warning: #f59e0b;
-  --warning-light: rgba(245, 158, 11, 0.1);
-  --info: #3b82f6;
-  --info-light: rgba(59, 130, 246, 0.1);
+  /* 狀態顏色 - 降低飽和度，更柔和 */
+  --success: #6b9f7a;
+  --success-light: rgba(107, 159, 122, 0.1);
+  --error: #c87070;
+  --error-light: rgba(200, 112, 112, 0.1);
+  --warning: #c9a85f;
+  --warning-light: rgba(201, 168, 95, 0.1);
+  --info: #6b8fc8;
+  --info-light: rgba(107, 143, 200, 0.1);
   
   /* 陰影 */
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.2);
-  --shadow-primary: 0 4px 20px rgba(99, 102, 241, 0.3);
-  --shadow-primary-hover: 0 8px 30px rgba(99, 102, 241, 0.4);
+  --shadow-primary: 0 4px 20px rgba(124, 124, 214, 0.2);
+  --shadow-primary-hover: 0 8px 30px rgba(124, 124, 214, 0.25);
   
   /* 間距 */
   --spacing-xs: 0.25rem;
@@ -124,9 +124,9 @@
 }
 
 .btn-danger:hover {
-  background: #dc2626;
+  background: #b85a5a;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 12px rgba(200, 112, 112, 0.2);
 }
 
 /* 通用輸入框樣式 */
@@ -162,9 +162,9 @@
   border: 1px solid var(--primary-border);
 }
 
-/* 漸層文字 */
+/* 漸層文字 - 更柔和的漸層 */
 .gradient-text {
-  background: linear-gradient(135deg, var(--primary-color) 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, var(--primary-color) 0%, #9b8bc8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -192,7 +192,7 @@
   font-size: 2.5rem;
   font-weight: 700;
   margin-bottom: var(--spacing-md);
-  background: linear-gradient(135deg, var(--primary-color) 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, var(--primary-color) 0%, #9b8bc8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

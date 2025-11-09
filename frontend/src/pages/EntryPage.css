@@ -16,7 +16,7 @@
   font-size: 4rem;
   font-weight: 700;
   margin-bottom: var(--spacing-xl);
-  background: linear-gradient(135deg, var(--primary-color) 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, var(--primary-color) 0%, #9b8bc8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -60,7 +60,7 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, var(--primary-color), #8b5cf6);
+  background: linear-gradient(90deg, var(--primary-color), #9b8bc8);
   transform: scaleX(0);
   transition: transform var(--transition-base);
 }
