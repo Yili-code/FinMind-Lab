@@ -1,18 +1,24 @@
+@import '../../styles/design-system.css';
+
 .financial-table-container {
-  margin-bottom: 2rem;
+  margin-bottom: var(--spacing-xl);
+  animation: fadeIn var(--transition-base);
 }
 
 .financial-table-container h3 {
-  margin-bottom: 1rem;
-  color: rgba(255, 255, 255, 0.87);
+  margin-bottom: var(--spacing-md);
+  color: var(--text-primary);
   font-size: 1.25rem;
+  font-weight: 600;
 }
 
 .table-wrapper {
   overflow-x: auto;
-  background-color: #1a1a1a;
-  border-radius: 8px;
-  padding: 1rem;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
 }
 
 .financial-table {
@@ -23,94 +29,79 @@
 }
 
 .financial-table thead {
-  background-color: #242424;
+  background: var(--bg-secondary);
 }
 
 .financial-table th {
-  padding: 0.75rem;
+  padding: var(--spacing-md);
   text-align: left;
-  color: rgba(255, 255, 255, 0.87);
-  font-weight: 500;
-  border-bottom: 2px solid #333;
+  color: var(--text-primary);
+  font-weight: 600;
+  border-bottom: 2px solid var(--border-color);
   white-space: nowrap;
 }
 
 .financial-table td {
-  padding: 0.75rem;
-  color: rgba(255, 255, 255, 0.7);
-  border-bottom: 1px solid #333;
+  padding: var(--spacing-md);
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .financial-table tbody tr {
-  transition: background-color 0.2s;
+  transition: all var(--transition-fast);
 }
 
 .financial-table tbody tr:hover {
-  background-color: #2a2a2a;
+  background: var(--bg-hover);
   cursor: pointer;
+  transform: scale(1.01);
 }
 
 .financial-table tbody tr.selected {
-  background-color: rgba(100, 108, 255, 0.2);
+  background: var(--primary-light);
+  border-left: 3px solid var(--primary-color);
 }
 
 .financial-table .stock-code {
-  color: #646cff;
-  font-weight: 500;
+  color: var(--primary-color);
+  font-weight: 600;
 }
 
 .financial-table .amount {
   text-align: right;
-  font-family: 'Courier New', monospace;
+  font-family: var(--font-mono);
 }
 
 .financial-table .amount.positive {
-  color: #4caf50;
+  color: var(--success);
 }
 
 .financial-table .amount.negative {
-  color: #f44336;
+  color: var(--error);
 }
 
 .financial-table .amount.total {
-  font-weight: bold;
-  color: rgba(255, 255, 255, 0.87);
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 .financial-table .eps {
   text-align: right;
-  color: #ff9800;
-  font-weight: 500;
+  color: var(--warning);
+  font-weight: 600;
 }
 
 .financial-table .ratio {
-  color: rgba(255, 152, 0, 0.8);
+  color: var(--warning);
   text-align: right;
   font-size: 0.85rem;
 }
 
 .financial-table .empty-message {
   text-align: center;
-  color: rgba(255, 255, 255, 0.5);
-  padding: 2rem;
+  color: var(--text-muted);
+  padding: var(--spacing-2xl);
   font-style: italic;
-}
-
-.table-info {
-  margin-top: 0.5rem;
-  font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.6);
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.filter-badge {
-  background-color: #646cff;
-  color: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
 }
 
 .financial-table .actions {
@@ -119,31 +110,56 @@
 
 .financial-table .edit-btn,
 .financial-table .delete-btn {
-  padding: 0.25rem 0.75rem;
-  margin: 0 0.25rem;
+  padding: var(--spacing-xs) var(--spacing-md);
+  margin: 0 var(--spacing-xs);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   font-size: 0.75rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all var(--transition-base);
 }
 
 .financial-table .edit-btn {
-  background-color: #646cff;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
   color: white;
+  box-shadow: var(--shadow-sm);
 }
 
 .financial-table .edit-btn:hover {
-  background-color: #535bf2;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-primary);
 }
 
 .financial-table .delete-btn {
-  background-color: #f44336;
+  background: var(--error);
   color: white;
+  box-shadow: var(--shadow-sm);
 }
 
 .financial-table .delete-btn:hover {
-  background-color: #d32f2f;
+  background: #dc2626;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.table-info {
+  margin-top: var(--spacing-md);
+  font-size: 0.875rem;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.filter-badge {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+  color: white;
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 500;
+  box-shadow: var(--shadow-sm);
 }
 
 @media (max-width: 768px) {
@@ -153,7 +169,6 @@
 
   .financial-table th,
   .financial-table td {
-    padding: 0.5rem;
+    padding: var(--spacing-sm);
   }
 }
-

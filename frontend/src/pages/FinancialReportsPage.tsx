@@ -5,14 +5,12 @@ import CashFlowTable from '../components/Financial/CashFlowTable'
 import IncomeStatementForm from '../components/Financial/IncomeStatementForm'
 import BalanceSheetForm from '../components/Financial/BalanceSheetForm'
 import CashFlowForm from '../components/Financial/CashFlowForm'
-import { useStock } from '../contexts/StockContext'
 import { financialStorageService } from '../services/financialStorageService'
 import type { IncomeStatementItem, BalanceSheetItem, CashFlowItem } from '../types/financial'
 import './FinancialReportsPage.css'
 
 function FinancialReportsPage() {
-  const { selectedStockCode, setSelectedStockCode } = useStock()
-  const [localSelectedStock, setLocalSelectedStock] = useState<string | undefined>(undefined)
+  const [selectedStockCode, setSelectedStockCode] = useState<string | undefined>(undefined)
   
   const [incomeStatements, setIncomeStatements] = useState<IncomeStatementItem[]>([])
   const [balanceSheets, setBalanceSheets] = useState<BalanceSheetItem[]>([])
@@ -36,18 +34,12 @@ function FinancialReportsPage() {
     setCashFlows(financialStorageService.getAllCashFlows())
   }
 
-  // 使用 StockContext 的選中股票，如果沒有則使用本地選中
-  const activeStockCode = selectedStockCode || localSelectedStock
-
   const handleTableClick = (stockCode: string) => {
-    const newCode = activeStockCode === stockCode ? undefined : stockCode
-    setLocalSelectedStock(newCode)
-    // 同時更新 StockContext，這樣可以與 Table 3 連動
+    const newCode = selectedStockCode === stockCode ? undefined : stockCode
     setSelectedStockCode(newCode)
   }
 
   const handleClearFilter = () => {
-    setLocalSelectedStock(undefined)
     setSelectedStockCode(undefined)
   }
 
@@ -125,11 +117,11 @@ function FinancialReportsPage() {
 
   // 取得選中股票的資訊
   const getSelectedStockInfo = () => {
-    if (!activeStockCode) return null
+    if (!selectedStockCode) return null
     
-    const income = incomeStatements.find(item => item.stockCode === activeStockCode)
-    const balance = balanceSheets.find(item => item.stockCode === activeStockCode)
-    const cashFlow = cashFlows.find(item => item.stockCode === activeStockCode)
+    const income = incomeStatements.find(item => item.stockCode === selectedStockCode)
+    const balance = balanceSheets.find(item => item.stockCode === selectedStockCode)
+    const cashFlow = cashFlows.find(item => item.stockCode === selectedStockCode)
     
     return { income, balance, cashFlow }
   }
@@ -142,15 +134,15 @@ function FinancialReportsPage() {
         <div className="financial-reports-header">
           <h1>財務報表</h1>
           <p className="financial-reports-description">
-            提供股票財務報表查詢與分析功能 - 與 Table 3 連動查詢
+            提供股票財務報表查詢與分析功能 - 所有資料由使用者自行輸入
           </p>
         </div>
 
-        {activeStockCode && stockInfo && (
+        {selectedStockCode && stockInfo && (
           <div className="financial-reports-controls">
             <div className="filter-control">
               <span className="filter-label">已選中股票:</span>
-              <span className="filter-value">{activeStockCode}</span>
+              <span className="filter-value">{selectedStockCode}</span>
               {stockInfo.income && (
                 <span className="stock-period">期間: {stockInfo.income.period}</span>
               )}
@@ -227,7 +219,7 @@ function FinancialReportsPage() {
         <div className="reports-tables">
           <IncomeStatementTable
             data={incomeStatements}
-            selectedStockCode={activeStockCode}
+            selectedStockCode={selectedStockCode}
             onRowClick={handleTableClick}
             onEdit={handleIncomeEdit}
             onDelete={handleIncomeDelete}
@@ -235,7 +227,7 @@ function FinancialReportsPage() {
 
           <BalanceSheetTable
             data={balanceSheets}
-            selectedStockCode={activeStockCode}
+            selectedStockCode={selectedStockCode}
             onRowClick={handleTableClick}
             onEdit={handleBalanceEdit}
             onDelete={handleBalanceDelete}
@@ -243,16 +235,16 @@ function FinancialReportsPage() {
 
           <CashFlowTable
             data={cashFlows}
-            selectedStockCode={activeStockCode}
+            selectedStockCode={selectedStockCode}
             onRowClick={handleTableClick}
             onEdit={handleCashFlowEdit}
             onDelete={handleCashFlowDelete}
           />
         </div>
 
-        {activeStockCode && stockInfo && stockInfo.income && (
+        {selectedStockCode && stockInfo && stockInfo.income && (
           <div className="financial-summary">
-            <h3>財務摘要 - {activeStockCode}</h3>
+            <h3>財務摘要 - {selectedStockCode}</h3>
             <div className="summary-grid">
               <div className="summary-card">
                 <h4>損益表摘要</h4>
@@ -320,7 +312,6 @@ function FinancialReportsPage() {
             </ul>
             <p className="info-note">
               💡 點擊任一表格的股票代號，三個表格會同步篩選顯示該股票的財務資料。
-              在 Function 2 的 Table 3 選中股票後，此頁面會自動顯示該股票的財務報表。
               所有資料由使用者自行輸入並儲存於本地資料庫。
             </p>
           </div>
