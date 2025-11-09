@@ -26,27 +26,34 @@ function CashFlowTable({ data, selectedStockCode, onRowClick }: CashFlowTablePro
     return num >= 0 ? `+${formatted}` : `-${formatted}`
   }
 
+  const formatPercent = (num: number) => {
+    return num.toFixed(2) + '%'
+  }
+
   return (
     <div className="financial-table-container">
-      <h3>Table 6: 現金流量表</h3>
+      <h3>Table 6: 股票財務分析 - 現金流量表</h3>
       <div className="table-wrapper">
         <table className="financial-table">
           <thead>
             <tr>
-              <th>股票代號</th>
-              <th>期間</th>
-              <th>營業活動現金流量</th>
-              <th>投資活動現金流量</th>
-              <th>籌資活動現金流量</th>
-              <th>本期現金增加(減少)</th>
-              <th>期初現金餘額</th>
-              <th>期末現金餘額</th>
+              <th>代號</th>
+              <th>年/季</th>
+              <th>營業現金</th>
+              <th>投資現金</th>
+              <th>比重</th>
+              <th>融資現金</th>
+              <th>比重</th>
+              <th>自由現金</th>
+              <th>比重</th>
+              <th>淨現金流</th>
+              <th>比重</th>
             </tr>
           </thead>
           <tbody>
             {filteredData.length === 0 ? (
               <tr>
-                <td colSpan={8} className="empty-message">
+                <td colSpan={11} className="empty-message">
                   {selectedStockCode ? `無 ${selectedStockCode} 的現金流量表資料` : '尚無資料'}
                 </td>
               </tr>
@@ -65,14 +72,19 @@ function CashFlowTable({ data, selectedStockCode, onRowClick }: CashFlowTablePro
                   <td className={`amount ${item.investingCashFlow >= 0 ? 'positive' : 'negative'}`}>
                     {formatCashFlow(item.investingCashFlow)}
                   </td>
+                  <td className="ratio">{formatPercent(item.investingCashFlowRatio)}</td>
                   <td className={`amount ${item.financingCashFlow >= 0 ? 'positive' : 'negative'}`}>
                     {formatCashFlow(item.financingCashFlow)}
                   </td>
+                  <td className="ratio">{formatPercent(item.financingCashFlowRatio)}</td>
+                  <td className={`amount ${item.freeCashFlow >= 0 ? 'positive' : 'negative'}`}>
+                    {formatCashFlow(item.freeCashFlow)}
+                  </td>
+                  <td className="ratio">{formatPercent(item.freeCashFlowRatio)}</td>
                   <td className={`amount ${item.netCashFlow >= 0 ? 'positive' : 'negative'}`}>
                     {formatCashFlow(item.netCashFlow)}
                   </td>
-                  <td className="amount">{formatNumber(item.beginningCash)}</td>
-                  <td className="amount total">{formatNumber(item.endingCash)}</td>
+                  <td className="ratio">{formatPercent(item.netCashFlowRatio)}</td>
                 </tr>
               ))
             )}
@@ -88,4 +100,3 @@ function CashFlowTable({ data, selectedStockCode, onRowClick }: CashFlowTablePro
 }
 
 export default CashFlowTable
-

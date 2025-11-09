@@ -21,23 +21,27 @@ function BalanceSheetTable({ data, selectedStockCode, onRowClick }: BalanceSheet
     return num.toLocaleString('zh-TW')
   }
 
+  const formatPercent = (num: number) => {
+    return num.toFixed(2) + '%'
+  }
+
   return (
     <div className="financial-table-container">
-      <h3>Table 5: 資產負債表</h3>
+      <h3>Table 5: 股票財務分析 - 資產負債表</h3>
       <div className="table-wrapper">
         <table className="financial-table">
           <thead>
             <tr>
-              <th>股票代號</th>
-              <th>期間</th>
-              <th>流動資產</th>
-              <th>非流動資產</th>
-              <th>資產總計</th>
-              <th>流動負債</th>
-              <th>非流動負債</th>
-              <th>負債總計</th>
+              <th>代號</th>
+              <th>年/季</th>
+              <th>總資產</th>
+              <th>比重</th>
               <th>股東權益</th>
-              <th>負債及股東權益總計</th>
+              <th>比重</th>
+              <th>流動資產</th>
+              <th>比重</th>
+              <th>流動負債</th>
+              <th>比重</th>
             </tr>
           </thead>
           <tbody>
@@ -56,14 +60,14 @@ function BalanceSheetTable({ data, selectedStockCode, onRowClick }: BalanceSheet
                 >
                   <td className="stock-code">{item.stockCode}</td>
                   <td>{item.period}</td>
-                  <td className="amount">{formatNumber(item.currentAssets)}</td>
-                  <td className="amount">{formatNumber(item.nonCurrentAssets)}</td>
                   <td className="amount total">{formatNumber(item.totalAssets)}</td>
-                  <td className="amount">{formatNumber(item.currentLiabilities)}</td>
-                  <td className="amount">{formatNumber(item.nonCurrentLiabilities)}</td>
-                  <td className="amount">{formatNumber(item.totalLiabilities)}</td>
+                  <td className="ratio">{formatPercent(item.totalAssetsRatio)}</td>
                   <td className="amount positive">{formatNumber(item.shareholdersEquity)}</td>
-                  <td className="amount total">{formatNumber(item.totalLiabilitiesAndEquity)}</td>
+                  <td className="ratio">{formatPercent(item.shareholdersEquityRatio)}</td>
+                  <td className="amount">{formatNumber(item.currentAssets)}</td>
+                  <td className="ratio">{formatPercent(item.currentAssetsRatio)}</td>
+                  <td className="amount">{formatNumber(item.currentLiabilities)}</td>
+                  <td className="ratio">{formatPercent(item.currentLiabilitiesRatio)}</td>
                 </tr>
               ))
             )}
@@ -79,4 +83,3 @@ function BalanceSheetTable({ data, selectedStockCode, onRowClick }: BalanceSheet
 }
 
 export default BalanceSheetTable
-

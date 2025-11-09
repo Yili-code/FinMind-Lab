@@ -98,8 +98,8 @@ function FinancialReportsPage() {
                   <span className="value positive">{(stockInfo.income.netIncome / 100000000).toFixed(2)} 億</span>
                 </div>
                 <div className="summary-item">
-                  <span>每股盈餘:</span>
-                  <span className="value eps">{stockInfo.income.eps.toFixed(2)}</span>
+                  <span>營業利益:</span>
+                  <span className="value positive">{(stockInfo.income.operatingIncome / 100000000).toFixed(2)} 億</span>
                 </div>
               </div>
 
@@ -111,8 +111,8 @@ function FinancialReportsPage() {
                     <span className="value">{(stockInfo.balance.totalAssets / 100000000).toFixed(2)} 億</span>
                   </div>
                   <div className="summary-item">
-                    <span>負債總計:</span>
-                    <span className="value">{(stockInfo.balance.totalLiabilities / 100000000).toFixed(2)} 億</span>
+                    <span>流動負債:</span>
+                    <span className="value">{(stockInfo.balance.currentLiabilities / 100000000).toFixed(2)} 億</span>
                   </div>
                   <div className="summary-item">
                     <span>股東權益:</span>
@@ -131,8 +131,10 @@ function FinancialReportsPage() {
                     </span>
                   </div>
                   <div className="summary-item">
-                    <span>期末現金餘額:</span>
-                    <span className="value">{(stockInfo.cashFlow.endingCash / 100000000).toFixed(2)} 億</span>
+                    <span>淨現金流:</span>
+                    <span className={`value ${stockInfo.cashFlow.netCashFlow >= 0 ? 'positive' : 'negative'}`}>
+                      {(stockInfo.cashFlow.netCashFlow / 100000000).toFixed(2)} 億
+                    </span>
                   </div>
                 </div>
               )}

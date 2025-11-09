@@ -19,7 +19,7 @@ function StockChart({ data, selectedStockCode }: StockChartProps) {
     最高: item.highPrice,
     最低: item.lowPrice,
     收盤: item.closePrice,
-    成交量: item.volume / 10000, // 轉換為萬股
+    成交量: item.totalVolume / 10000, // 轉換為萬股
   }))
 
   return (

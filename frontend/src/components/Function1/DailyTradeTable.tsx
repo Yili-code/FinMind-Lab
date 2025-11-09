@@ -65,13 +65,22 @@ function DailyTradeTable({ data, selectedStockCode, onRowClick }: DailyTradeTabl
           <thead>
             <tr>
               <th onClick={() => handleSort('stockCode')}>
-                股票代號 {sortConfig?.key === 'stockCode' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                代號 {sortConfig?.key === 'stockCode' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
               </th>
               <th onClick={() => handleSort('stockName')}>
-                股票名稱 {sortConfig?.key === 'stockName' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                名稱 {sortConfig?.key === 'stockName' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
               </th>
               <th onClick={() => handleSort('date')}>
                 日期 {sortConfig?.key === 'date' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('closePrice')}>
+                成交 {sortConfig?.key === 'closePrice' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('avgPrice')}>
+                均價 {sortConfig?.key === 'avgPrice' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('prevClose')}>
+                昨收 {sortConfig?.key === 'prevClose' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
               </th>
               <th onClick={() => handleSort('openPrice')}>
                 開盤 {sortConfig?.key === 'openPrice' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
@@ -82,17 +91,47 @@ function DailyTradeTable({ data, selectedStockCode, onRowClick }: DailyTradeTabl
               <th onClick={() => handleSort('lowPrice')}>
                 最低 {sortConfig?.key === 'lowPrice' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
               </th>
-              <th onClick={() => handleSort('closePrice')}>
-                收盤 {sortConfig?.key === 'closePrice' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-              </th>
-              <th onClick={() => handleSort('volume')}>
-                成交量 {sortConfig?.key === 'volume' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-              </th>
-              <th onClick={() => handleSort('amount')}>
-                成交金額 {sortConfig?.key === 'amount' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-              </th>
               <th onClick={() => handleSort('change')}>
                 漲跌 {sortConfig?.key === 'change' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('totalVolume')}>
+                總量 {sortConfig?.key === 'totalVolume' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('prevVolume')}>
+                昨量 {sortConfig?.key === 'prevVolume' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('innerVolume')}>
+                內盤 {sortConfig?.key === 'innerVolume' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('outerVolume')}>
+                外盤 {sortConfig?.key === 'outerVolume' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('foreignInvestor')}>
+                外資 {sortConfig?.key === 'foreignInvestor' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('investmentTrust')}>
+                投信 {sortConfig?.key === 'investmentTrust' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('dealer')}>
+                自營商 {sortConfig?.key === 'dealer' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('chips')}>
+                籌碼 {sortConfig?.key === 'chips' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('mainBuy')}>
+                主買 {sortConfig?.key === 'mainBuy' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('mainSell')}>
+                主賣 {sortConfig?.key === 'mainSell' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('monthHigh')}>
+                月高 {sortConfig?.key === 'monthHigh' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('monthLow')}>
+                月低 {sortConfig?.key === 'monthLow' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('quarterHigh')}>
+                季高 {sortConfig?.key === 'quarterHigh' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
               </th>
             </tr>
           </thead>
@@ -103,16 +142,29 @@ function DailyTradeTable({ data, selectedStockCode, onRowClick }: DailyTradeTabl
                 className={selectedStockCode && item.stockCode === selectedStockCode ? 'selected' : ''}
                 onClick={() => onRowClick?.(item.stockCode)}
               >
-                <td>{item.stockCode}</td>
+                <td className="stock-code">{item.stockCode}</td>
                 <td>{item.stockName}</td>
                 <td>{item.date}</td>
+                <td className="price close">{item.closePrice.toFixed(2)}</td>
+                <td className="price">{item.avgPrice.toFixed(2)}</td>
+                <td className="price">{item.prevClose.toFixed(2)}</td>
                 <td className="price">{item.openPrice.toFixed(2)}</td>
                 <td className="price high">{item.highPrice.toFixed(2)}</td>
                 <td className="price low">{item.lowPrice.toFixed(2)}</td>
-                <td className="price close">{item.closePrice.toFixed(2)}</td>
-                <td className="volume">{formatNumber(item.volume)}</td>
-                <td className="amount">{formatNumber(item.amount)}</td>
                 <td className="change">{formatChange(item.change, item.changePercent)}</td>
+                <td className="volume">{formatNumber(item.totalVolume)}</td>
+                <td className="volume">{formatNumber(item.prevVolume)}</td>
+                <td className="volume">{formatNumber(item.innerVolume)}</td>
+                <td className="volume">{formatNumber(item.outerVolume)}</td>
+                <td className="volume investor">{formatNumber(item.foreignInvestor)}</td>
+                <td className="volume investor">{formatNumber(item.investmentTrust)}</td>
+                <td className="volume investor">{formatNumber(item.dealer)}</td>
+                <td className="volume chips">{formatNumber(item.chips)}</td>
+                <td className="volume buy">{formatNumber(item.mainBuy)}</td>
+                <td className="volume sell">{formatNumber(item.mainSell)}</td>
+                <td className="price high">{item.monthHigh.toFixed(2)}</td>
+                <td className="price low">{item.monthLow.toFixed(2)}</td>
+                <td className="price high">{item.quarterHigh.toFixed(2)}</td>
               </tr>
             ))}
           </tbody>
@@ -127,4 +179,3 @@ function DailyTradeTable({ data, selectedStockCode, onRowClick }: DailyTradeTabl
 }
 
 export default DailyTradeTable
-

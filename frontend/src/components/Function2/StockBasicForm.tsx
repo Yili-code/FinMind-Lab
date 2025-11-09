@@ -13,19 +13,38 @@ function StockBasicForm({ onSubmit, initialData, onCancel }: StockBasicFormProps
   const [formData, setFormData] = useState({
     stockCode: initialData?.stockCode || '',
     stockName: initialData?.stockName || '',
-    industry: initialData?.industry || '',
-    market: initialData?.market || '上市',
+    category: initialData?.category || '',
+    establishedDate: initialData?.establishedDate || '',
     listedDate: initialData?.listedDate || '',
+    industry: initialData?.industry || '',
     capital: initialData?.capital || 0,
-    address: initialData?.address || '',
-    website: initialData?.website || ''
+    issuedShares: initialData?.issuedShares || 0,
+    marketValue: initialData?.marketValue || 0,
+    directors: initialData?.directors || '',
+    market: initialData?.market || '上市',
+    group: initialData?.group || '',
+    employees: initialData?.employees || 0,
+    dividend: initialData?.dividend || 0,
+    yield: initialData?.yield || 0,
+    dividendPerShare: initialData?.dividendPerShare || 0,
+    closingPrice: initialData?.closingPrice || 0,
+    exDividendDate: initialData?.exDividendDate || '',
+    peRatio: initialData?.peRatio || 0,
+    equityRatio: initialData?.equityRatio || 0,
+    industryChange: initialData?.industryChange || 0,
+    industryEPS: initialData?.industryEPS || 0,
+    industryYield: initialData?.industryYield || 0
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'capital' ? parseFloat(value) || 0 : value
+      [name]: ['capital', 'issuedShares', 'marketValue', 'employees', 'dividend', 'yield', 
+               'dividendPerShare', 'closingPrice', 'peRatio', 'equityRatio', 'industryChange', 
+               'industryEPS', 'industryYield'].includes(name) 
+        ? parseFloat(value) || 0 
+        : value
     }))
   }
 
@@ -37,12 +56,27 @@ function StockBasicForm({ onSubmit, initialData, onCancel }: StockBasicFormProps
       setFormData({
         stockCode: '',
         stockName: '',
-        industry: '',
-        market: '上市',
+        category: '',
+        establishedDate: '',
         listedDate: '',
+        industry: '',
         capital: 0,
-        address: '',
-        website: ''
+        issuedShares: 0,
+        marketValue: 0,
+        directors: '',
+        market: '上市',
+        group: '',
+        employees: 0,
+        dividend: 0,
+        yield: 0,
+        dividendPerShare: 0,
+        closingPrice: 0,
+        exDividendDate: '',
+        peRatio: 0,
+        equityRatio: 0,
+        industryChange: 0,
+        industryEPS: 0,
+        industryYield: 0
       })
     }
   }
@@ -51,113 +85,301 @@ function StockBasicForm({ onSubmit, initialData, onCancel }: StockBasicFormProps
     <div className="stock-basic-form-container">
       <h3>{initialData ? '編輯股票基本檔' : '新增股票基本檔'}</h3>
       <form onSubmit={handleSubmit} className="stock-basic-form">
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="stockCode">股票代號 *</label>
-            <input
-              type="text"
-              id="stockCode"
-              name="stockCode"
-              value={formData.stockCode}
-              onChange={handleChange}
-              required
-              disabled={!!initialData}
-              placeholder="例如: 2330"
-            />
+        <div className="form-section">
+          <h4>基本資訊</h4>
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="stockCode">股票代號 *</label>
+              <input
+                type="text"
+                id="stockCode"
+                name="stockCode"
+                value={formData.stockCode}
+                onChange={handleChange}
+                required
+                disabled={!!initialData}
+                placeholder="例如: 2330"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="stockName">股票名稱 *</label>
+              <input
+                type="text"
+                id="stockName"
+                name="stockName"
+                value={formData.stockName}
+                onChange={handleChange}
+                required
+                placeholder="例如: 台積電"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="category">分類</label>
+              <input
+                type="text"
+                id="category"
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                placeholder="例如: 電子零組件"
+              />
+            </div>
           </div>
-          <div className="form-group">
-            <label htmlFor="stockName">股票名稱 *</label>
-            <input
-              type="text"
-              id="stockName"
-              name="stockName"
-              value={formData.stockName}
-              onChange={handleChange}
-              required
-              placeholder="例如: 台積電"
-            />
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="establishedDate">成立日期</label>
+              <input
+                type="date"
+                id="establishedDate"
+                name="establishedDate"
+                value={formData.establishedDate}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="listedDate">掛牌日期 *</label>
+              <input
+                type="date"
+                id="listedDate"
+                name="listedDate"
+                value={formData.listedDate}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="industry">產業 *</label>
+              <input
+                type="text"
+                id="industry"
+                name="industry"
+                value={formData.industry}
+                onChange={handleChange}
+                required
+                placeholder="例如: 半導體"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="industry">產業別 *</label>
-            <input
-              type="text"
-              id="industry"
-              name="industry"
-              value={formData.industry}
-              onChange={handleChange}
-              required
-              placeholder="例如: 半導體"
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="market">市場別 *</label>
-            <select
-              id="market"
-              name="market"
-              value={formData.market}
-              onChange={handleChange}
-              required
-            >
-              <option value="上市">上市</option>
-              <option value="上櫃">上櫃</option>
-              <option value="興櫃">興櫃</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="listedDate">上市日期 *</label>
-            <input
-              type="date"
-              id="listedDate"
-              name="listedDate"
-              value={formData.listedDate}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="capital">資本額（萬元） *</label>
-            <input
-              type="number"
-              id="capital"
-              name="capital"
-              value={formData.capital}
-              onChange={handleChange}
-              required
-              min="0"
-              step="0.01"
-              placeholder="例如: 259303800"
-            />
+        <div className="form-section">
+          <h4>財務資訊</h4>
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="capital">股本（萬元） *</label>
+              <input
+                type="number"
+                id="capital"
+                name="capital"
+                value={formData.capital}
+                onChange={handleChange}
+                required
+                min="0"
+                step="0.01"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="issuedShares">發行股數（股）</label>
+              <input
+                type="number"
+                id="issuedShares"
+                name="issuedShares"
+                value={formData.issuedShares}
+                onChange={handleChange}
+                min="0"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="marketValue">市值（萬元）</label>
+              <input
+                type="number"
+                id="marketValue"
+                name="marketValue"
+                value={formData.marketValue}
+                onChange={handleChange}
+                min="0"
+                step="0.01"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="form-group">
-          <label htmlFor="address">公司地址</label>
-          <input
-            type="text"
-            id="address"
-            name="address"
-            value={formData.address}
-            onChange={handleChange}
-            placeholder="例如: 新竹市東區力行六路8號"
-          />
+        <div className="form-section">
+          <h4>其他資訊</h4>
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="directors">董監</label>
+              <input
+                type="text"
+                id="directors"
+                name="directors"
+                value={formData.directors}
+                onChange={handleChange}
+                placeholder="例如: 張忠謀"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="market">市櫃 *</label>
+              <select
+                id="market"
+                name="market"
+                value={formData.market}
+                onChange={handleChange}
+                required
+              >
+                <option value="上市">上市</option>
+                <option value="上櫃">上櫃</option>
+                <option value="興櫃">興櫃</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label htmlFor="group">集團</label>
+              <input
+                type="text"
+                id="group"
+                name="group"
+                value={formData.group}
+                onChange={handleChange}
+                placeholder="例如: 台積電集團"
+              />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="employees">員工人數</label>
+              <input
+                type="number"
+                id="employees"
+                name="employees"
+                value={formData.employees}
+                onChange={handleChange}
+                min="0"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="dividend">股利</label>
+              <input
+                type="number"
+                id="dividend"
+                name="dividend"
+                value={formData.dividend}
+                onChange={handleChange}
+                step="0.01"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="yield">殖利（%）</label>
+              <input
+                type="number"
+                id="yield"
+                name="yield"
+                value={formData.yield}
+                onChange={handleChange}
+                step="0.01"
+              />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="dividendPerShare">股息</label>
+              <input
+                type="number"
+                id="dividendPerShare"
+                name="dividendPerShare"
+                value={formData.dividendPerShare}
+                onChange={handleChange}
+                step="0.01"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="closingPrice">收價</label>
+              <input
+                type="number"
+                id="closingPrice"
+                name="closingPrice"
+                value={formData.closingPrice}
+                onChange={handleChange}
+                step="0.01"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="exDividendDate">填息日期</label>
+              <input
+                type="date"
+                id="exDividendDate"
+                name="exDividendDate"
+                value={formData.exDividendDate}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="peRatio">本益比</label>
+              <input
+                type="number"
+                id="peRatio"
+                name="peRatio"
+                value={formData.peRatio}
+                onChange={handleChange}
+                step="0.01"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="equityRatio">股權（%）</label>
+              <input
+                type="number"
+                id="equityRatio"
+                name="equityRatio"
+                value={formData.equityRatio}
+                onChange={handleChange}
+                step="0.01"
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="form-group">
-          <label htmlFor="website">公司網站</label>
-          <input
-            type="url"
-            id="website"
-            name="website"
-            value={formData.website}
-            onChange={handleChange}
-            placeholder="例如: https://www.tsmc.com"
-          />
+        <div className="form-section">
+          <h4>同業比較</h4>
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="industryChange">同業漲跌（%）</label>
+              <input
+                type="number"
+                id="industryChange"
+                name="industryChange"
+                value={formData.industryChange}
+                onChange={handleChange}
+                step="0.01"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="industryEPS">同業EPS</label>
+              <input
+                type="number"
+                id="industryEPS"
+                name="industryEPS"
+                value={formData.industryEPS}
+                onChange={handleChange}
+                step="0.01"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="industryYield">同業殖利（%）</label>
+              <input
+                type="number"
+                id="industryYield"
+                name="industryYield"
+                value={formData.industryYield}
+                onChange={handleChange}
+                step="0.01"
+              />
+            </div>
+          </div>
         </div>
 
         <div className="form-actions">
@@ -176,4 +398,3 @@ function StockBasicForm({ onSubmit, initialData, onCancel }: StockBasicFormProps
 }
 
 export default StockBasicForm
-

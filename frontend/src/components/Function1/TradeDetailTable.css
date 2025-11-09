@@ -59,25 +59,55 @@
   background-color: rgba(100, 108, 255, 0.2);
 }
 
-.trade-detail-table .price {
-  color: #4caf50;
+.trade-detail-table .stock-code {
+  color: #646cff;
   font-weight: 500;
 }
 
-.trade-detail-table .volume,
-.trade-detail-table .amount {
+.trade-detail-table .price {
+  color: #4caf50;
+  font-weight: 500;
   text-align: right;
-  font-family: 'Courier New', monospace;
 }
 
-.trade-detail-table .buy {
+.trade-detail-table .price.high {
+  color: #f44336;
+}
+
+.trade-detail-table .price.low {
+  color: #2196f3;
+}
+
+.trade-detail-table .change .positive {
   color: #f44336;
   font-weight: 500;
 }
 
-.trade-detail-table .sell {
+.trade-detail-table .change .negative {
   color: #4caf50;
   font-weight: 500;
+}
+
+.trade-detail-table .lots {
+  text-align: right;
+  font-family: 'Courier New', monospace;
+  color: rgba(255, 255, 255, 0.87);
+}
+
+.trade-detail-table .period {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.trade-detail-table .volume {
+  text-align: right;
+  font-family: 'Courier New', monospace;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.trade-detail-table .volume.estimated {
+  color: rgba(255, 152, 0, 0.8);
+  font-style: italic;
 }
 
 .table-info {

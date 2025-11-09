@@ -18,7 +18,8 @@
 .daily-trade-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  min-width: 2000px;
 }
 
 .daily-trade-table thead {
@@ -59,9 +60,15 @@
   background-color: rgba(100, 108, 255, 0.2);
 }
 
+.daily-trade-table .stock-code {
+  color: #646cff;
+  font-weight: 500;
+}
+
 .daily-trade-table .price {
   color: #4caf50;
   font-weight: 500;
+  text-align: right;
 }
 
 .daily-trade-table .price.high {
@@ -74,12 +81,29 @@
 
 .daily-trade-table .price.close {
   color: #ff9800;
+  font-weight: 600;
 }
 
-.daily-trade-table .volume,
-.daily-trade-table .amount {
+.daily-trade-table .volume {
   text-align: right;
   font-family: 'Courier New', monospace;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.daily-trade-table .volume.investor {
+  color: rgba(100, 108, 255, 0.8);
+}
+
+.daily-trade-table .volume.chips {
+  color: rgba(255, 152, 0, 0.8);
+}
+
+.daily-trade-table .volume.buy {
+  color: #f44336;
+}
+
+.daily-trade-table .volume.sell {
+  color: #4caf50;
 }
 
 .daily-trade-table .change .positive {

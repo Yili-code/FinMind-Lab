@@ -21,29 +21,34 @@ function IncomeStatementTable({ data, selectedStockCode, onRowClick }: IncomeSta
     return num.toLocaleString('zh-TW')
   }
 
+  const formatPercent = (num: number) => {
+    return num.toFixed(2) + '%'
+  }
+
   return (
     <div className="financial-table-container">
-      <h3>Table 4: 損益表</h3>
+      <h3>Table 4: 股票財務分析 - 損益表</h3>
       <div className="table-wrapper">
         <table className="financial-table">
           <thead>
             <tr>
-              <th>股票代號</th>
-              <th>期間</th>
+              <th>代號</th>
+              <th>年/季</th>
               <th>營業收入</th>
-              <th>營業成本</th>
               <th>營業毛利</th>
+              <th>比重</th>
               <th>營業費用</th>
+              <th>比重</th>
               <th>營業利益</th>
-              <th>稅前淨利</th>
-              <th>本期淨利</th>
-              <th>每股盈餘</th>
+              <th>比重</th>
+              <th>稅後淨利</th>
+              <th>其他損益</th>
             </tr>
           </thead>
           <tbody>
             {filteredData.length === 0 ? (
               <tr>
-                <td colSpan={10} className="empty-message">
+                <td colSpan={11} className="empty-message">
                   {selectedStockCode ? `無 ${selectedStockCode} 的損益表資料` : '尚無資料'}
                 </td>
               </tr>
@@ -57,13 +62,14 @@ function IncomeStatementTable({ data, selectedStockCode, onRowClick }: IncomeSta
                   <td className="stock-code">{item.stockCode}</td>
                   <td>{item.period}</td>
                   <td className="amount">{formatNumber(item.revenue)}</td>
-                  <td className="amount">{formatNumber(item.costOfGoodsSold)}</td>
                   <td className="amount positive">{formatNumber(item.grossProfit)}</td>
+                  <td className="ratio">{formatPercent(item.grossProfitRatio)}</td>
                   <td className="amount">{formatNumber(item.operatingExpenses)}</td>
+                  <td className="ratio">{formatPercent(item.operatingExpensesRatio)}</td>
                   <td className="amount positive">{formatNumber(item.operatingIncome)}</td>
-                  <td className="amount positive">{formatNumber(item.incomeBeforeTax)}</td>
+                  <td className="ratio">{formatPercent(item.operatingIncomeRatio)}</td>
                   <td className="amount positive">{formatNumber(item.netIncome)}</td>
-                  <td className="eps">{item.eps.toFixed(2)}</td>
+                  <td className="amount">{formatNumber(item.otherIncome)}</td>
                 </tr>
               ))
             )}
@@ -79,4 +85,3 @@ function IncomeStatementTable({ data, selectedStockCode, onRowClick }: IncomeSta
 }
 
 export default IncomeStatementTable
-

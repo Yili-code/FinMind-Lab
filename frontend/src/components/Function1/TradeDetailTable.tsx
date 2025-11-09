@@ -40,7 +40,21 @@ function TradeDetailTable({ data, selectedStockCode, onRowClick }: TradeDetailTa
     : sortedData
 
   const formatNumber = (num: number) => {
+    if (num >= 100000000) {
+      return (num / 100000000).toFixed(2) + '億'
+    } else if (num >= 10000) {
+      return (num / 10000).toFixed(2) + '萬'
+    }
     return num.toLocaleString('zh-TW')
+  }
+
+  const formatChange = (change: number, changePercent: number) => {
+    const sign = change >= 0 ? '+' : ''
+    return (
+      <span className={change >= 0 ? 'positive' : 'negative'}>
+        {sign}{change.toFixed(2)} ({sign}{changePercent.toFixed(2)}%)
+      </span>
+    )
   }
 
   return (
@@ -51,25 +65,37 @@ function TradeDetailTable({ data, selectedStockCode, onRowClick }: TradeDetailTa
           <thead>
             <tr>
               <th onClick={() => handleSort('stockCode')}>
-                股票代號 {sortConfig?.key === 'stockCode' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                代號 {sortConfig?.key === 'stockCode' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
               </th>
-              <th onClick={() => handleSort('stockName')}>
-                股票名稱 {sortConfig?.key === 'stockName' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-              </th>
-              <th onClick={() => handleSort('time')}>
-                時間 {sortConfig?.key === 'time' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              <th onClick={() => handleSort('date')}>
+                日期 {sortConfig?.key === 'date' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
               </th>
               <th onClick={() => handleSort('price')}>
                 成交價 {sortConfig?.key === 'price' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
               </th>
-              <th onClick={() => handleSort('volume')}>
-                成交量 {sortConfig?.key === 'volume' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              <th onClick={() => handleSort('change')}>
+                漲跌 {sortConfig?.key === 'change' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
               </th>
-              <th onClick={() => handleSort('amount')}>
-                成交金額 {sortConfig?.key === 'amount' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              <th onClick={() => handleSort('lots')}>
+                張數 {sortConfig?.key === 'lots' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
               </th>
-              <th onClick={() => handleSort('buySell')}>
-                買賣 {sortConfig?.key === 'buySell' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              <th onClick={() => handleSort('period')}>
+                時段 {sortConfig?.key === 'period' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('openPrice')}>
+                開盤 {sortConfig?.key === 'openPrice' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('highPrice')}>
+                最高 {sortConfig?.key === 'highPrice' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('lowPrice')}>
+                最低 {sortConfig?.key === 'lowPrice' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('totalVolume')}>
+                總量 {sortConfig?.key === 'totalVolume' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('estimatedVolume')}>
+                預估量 {sortConfig?.key === 'estimatedVolume' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
               </th>
             </tr>
           </thead>
@@ -80,13 +106,17 @@ function TradeDetailTable({ data, selectedStockCode, onRowClick }: TradeDetailTa
                 className={selectedStockCode && item.stockCode === selectedStockCode ? 'selected' : ''}
                 onClick={() => onRowClick?.(item.stockCode)}
               >
-                <td>{item.stockCode}</td>
-                <td>{item.stockName}</td>
-                <td>{item.time}</td>
+                <td className="stock-code">{item.stockCode}</td>
+                <td>{item.date}</td>
                 <td className="price">{item.price.toFixed(2)}</td>
-                <td className="volume">{formatNumber(item.volume)}</td>
-                <td className="amount">{formatNumber(item.amount)}</td>
-                <td className={item.buySell === '買' ? 'buy' : 'sell'}>{item.buySell}</td>
+                <td className="change">{formatChange(item.change, item.changePercent)}</td>
+                <td className="lots">{item.lots.toFixed(1)}</td>
+                <td className="period">{item.period}</td>
+                <td className="price">{item.openPrice.toFixed(2)}</td>
+                <td className="price high">{item.highPrice.toFixed(2)}</td>
+                <td className="price low">{item.lowPrice.toFixed(2)}</td>
+                <td className="volume">{formatNumber(item.totalVolume)}</td>
+                <td className="volume estimated">{formatNumber(item.estimatedVolume)}</td>
               </tr>
             ))}
           </tbody>
@@ -101,4 +131,3 @@ function TradeDetailTable({ data, selectedStockCode, onRowClick }: TradeDetailTa
 }
 
 export default TradeDetailTable
-

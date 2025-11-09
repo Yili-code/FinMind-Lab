@@ -83,6 +83,12 @@
   font-weight: 500;
 }
 
+.financial-table .ratio {
+  color: rgba(255, 152, 0, 0.8);
+  text-align: right;
+  font-size: 0.85rem;
+}
+
 .financial-table .empty-message {
   text-align: center;
   color: rgba(255, 255, 255, 0.5);

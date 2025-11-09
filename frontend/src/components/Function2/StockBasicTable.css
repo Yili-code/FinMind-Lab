@@ -18,7 +18,24 @@
 .stock-basic-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
+  min-width: 3000px;
+}
+
+.stock-basic-table .yield {
+  color: #ff9800;
+  text-align: right;
+}
+
+.stock-basic-table .pe {
+  color: #2196f3;
+  text-align: right;
+}
+
+.stock-basic-table .eps {
+  color: #ff9800;
+  text-align: right;
+  font-weight: 500;
 }
 
 .stock-basic-table thead {
