@@ -5,8 +5,15 @@ import pandas as pd
 from datetime import datetime, timedelta
 from typing import Optional, Dict, List
 import logging
+import warnings
+
+# 抑制 yfinance 和 pandas 的警告訊息
+warnings.filterwarnings('ignore', category=FutureWarning)
+warnings.filterwarnings('ignore', category=UserWarning)
+warnings.filterwarnings('ignore', message='.*pandas.*')
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.ERROR)  # 只顯示錯誤級別的日誌
 
 # 台股代號映射（yfinance 使用 .TW 後綴）
 def get_yfinance_ticker(stock_code: str) -> str:
@@ -18,7 +25,15 @@ def get_stock_info(stock_code: str) -> Optional[Dict]:
     try:
         ticker = get_yfinance_ticker(stock_code)
         stock = yf.Ticker(ticker)
-        info = stock.info
+        
+        # 使用 timeout 和更安全的獲取方式
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            info = stock.info
+        
+        if not info or len(info) == 0:
+            logger.warning(f"No info available for {stock_code}")
+            return None
         
         # 獲取股票名稱（中文）
         stock_name = info.get('longName', info.get('shortName', stock_code))
@@ -51,8 +66,10 @@ def get_intraday_data(stock_code: str, period: str = "1d", interval: str = "1m")
         ticker = get_yfinance_ticker(stock_code)
         stock = yf.Ticker(ticker)
         
-        # 獲取歷史數據
-        hist = stock.history(period=period, interval=interval)
+        # 獲取歷史數據，抑制警告
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            hist = stock.history(period=period, interval=interval, timeout=10)
         
         if hist.empty:
             return []
@@ -90,17 +107,23 @@ def get_daily_trade_data(stock_code: str, days: int = 5) -> List[Dict]:
         ticker = get_yfinance_ticker(stock_code)
         stock = yf.Ticker(ticker)
         
-        # 獲取歷史數據
+        # 獲取歷史數據，抑制警告
         end_date = datetime.now()
         start_date = end_date - timedelta(days=days)
-        hist = stock.history(start=start_date, end=end_date)
+        
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            hist = stock.history(start=start_date, end=end_date, timeout=10)
         
         if hist.empty:
             return []
         
         # 獲取股票資訊
-        info = stock.info
-        stock_name = info.get('longName', info.get('shortName', stock_code))
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            info = stock.info
+        
+        stock_name = info.get('longName', info.get('shortName', stock_code)) if info else stock_code
         
         # 轉換為列表格式
         daily_trades = []

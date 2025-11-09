@@ -6,12 +6,19 @@ from pydantic import BaseModel, EmailStr
 from datetime import datetime
 import json
 import os
+import warnings
+import logging
 from typing import Optional, List
 from services.yfinance_service import (
     get_stock_info,
     get_intraday_data,
     get_daily_trade_data
 )
+
+# 抑制不必要的警告
+warnings.filterwarnings('ignore')
+logging.getLogger('yfinance').setLevel(logging.ERROR)
+logging.getLogger('urllib3').setLevel(logging.ERROR)
 
 app = FastAPI(title="FinMind Lab API")
 
