@@ -1,7 +1,9 @@
 import type { TradeDetail, DailyTrade } from '../types/stock'
 
 // Mock 股票成交明細數據（Table 1）
+// 為每個股票生成兩組資料
 export const mockTradeDetails: TradeDetail[] = [
+  // 台積電 - 第一組
   { 
     id: '1', 
     stockCode: '2330', 
@@ -18,6 +20,24 @@ export const mockTradeDetails: TradeDetail[] = [
     lowPrice: 578,
     totalVolume: 25000000,
     estimatedVolume: 28000000
+  },
+  // 台積電 - 第二組
+  { 
+    id: '1-2', 
+    stockCode: '2330', 
+    stockName: '台積電', 
+    date: '2024-11-10',
+    time: '09:05:30', 
+    price: 582, 
+    change: 5,
+    changePercent: 0.86,
+    lots: 1.5,
+    period: '早盤',
+    openPrice: 580,
+    highPrice: 586,
+    lowPrice: 579,
+    totalVolume: 28000000,
+    estimatedVolume: 30000000
   },
   { 
     id: '2', 
@@ -36,6 +56,7 @@ export const mockTradeDetails: TradeDetail[] = [
     totalVolume: 25000000,
     estimatedVolume: 28000000
   },
+  // 鴻海 - 第一組
   { 
     id: '3', 
     stockCode: '2317', 
@@ -52,6 +73,24 @@ export const mockTradeDetails: TradeDetail[] = [
     lowPrice: 104,
     totalVolume: 15000000,
     estimatedVolume: 17000000
+  },
+  // 鴻海 - 第二組
+  { 
+    id: '3-2', 
+    stockCode: '2317', 
+    stockName: '鴻海', 
+    date: '2024-11-10',
+    time: '09:08:20', 
+    price: 106, 
+    change: 2,
+    changePercent: 1.92,
+    lots: 2.5,
+    period: '早盤',
+    openPrice: 105,
+    highPrice: 107,
+    lowPrice: 104.5,
+    totalVolume: 18000000,
+    estimatedVolume: 20000000
   },
   { 
     id: '4', 
@@ -175,7 +214,9 @@ export const mockTradeDetails: TradeDetail[] = [
 ]
 
 // Mock 股票日交易檔數據（Table 2）
+// 為每個股票生成兩組資料
 export const mockDailyTrades: DailyTrade[] = [
+  // 台積電 - 第一組
   {
     id: '1',
     stockCode: '2330',
@@ -203,6 +244,35 @@ export const mockDailyTrades: DailyTrade[] = [
     monthLow: 570, // 月低
     quarterHigh: 600 // 季高
   },
+  // 台積電 - 第二組
+  {
+    id: '1-2',
+    stockCode: '2330',
+    stockName: '台積電',
+    date: '2024-11-10',
+    closePrice: 584, // 成交
+    avgPrice: 582.5, // 均價
+    prevClose: 582, // 昨收
+    openPrice: 580,
+    highPrice: 586,
+    lowPrice: 579,
+    change: 2,
+    changePercent: 0.34,
+    totalVolume: 28000000,
+    prevVolume: 25000000, // 昨量
+    innerVolume: 13500000, // 內盤
+    outerVolume: 14500000, // 外盤
+    foreignInvestor: 5500000, // 外資
+    investmentTrust: 900000, // 投信
+    dealer: 1300000, // 自營商
+    chips: 7700000, // 籌碼
+    mainBuy: 16000000, // 主買
+    mainSell: 12000000, // 主賣
+    monthHigh: 590, // 月高
+    monthLow: 570, // 月低
+    quarterHigh: 600 // 季高
+  },
+  // 鴻海 - 第一組
   {
     id: '2',
     stockCode: '2317',
@@ -226,6 +296,34 @@ export const mockDailyTrades: DailyTrade[] = [
     chips: 3300000,
     mainBuy: 9000000,
     mainSell: 6000000,
+    monthHigh: 108,
+    monthLow: 102,
+    quarterHigh: 110
+  },
+  // 鴻海 - 第二組
+  {
+    id: '2-2',
+    stockCode: '2317',
+    stockName: '鴻海',
+    date: '2024-11-10',
+    closePrice: 106.5,
+    avgPrice: 106.0,
+    prevClose: 105.5,
+    openPrice: 105,
+    highPrice: 107,
+    lowPrice: 104.5,
+    change: 1,
+    changePercent: 0.95,
+    totalVolume: 18000000,
+    prevVolume: 15000000,
+    innerVolume: 8500000,
+    outerVolume: 9500000,
+    foreignInvestor: 2500000,
+    investmentTrust: 600000,
+    dealer: 900000,
+    chips: 4000000,
+    mainBuy: 10000000,
+    mainSell: 8000000,
     monthHigh: 108,
     monthLow: 102,
     quarterHigh: 110
