@@ -1,0 +1,43 @@
+.entry-page {
+  min-height: calc(100vh - 200px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.entry-content {
+  max-width: 800px;
+  text-align: center;
+}
+
+.entry-title {
+  font-size: 4rem;
+  font-weight: bold;
+  margin-bottom: 2rem;
+  background: linear-gradient(135deg, #646cff 0%, #535bf2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.entry-description {
+  font-size: 1.25rem;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.87);
+}
+
+.entry-description p {
+  margin: 1rem 0;
+}
+
+@media (max-width: 768px) {
+  .entry-title {
+    font-size: 2.5rem;
+  }
+
+  .entry-description {
+    font-size: 1rem;
+  }
+}
+

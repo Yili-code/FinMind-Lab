@@ -1,0 +1,24 @@
+.function-page {
+  min-height: calc(100vh - 200px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.function-content {
+  max-width: 800px;
+  text-align: center;
+}
+
+.function-content h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: rgba(255, 255, 255, 0.87);
+}
+
+.function-content p {
+  font-size: 1.25rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
