@@ -5,9 +5,11 @@ interface BalanceSheetTableProps {
   data: BalanceSheetItem[]
   selectedStockCode?: string
   onRowClick?: (stockCode: string) => void
+  onEdit?: (balance: BalanceSheetItem) => void
+  onDelete?: (id: string) => void
 }
 
-function BalanceSheetTable({ data, selectedStockCode, onRowClick }: BalanceSheetTableProps) {
+function BalanceSheetTable({ data, selectedStockCode, onRowClick, onEdit, onDelete }: BalanceSheetTableProps) {
   const filteredData = selectedStockCode
     ? data.filter(item => item.stockCode === selectedStockCode)
     : data
@@ -42,12 +44,13 @@ function BalanceSheetTable({ data, selectedStockCode, onRowClick }: BalanceSheet
               <th>比重</th>
               <th>流動負債</th>
               <th>比重</th>
+              {(onEdit || onDelete) && <th>操作</th>}
             </tr>
           </thead>
           <tbody>
             {filteredData.length === 0 ? (
               <tr>
-                <td colSpan={10} className="empty-message">
+                <td colSpan={(onEdit || onDelete) ? 11 : 10} className="empty-message">
                   {selectedStockCode ? `無 ${selectedStockCode} 的資產負債表資料` : '尚無資料'}
                 </td>
               </tr>
@@ -68,6 +71,28 @@ function BalanceSheetTable({ data, selectedStockCode, onRowClick }: BalanceSheet
                   <td className="ratio">{formatPercent(item.currentAssetsRatio)}</td>
                   <td className="amount">{formatNumber(item.currentLiabilities)}</td>
                   <td className="ratio">{formatPercent(item.currentLiabilitiesRatio)}</td>
+                  {(onEdit || onDelete) && (
+                    <td className="actions" onClick={(e) => e.stopPropagation()}>
+                      {onEdit && (
+                        <button 
+                          className="edit-btn" 
+                          onClick={() => onEdit(item)}
+                          title="編輯"
+                        >
+                          編輯
+                        </button>
+                      )}
+                      {onDelete && (
+                        <button 
+                          className="delete-btn" 
+                          onClick={() => onDelete(item.id)}
+                          title="刪除"
+                        >
+                          刪除
+                        </button>
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))
             )}

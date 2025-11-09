@@ -1,14 +1,40 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import IncomeStatementTable from '../components/Financial/IncomeStatementTable'
 import BalanceSheetTable from '../components/Financial/BalanceSheetTable'
 import CashFlowTable from '../components/Financial/CashFlowTable'
+import IncomeStatementForm from '../components/Financial/IncomeStatementForm'
+import BalanceSheetForm from '../components/Financial/BalanceSheetForm'
+import CashFlowForm from '../components/Financial/CashFlowForm'
 import { useStock } from '../contexts/StockContext'
-import { mockIncomeStatements, mockBalanceSheets, mockCashFlows } from '../data/mockFinancialData'
+import { financialStorageService } from '../services/financialStorageService'
+import type { IncomeStatementItem, BalanceSheetItem, CashFlowItem } from '../types/financial'
 import './FinancialReportsPage.css'
 
 function FinancialReportsPage() {
   const { selectedStockCode, setSelectedStockCode } = useStock()
   const [localSelectedStock, setLocalSelectedStock] = useState<string | undefined>(undefined)
+  
+  const [incomeStatements, setIncomeStatements] = useState<IncomeStatementItem[]>([])
+  const [balanceSheets, setBalanceSheets] = useState<BalanceSheetItem[]>([])
+  const [cashFlows, setCashFlows] = useState<CashFlowItem[]>([])
+
+  const [showIncomeForm, setShowIncomeForm] = useState(false)
+  const [showBalanceForm, setShowBalanceForm] = useState(false)
+  const [showCashFlowForm, setShowCashFlowForm] = useState(false)
+
+  const [editingIncome, setEditingIncome] = useState<IncomeStatementItem | undefined>(undefined)
+  const [editingBalance, setEditingBalance] = useState<BalanceSheetItem | undefined>(undefined)
+  const [editingCashFlow, setEditingCashFlow] = useState<CashFlowItem | undefined>(undefined)
+
+  useEffect(() => {
+    loadFinancialData()
+  }, [])
+
+  const loadFinancialData = () => {
+    setIncomeStatements(financialStorageService.getAllIncomeStatements())
+    setBalanceSheets(financialStorageService.getAllBalanceSheets())
+    setCashFlows(financialStorageService.getAllCashFlows())
+  }
 
   // 使用 StockContext 的選中股票，如果沒有則使用本地選中
   const activeStockCode = selectedStockCode || localSelectedStock
@@ -25,13 +51,85 @@ function FinancialReportsPage() {
     setSelectedStockCode(undefined)
   }
 
+  // 損益表處理
+  const handleIncomeSubmit = (income: Omit<IncomeStatementItem, 'id'>) => {
+    if (editingIncome) {
+      financialStorageService.updateIncomeStatement(editingIncome.id, income)
+    } else {
+      financialStorageService.addIncomeStatement(income)
+    }
+    loadFinancialData()
+    setShowIncomeForm(false)
+    setEditingIncome(undefined)
+  }
+
+  const handleIncomeEdit = (income: IncomeStatementItem) => {
+    setEditingIncome(income)
+    setShowIncomeForm(true)
+  }
+
+  const handleIncomeDelete = (id: string) => {
+    if (window.confirm('確定要刪除此筆損益表資料嗎？')) {
+      financialStorageService.deleteIncomeStatement(id)
+      loadFinancialData()
+    }
+  }
+
+  // 資產負債表處理
+  const handleBalanceSubmit = (balance: Omit<BalanceSheetItem, 'id'>) => {
+    if (editingBalance) {
+      financialStorageService.updateBalanceSheet(editingBalance.id, balance)
+    } else {
+      financialStorageService.addBalanceSheet(balance)
+    }
+    loadFinancialData()
+    setShowBalanceForm(false)
+    setEditingBalance(undefined)
+  }
+
+  const handleBalanceEdit = (balance: BalanceSheetItem) => {
+    setEditingBalance(balance)
+    setShowBalanceForm(true)
+  }
+
+  const handleBalanceDelete = (id: string) => {
+    if (window.confirm('確定要刪除此筆資產負債表資料嗎？')) {
+      financialStorageService.deleteBalanceSheet(id)
+      loadFinancialData()
+    }
+  }
+
+  // 現金流量表處理
+  const handleCashFlowSubmit = (cashFlow: Omit<CashFlowItem, 'id'>) => {
+    if (editingCashFlow) {
+      financialStorageService.updateCashFlow(editingCashFlow.id, cashFlow)
+    } else {
+      financialStorageService.addCashFlow(cashFlow)
+    }
+    loadFinancialData()
+    setShowCashFlowForm(false)
+    setEditingCashFlow(undefined)
+  }
+
+  const handleCashFlowEdit = (cashFlow: CashFlowItem) => {
+    setEditingCashFlow(cashFlow)
+    setShowCashFlowForm(true)
+  }
+
+  const handleCashFlowDelete = (id: string) => {
+    if (window.confirm('確定要刪除此筆現金流量表資料嗎？')) {
+      financialStorageService.deleteCashFlow(id)
+      loadFinancialData()
+    }
+  }
+
   // 取得選中股票的資訊
   const getSelectedStockInfo = () => {
     if (!activeStockCode) return null
     
-    const income = mockIncomeStatements.find(item => item.stockCode === activeStockCode)
-    const balance = mockBalanceSheets.find(item => item.stockCode === activeStockCode)
-    const cashFlow = mockCashFlows.find(item => item.stockCode === activeStockCode)
+    const income = incomeStatements.find(item => item.stockCode === activeStockCode)
+    const balance = balanceSheets.find(item => item.stockCode === activeStockCode)
+    const cashFlow = cashFlows.find(item => item.stockCode === activeStockCode)
     
     return { income, balance, cashFlow }
   }
@@ -63,23 +161,92 @@ function FinancialReportsPage() {
           </div>
         )}
 
+        <div className="financial-actions">
+          <button 
+            className="add-btn" 
+            onClick={() => {
+              setEditingIncome(undefined)
+              setShowIncomeForm(true)
+            }}
+          >
+            + 新增損益表
+          </button>
+          <button 
+            className="add-btn" 
+            onClick={() => {
+              setEditingBalance(undefined)
+              setShowBalanceForm(true)
+            }}
+          >
+            + 新增資產負債表
+          </button>
+          <button 
+            className="add-btn" 
+            onClick={() => {
+              setEditingCashFlow(undefined)
+              setShowCashFlowForm(true)
+            }}
+          >
+            + 新增現金流量表
+          </button>
+        </div>
+
+        {showIncomeForm && (
+          <IncomeStatementForm
+            onSubmit={handleIncomeSubmit}
+            initialData={editingIncome}
+            onCancel={() => {
+              setShowIncomeForm(false)
+              setEditingIncome(undefined)
+            }}
+          />
+        )}
+
+        {showBalanceForm && (
+          <BalanceSheetForm
+            onSubmit={handleBalanceSubmit}
+            initialData={editingBalance}
+            onCancel={() => {
+              setShowBalanceForm(false)
+              setEditingBalance(undefined)
+            }}
+          />
+        )}
+
+        {showCashFlowForm && (
+          <CashFlowForm
+            onSubmit={handleCashFlowSubmit}
+            initialData={editingCashFlow}
+            onCancel={() => {
+              setShowCashFlowForm(false)
+              setEditingCashFlow(undefined)
+            }}
+          />
+        )}
+
         <div className="reports-tables">
           <IncomeStatementTable
-            data={mockIncomeStatements}
+            data={incomeStatements}
             selectedStockCode={activeStockCode}
             onRowClick={handleTableClick}
+            onEdit={handleIncomeEdit}
+            onDelete={handleIncomeDelete}
           />
 
           <BalanceSheetTable
-            data={mockBalanceSheets}
+            data={balanceSheets}
             selectedStockCode={activeStockCode}
             onRowClick={handleTableClick}
+            onEdit={handleBalanceEdit}
+            onDelete={handleBalanceDelete}
           />
 
           <CashFlowTable
-            data={mockCashFlows}
+            data={cashFlows}
             selectedStockCode={activeStockCode}
             onRowClick={handleTableClick}
+            onEdit={handleCashFlowEdit}
+            onDelete={handleCashFlowDelete}
           />
         </div>
 
@@ -154,6 +321,7 @@ function FinancialReportsPage() {
             <p className="info-note">
               💡 點擊任一表格的股票代號，三個表格會同步篩選顯示該股票的財務資料。
               在 Function 2 的 Table 3 選中股票後，此頁面會自動顯示該股票的財務報表。
+              所有資料由使用者自行輸入並儲存於本地資料庫。
             </p>
           </div>
         </div>

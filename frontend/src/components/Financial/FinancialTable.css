@@ -113,6 +113,39 @@
   font-size: 0.75rem;
 }
 
+.financial-table .actions {
+  white-space: nowrap;
+}
+
+.financial-table .edit-btn,
+.financial-table .delete-btn {
+  padding: 0.25rem 0.75rem;
+  margin: 0 0.25rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.financial-table .edit-btn {
+  background-color: #646cff;
+  color: white;
+}
+
+.financial-table .edit-btn:hover {
+  background-color: #535bf2;
+}
+
+.financial-table .delete-btn {
+  background-color: #f44336;
+  color: white;
+}
+
+.financial-table .delete-btn:hover {
+  background-color: #d32f2f;
+}
+
 @media (max-width: 768px) {
   .financial-table {
     font-size: 0.8rem;
