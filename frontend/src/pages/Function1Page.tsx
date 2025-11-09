@@ -4,7 +4,7 @@ import DailyTradeTable from '../components/Function1/DailyTradeTable'
 import StockChart from '../components/Function1/StockChart'
 import { useStock } from '../contexts/StockContext'
 import { mockTradeDetails, mockDailyTrades } from '../data/mockData'
-import { getIntradayData, getDailyTradeData, testBackendConnection } from '../services/stockApi'
+import { getIntradayData, getDailyTradeData, getMarketIndexData, testBackendConnection } from '../services/stockApi'
 import type { TradeDetail, DailyTrade } from '../types/stock'
 import './Function1Page.css'
 
@@ -12,6 +12,7 @@ function Function1Page() {
   const { selectedStockCode, setSelectedStockCode } = useStock()
   const [tradeDetails, setTradeDetails] = useState<TradeDetail[]>([])
   const [dailyTrades, setDailyTrades] = useState<DailyTrade[]>([])
+  const [marketIndexData, setMarketIndexData] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [useRealData, setUseRealData] = useState(true)
@@ -98,6 +99,15 @@ function Function1Page() {
 
       setTradeDetails(allTradeDetails)
       setDailyTrades(allDailyTrades)
+
+      // 載入大盤指數數據
+      try {
+        const marketResponse = await getMarketIndexData('^TWII', 5)
+        setMarketIndexData(marketResponse.data)
+      } catch (err) {
+        console.error('Error loading market index data:', err)
+        // 大盤數據載入失敗不影響其他功能
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : '載入數據時發生錯誤')
       console.error('Error loading stock data:', err)
@@ -202,8 +212,7 @@ function Function1Page() {
         <div className="function1-content">
           <div className="visualization-section">
             <StockChart 
-              data={dailyTrades} 
-              selectedStockCode={selectedStockCode}
+              marketIndexData={marketIndexData}
             />
           </div>
 

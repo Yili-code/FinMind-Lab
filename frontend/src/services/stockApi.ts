@@ -164,3 +164,41 @@ export async function testBackendConnection(): Promise<boolean> {
   }
 }
 
+// 獲取大盤指數數據
+export interface MarketIndexResponse {
+  indexCode: string
+  data: Array<{
+    date: string
+    indexName: string
+    closePrice: number
+    openPrice: number
+    highPrice: number
+    lowPrice: number
+    change: number
+    changePercent: number
+    volume: number
+  }>
+  count: number
+}
+
+export async function getMarketIndexData(
+  indexCode: string = '^TWII',
+  days: number = 5
+): Promise<MarketIndexResponse> {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/stock/market-index?index_code=${indexCode}&days=${days}`
+    )
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`無法獲取大盤指數數據: ${errorText}`)
+    }
+    return response.json()
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('無法連接到後端服務器，請確認後端是否正在運行 (http://localhost:8000)')
+    }
+    throw error
+  }
+}
+

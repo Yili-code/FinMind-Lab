@@ -67,8 +67,8 @@ function TradeDetailTable({ data, selectedStockCode, onRowClick }: TradeDetailTa
               <th onClick={() => handleSort('stockCode')}>
                 代號 {sortConfig?.key === 'stockCode' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
               </th>
-              <th onClick={() => handleSort('date')}>
-                日期 {sortConfig?.key === 'date' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              <th onClick={() => handleSort('time')}>
+                時間 {sortConfig?.key === 'time' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
               </th>
               <th onClick={() => handleSort('price')}>
                 成交價 {sortConfig?.key === 'price' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
@@ -107,7 +107,15 @@ function TradeDetailTable({ data, selectedStockCode, onRowClick }: TradeDetailTa
                 onClick={() => onRowClick?.(item.stockCode)}
               >
                 <td className="stock-code">{item.stockCode}</td>
-                <td>{item.date}</td>
+                <td className="time-cell">
+                  {item.time ? (
+                    item.time.includes(':') && item.time.split(':').length >= 3 
+                      ? item.time 
+                      : `${item.date} ${item.time}`
+                  ) : (
+                    item.date
+                  )}
+                </td>
                 <td className="price">{item.price.toFixed(2)}</td>
                 <td className="change">{formatChange(item.change, item.changePercent)}</td>
                 <td className="lots">{item.lots.toFixed(1)}</td>

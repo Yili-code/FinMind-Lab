@@ -101,6 +101,53 @@ def get_intraday_data(stock_code: str, period: str = "1d", interval: str = "1m")
         logger.error(f"Error fetching intraday data for {stock_code}: {str(e)}")
         return []
 
+def get_market_index_data(index_code: str = "^TWII", days: int = 5) -> List[Dict]:
+    """獲取大盤指數數據（加權指數）"""
+    try:
+        stock = yf.Ticker(index_code)
+        
+        # 獲取歷史數據
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days)
+        
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            hist = stock.history(start=start_date, end=end_date, timeout=10)
+        
+        if hist.empty:
+            return []
+        
+        # 獲取指數資訊
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            info = stock.info
+        
+        index_name = info.get('longName', info.get('shortName', '加權指數')) if info else '加權指數'
+        
+        # 轉換為列表格式
+        index_data = []
+        for idx, row in hist.iterrows():
+            prev_close = hist.iloc[hist.index.get_loc(idx) - 1]['Close'] if hist.index.get_loc(idx) > 0 else row['Open']
+            change = row['Close'] - prev_close
+            change_percent = (change / prev_close * 100) if prev_close > 0 else 0
+            
+            index_data.append({
+                'date': idx.strftime('%Y-%m-%d'),
+                'indexName': index_name,
+                'closePrice': float(row['Close']),
+                'openPrice': float(row['Open']),
+                'highPrice': float(row['High']),
+                'lowPrice': float(row['Low']),
+                'change': round(change, 2),
+                'changePercent': round(change_percent, 2),
+                'volume': int(row['Volume']),
+            })
+        
+        return index_data
+    except Exception as e:
+        logger.error(f"Error fetching market index data: {str(e)}")
+        return []
+
 def get_daily_trade_data(stock_code: str, days: int = 5) -> List[Dict]:
     """獲取日交易檔數據"""
     try:

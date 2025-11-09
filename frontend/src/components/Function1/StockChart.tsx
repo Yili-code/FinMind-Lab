@@ -1,47 +1,64 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
-import type { DailyTrade } from '../../types/stock'
 import './StockChart.css'
 
-interface StockChartProps {
-  data: DailyTrade[]
-  selectedStockCode?: string
+interface MarketIndexData {
+  date: string
+  indexName: string
+  closePrice: number
+  openPrice: number
+  highPrice: number
+  lowPrice: number
+  change: number
+  changePercent: number
+  volume: number
 }
 
-function StockChart({ data, selectedStockCode }: StockChartProps) {
-  const chartData = selectedStockCode
-    ? data.filter(item => item.stockCode === selectedStockCode)
-    : data
+interface StockChartProps {
+  marketIndexData?: MarketIndexData[]
+}
 
-  const formatChartData = chartData.map(item => ({
-    name: item.stockName,
+function StockChart({ marketIndexData = [] }: StockChartProps) {
+  const formatChartData = marketIndexData.map(item => ({
     date: item.date,
     開盤: item.openPrice,
     最高: item.highPrice,
     最低: item.lowPrice,
     收盤: item.closePrice,
-    成交量: item.totalVolume / 10000, // 轉換為萬股
+    成交量: item.volume / 100000000, // 轉換為億
   }))
+
+  if (formatChartData.length === 0) {
+    return (
+      <div className="stock-chart-container">
+        <h3>大盤走勢圖</h3>
+        <div className="chart-loading">載入大盤數據中...</div>
+      </div>
+    )
+  }
 
   return (
     <div className="stock-chart-container">
-      <h3>價格走勢圖</h3>
-      {selectedStockCode && (
+      <h3>大盤走勢圖</h3>
+      {marketIndexData.length > 0 && (
         <div className="chart-filter-info">
-          顯示: {chartData[0]?.stockName} ({selectedStockCode})
+          顯示: {marketIndexData[0]?.indexName || '加權指數'} ({formatChartData.length} 天)
         </div>
       )}
       <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={formatChartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+        <LineChart data={formatChartData} margin={{ top: 5, right: 30, left: 20, bottom: 60 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
           <XAxis 
-            dataKey="name" 
-            stroke="#888"
-            tick={{ fill: '#888' }}
+            dataKey="date" 
+            stroke="var(--text-secondary)"
+            tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
+            angle={-45}
+            textAnchor="end"
+            height={60}
           />
           <YAxis 
-            stroke="#888"
-            tick={{ fill: '#888' }}
-            label={{ value: '價格', angle: -90, position: 'insideLeft', fill: '#888' }}
+            stroke="var(--text-secondary)"
+            tick={{ fill: 'var(--text-secondary)' }}
+            label={{ value: '指數', angle: -90, position: 'insideLeft', fill: 'var(--text-secondary)' }}
           />
           <Tooltip 
             contentStyle={{ 
@@ -57,30 +74,34 @@ function StockChart({ data, selectedStockCode }: StockChartProps) {
           <Line 
             type="monotone" 
             dataKey="開盤" 
-            stroke="#2196f3" 
+            stroke="var(--info)" 
             strokeWidth={2}
-            dot={{ r: 4 }}
+            dot={{ r: 3 }}
+            name="開盤"
           />
           <Line 
             type="monotone" 
             dataKey="最高" 
-            stroke="#f44336" 
+            stroke="var(--error)" 
             strokeWidth={2}
-            dot={{ r: 4 }}
+            dot={{ r: 3 }}
+            name="最高"
           />
           <Line 
             type="monotone" 
             dataKey="最低" 
-            stroke="#4caf50" 
+            stroke="var(--success)" 
             strokeWidth={2}
-            dot={{ r: 4 }}
+            dot={{ r: 3 }}
+            name="最低"
           />
           <Line 
             type="monotone" 
             dataKey="收盤" 
-            stroke="#ff9800" 
+            stroke="var(--warning)" 
             strokeWidth={2}
-            dot={{ r: 4 }}
+            dot={{ r: 3 }}
+            name="收盤"
           />
         </LineChart>
       </ResponsiveContainer>

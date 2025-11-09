@@ -11,17 +11,19 @@ import logging
 from typing import Optional, List
 try:
     # 從 backend 目錄運行時
-    from services.yfinance_service import (
-        get_stock_info,
-        get_intraday_data,
-        get_daily_trade_data
-    )
-except ImportError:
+from services.yfinance_service import (
+    get_stock_info,
+    get_intraday_data,
+    get_daily_trade_data,
+    get_market_index_data
+)
+    except ImportError:
     # 從項目根目錄運行時
     from backend.services.yfinance_service import (
         get_stock_info,
         get_intraday_data,
-        get_daily_trade_data
+        get_daily_trade_data,
+        get_market_index_data
     )
 
 # 抑制不必要的警告
@@ -158,3 +160,19 @@ async def get_multiple_stocks(
 		}
 	except Exception as e:
 		raise HTTPException(status_code=500, detail=f"批量獲取股票資訊時發生錯誤: {str(e)}")
+
+@app.get("/api/stock/market-index")
+async def get_market_index(
+	index_code: str = Query("^TWII", description="指數代號，預設為 ^TWII (加權指數)"),
+	days: int = Query(5, description="獲取最近幾天的數據", ge=1, le=30)
+):
+	"""獲取大盤指數數據"""
+	try:
+		data = get_market_index_data(index_code, days=days)
+		return {
+			"indexCode": index_code,
+			"data": data,
+			"count": len(data)
+		}
+	except Exception as e:
+		raise HTTPException(status_code=500, detail=f"獲取大盤指數數據時發生錯誤: {str(e)}")
