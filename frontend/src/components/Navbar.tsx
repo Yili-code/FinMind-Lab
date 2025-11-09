@@ -11,12 +11,17 @@ function Navbar() {
         <ul className="navbar-menu">
           <li className="navbar-item">
             <Link to="/function1" className="navbar-link">
-              Function 1
+              Data Integration
             </Link>
           </li>
           <li className="navbar-item">
             <Link to="/function2" className="navbar-link">
-              Function 2
+              Response Dashboard
+            </Link>
+          </li>
+          <li className="navbar-item">
+            <Link to="/financial-reports" className="navbar-link">
+              財務報表
             </Link>
           </li>
         </ul>
