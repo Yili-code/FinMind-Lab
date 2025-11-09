@@ -9,11 +9,20 @@ import os
 import warnings
 import logging
 from typing import Optional, List
-from services.yfinance_service import (
-    get_stock_info,
-    get_intraday_data,
-    get_daily_trade_data
-)
+try:
+    # 從 backend 目錄運行時
+    from services.yfinance_service import (
+        get_stock_info,
+        get_intraday_data,
+        get_daily_trade_data
+    )
+except ImportError:
+    # 從項目根目錄運行時
+    from backend.services.yfinance_service import (
+        get_stock_info,
+        get_intraday_data,
+        get_daily_trade_data
+    )
 
 # 抑制不必要的警告
 warnings.filterwarnings('ignore')

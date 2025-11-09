@@ -2,10 +2,18 @@
 
 ## 啟動後端服務
 
+### 方法 1: 從 backend 目錄運行（推薦）
 ```bash
 cd backend
 python -m uvicorn main:app --reload --port 8000
 ```
+
+### 方法 2: 從項目根目錄運行
+```bash
+python -m uvicorn backend.main:app --reload --port 8000
+```
+
+**注意：** 推薦使用方法 1，從 `backend` 目錄運行，這樣可以避免模組導入問題。
 
 服務啟動後，您應該看到：
 ```
