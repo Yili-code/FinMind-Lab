@@ -1,0 +1,110 @@
+.trade-detail-table-container {
+  margin-bottom: 2rem;
+}
+
+.trade-detail-table-container h3 {
+  margin-bottom: 1rem;
+  color: rgba(255, 255, 255, 0.87);
+  font-size: 1.25rem;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  background-color: #1a1a1a;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.trade-detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.trade-detail-table thead {
+  background-color: #242424;
+}
+
+.trade-detail-table th {
+  padding: 0.75rem;
+  text-align: left;
+  color: rgba(255, 255, 255, 0.87);
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 2px solid #333;
+  white-space: nowrap;
+}
+
+.trade-detail-table th:hover {
+  background-color: #2a2a2a;
+}
+
+.trade-detail-table td {
+  padding: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  border-bottom: 1px solid #333;
+}
+
+.trade-detail-table tbody tr {
+  transition: background-color 0.2s;
+}
+
+.trade-detail-table tbody tr:hover {
+  background-color: #2a2a2a;
+  cursor: pointer;
+}
+
+.trade-detail-table tbody tr.selected {
+  background-color: rgba(100, 108, 255, 0.2);
+}
+
+.trade-detail-table .price {
+  color: #4caf50;
+  font-weight: 500;
+}
+
+.trade-detail-table .volume,
+.trade-detail-table .amount {
+  text-align: right;
+  font-family: 'Courier New', monospace;
+}
+
+.trade-detail-table .buy {
+  color: #f44336;
+  font-weight: 500;
+}
+
+.trade-detail-table .sell {
+  color: #4caf50;
+  font-weight: 500;
+}
+
+.table-info {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.filter-badge {
+  background-color: #646cff;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+}
+
+@media (max-width: 768px) {
+  .trade-detail-table {
+    font-size: 0.8rem;
+  }
+
+  .trade-detail-table th,
+  .trade-detail-table td {
+    padding: 0.5rem;
+  }
+}
+

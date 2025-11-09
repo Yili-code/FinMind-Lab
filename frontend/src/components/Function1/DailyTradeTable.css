@@ -1,0 +1,122 @@
+.daily-trade-table-container {
+  margin-bottom: 2rem;
+}
+
+.daily-trade-table-container h3 {
+  margin-bottom: 1rem;
+  color: rgba(255, 255, 255, 0.87);
+  font-size: 1.25rem;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  background-color: #1a1a1a;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.daily-trade-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.daily-trade-table thead {
+  background-color: #242424;
+}
+
+.daily-trade-table th {
+  padding: 0.75rem;
+  text-align: left;
+  color: rgba(255, 255, 255, 0.87);
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 2px solid #333;
+  white-space: nowrap;
+}
+
+.daily-trade-table th:hover {
+  background-color: #2a2a2a;
+}
+
+.daily-trade-table td {
+  padding: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  border-bottom: 1px solid #333;
+}
+
+.daily-trade-table tbody tr {
+  transition: background-color 0.2s;
+}
+
+.daily-trade-table tbody tr:hover {
+  background-color: #2a2a2a;
+  cursor: pointer;
+}
+
+.daily-trade-table tbody tr.selected {
+  background-color: rgba(100, 108, 255, 0.2);
+}
+
+.daily-trade-table .price {
+  color: #4caf50;
+  font-weight: 500;
+}
+
+.daily-trade-table .price.high {
+  color: #f44336;
+}
+
+.daily-trade-table .price.low {
+  color: #2196f3;
+}
+
+.daily-trade-table .price.close {
+  color: #ff9800;
+}
+
+.daily-trade-table .volume,
+.daily-trade-table .amount {
+  text-align: right;
+  font-family: 'Courier New', monospace;
+}
+
+.daily-trade-table .change .positive {
+  color: #f44336;
+  font-weight: 500;
+}
+
+.daily-trade-table .change .negative {
+  color: #4caf50;
+  font-weight: 500;
+}
+
+.table-info {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.filter-badge {
+  background-color: #646cff;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+}
+
+@media (max-width: 768px) {
+  .daily-trade-table {
+    font-size: 0.8rem;
+  }
+
+  .daily-trade-table th,
+  .daily-trade-table td {
+    padding: 0.5rem;
+  }
+}
+

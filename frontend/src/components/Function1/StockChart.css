@@ -1,0 +1,22 @@
+.stock-chart-container {
+  background-color: #1a1a1a;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stock-chart-container h3 {
+  margin-bottom: 1rem;
+  color: rgba(255, 255, 255, 0.87);
+  font-size: 1.25rem;
+}
+
+.chart-filter-info {
+  margin-bottom: 1rem;
+  padding: 0.5rem 1rem;
+  background-color: rgba(100, 108, 255, 0.2);
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.87);
+  font-size: 0.9rem;
+}
+
