@@ -21,24 +21,40 @@ function StockChart({ marketIndexData = [] }: StockChartProps) {
   // 格式化數據：準備K線圖數據
   const formatChartData = marketIndexData.map((item) => {
     // 提取日期（例如：2025-11-10 -> 11/10）
-    const dateObj = new Date(item.date)
-    const month = (dateObj.getMonth() + 1).toString().padStart(2, '0')
-    const day = dateObj.getDate().toString().padStart(2, '0')
-    const dateLabel = `${month}/${day}`
+    let dateLabel = item.date
+    try {
+      const dateObj = new Date(item.date)
+      if (!isNaN(dateObj.getTime())) {
+        const month = (dateObj.getMonth() + 1).toString().padStart(2, '0')
+        const day = dateObj.getDate().toString().padStart(2, '0')
+        dateLabel = `${month}/${day}`
+      }
+    } catch (e) {
+      // 如果日期解析失敗，使用原始日期
+      dateLabel = item.date
+    }
     
     return {
       date: dateLabel,
-      open: item.openPrice,
-      high: item.highPrice,
-      low: item.lowPrice,
-      close: item.closePrice,
-      成交量: item.volume,
-      isUp: item.closePrice >= item.openPrice,
+      open: item.openPrice || 0,
+      high: item.highPrice || 0,
+      low: item.lowPrice || 0,
+      close: item.closePrice || 0,
+      成交量: item.volume || 0,
+      isUp: (item.closePrice || 0) >= (item.openPrice || 0),
     }
   })
   
   // 計算 Y 軸範圍（用於K線圖）
-  const allPrices = formatChartData.flatMap(d => [d.high, d.low])
+  const allPrices = formatChartData.flatMap(d => [d.high, d.low]).filter(p => p > 0)
+  if (allPrices.length === 0) {
+    return (
+      <div className="stock-chart-container">
+        <h3>大盤走勢圖（日K線）</h3>
+        <div className="chart-loading">無大盤數據可顯示</div>
+      </div>
+    )
+  }
   const minPrice = Math.min(...allPrices)
   const maxPrice = Math.max(...allPrices)
   const priceRange = maxPrice - minPrice

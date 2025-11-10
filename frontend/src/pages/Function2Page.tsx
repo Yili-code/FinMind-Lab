@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import StockBasicForm from '../components/Function2/StockBasicForm'
 import StockBasicTable from '../components/Function2/StockBasicTable'
 import { storageService } from '../services/storageService'
-import { useStock } from '../contexts/StockContext'
 import type { StockBasic } from '../types/stock'
 import './Function2Page.css'
 
@@ -10,7 +9,7 @@ function Function2Page() {
   const [stocks, setStocks] = useState<StockBasic[]>([])
   const [editingStock, setEditingStock] = useState<StockBasic | undefined>(undefined)
   const [showForm, setShowForm] = useState(false)
-  const { selectedStockCode, setSelectedStockCode } = useStock()
+  const [selectedStockCode, setSelectedStockCode] = useState<string | undefined>(undefined)
 
   useEffect(() => {
     loadStocks()
@@ -71,7 +70,7 @@ function Function2Page() {
         <div className="function2-header">
           <h1>Response Dashboard</h1>
           <p className="function2-description">
-            股票基本檔管理與財務報表查詢 - 管理股票基本資訊並與 Function 1 連動
+            股票基本檔管理與財務報表查詢 - 管理股票基本資訊
           </p>
         </div>
 
@@ -117,9 +116,9 @@ function Function2Page() {
             <p className="info-note">未來將整合實際的 SQLite 資料庫</p>
           </div>
           <div className="info-card">
-            <h4>與 Function 1 連動</h4>
-            <p>點擊 Table 3 的股票會同步選中 Function 1 的 Table 1 和 Table 2</p>
-            <p className="info-note">可在 Function 1 頁面查看該股票的詳細交易資料</p>
+            <h4>股票篩選</h4>
+            <p>點擊表格中的股票可以篩選顯示該股票的資料</p>
+            <p className="info-note">點擊「清除選中」按鈕可取消篩選</p>
           </div>
           <div className="info-card">
             <h4>財務報表</h4>

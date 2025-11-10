@@ -14,17 +14,17 @@ def test_hello():
     try:
         response = requests.get(f"{BASE_URL}/api/hello", timeout=5)
         if response.status_code == 200:
-            print(f"✓ 成功: {response.json()}")
+            print(f"[OK] 成功: {response.json()}")
             return True
         else:
-            print(f"✗ 失敗: {response.status_code}")
+            print(f"[X] 失敗: {response.status_code}")
             return False
     except requests.exceptions.ConnectionError:
-        print("✗ 無法連接到後端服務器，請確認後端是否正在運行")
+        print("[X] 無法連接到後端服務器，請確認後端是否正在運行")
         print("  運行命令: cd backend && python -m uvicorn main:app --reload --port 8000")
         return False
     except Exception as e:
-        print(f"✗ 錯誤: {str(e)}")
+        print(f"[X] 錯誤: {str(e)}")
         return False
 
 def test_stock_info(stock_code: str):
@@ -34,15 +34,15 @@ def test_stock_info(stock_code: str):
         response = requests.get(f"{BASE_URL}/api/stock/info/{stock_code}", timeout=10)
         if response.status_code == 200:
             data = response.json()
-            print(f"✓ 成功獲取 {stock_code} 的資訊")
+            print(f"[OK] 成功獲取 {stock_code} 的資訊")
             print(f"  股票名稱: {data.get('stockName', 'N/A')}")
             print(f"  當前價格: {data.get('currentPrice', 'N/A')}")
             return True
         else:
-            print(f"✗ 失敗: {response.status_code} - {response.text}")
+            print(f"[X] 失敗: {response.status_code} - {response.text}")
             return False
     except Exception as e:
-        print(f"✗ 錯誤: {str(e)}")
+        print(f"[X] 錯誤: {str(e)}")
         return False
 
 def test_intraday_data(stock_code: str):
@@ -56,16 +56,16 @@ def test_intraday_data(stock_code: str):
         if response.status_code == 200:
             data = response.json()
             count = data.get('count', 0)
-            print(f"✓ 成功獲取 {count} 筆盤中數據")
+            print(f"[OK] 成功獲取 {count} 筆盤中數據")
             if count > 0:
                 first = data.get('data', [])[0]
                 print(f"  第一筆: {first.get('date')} {first.get('time')} - 價格: {first.get('price')}")
             return True
         else:
-            print(f"✗ 失敗: {response.status_code} - {response.text}")
+            print(f"[X] 失敗: {response.status_code} - {response.text}")
             return False
     except Exception as e:
-        print(f"✗ 錯誤: {str(e)}")
+        print(f"[X] 錯誤: {str(e)}")
         return False
 
 def test_daily_trade_data(stock_code: str):
@@ -79,16 +79,16 @@ def test_daily_trade_data(stock_code: str):
         if response.status_code == 200:
             data = response.json()
             count = data.get('count', 0)
-            print(f"✓ 成功獲取 {count} 筆日交易數據")
+            print(f"[OK] 成功獲取 {count} 筆日交易數據")
             if count > 0:
                 first = data.get('data', [])[0]
                 print(f"  第一筆: {first.get('date')} - 收盤價: {first.get('closePrice')}")
             return True
         else:
-            print(f"✗ 失敗: {response.status_code} - {response.text}")
+            print(f"[X] 失敗: {response.status_code} - {response.text}")
             return False
     except Exception as e:
-        print(f"✗ 錯誤: {str(e)}")
+        print(f"[X] 錯誤: {str(e)}")
         return False
 
 def test_market_index():
@@ -102,16 +102,16 @@ def test_market_index():
         if response.status_code == 200:
             data = response.json()
             count = data.get('count', 0)
-            print(f"✓ 成功獲取 {count} 筆大盤指數數據")
+            print(f"[OK] 成功獲取 {count} 筆大盤指數數據")
             if count > 0:
                 first = data.get('data', [])[0]
                 print(f"  第一筆: {first.get('date')} - 指數: {first.get('closePrice')}")
             return True
         else:
-            print(f"✗ 失敗: {response.status_code} - {response.text}")
+            print(f"[X] 失敗: {response.status_code} - {response.text}")
             return False
     except Exception as e:
-        print(f"✗ 錯誤: {str(e)}")
+        print(f"[X] 錯誤: {str(e)}")
         return False
 
 def test_batch_stocks():
@@ -125,13 +125,13 @@ def test_batch_stocks():
         if response.status_code == 200:
             data = response.json()
             count = data.get('count', 0)
-            print(f"✓ 成功獲取 {count} 個股票的資訊")
+            print(f"[OK] 成功獲取 {count} 個股票的資訊")
             return True
         else:
-            print(f"✗ 失敗: {response.status_code} - {response.text}")
+            print(f"[X] 失敗: {response.status_code} - {response.text}")
             return False
     except Exception as e:
-        print(f"✗ 錯誤: {str(e)}")
+        print(f"[X] 錯誤: {str(e)}")
         return False
 
 def main():
@@ -142,7 +142,7 @@ def main():
     
     # 先測試連接
     if not test_hello():
-        print("\n⚠ 後端服務器未運行，請先啟動後端服務")
+        print("\n[警告] 後端服務器未運行，請先啟動後端服務")
         return
     
     # 測試各個端點
@@ -161,7 +161,7 @@ def main():
     passed = sum(1 for _, result in results if result)
     total = len(results)
     for name, result in results:
-        status = "✓ 通過" if result else "✗ 失敗"
+        status = "[OK] 通過" if result else "[X] 失敗"
         print(f"{status}: {name}")
     
     print(f"\n總計: {passed}/{total} 測試通過")

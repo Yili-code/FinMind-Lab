@@ -24,15 +24,15 @@ def test_stock_info():
         try:
             info = get_stock_info(code)
             if info:
-                print(f"✓ 成功獲取 {code} 的資訊")
+                print(f"[OK] 成功獲取 {code} 的資訊")
                 print(f"  股票名稱: {info.get('stockName', 'N/A')}")
                 print(f"  當前價格: {info.get('currentPrice', 'N/A')}")
                 print(f"  前收盤價: {info.get('previousClose', 'N/A')}")
                 print(f"  成交量: {info.get('volume', 'N/A')}")
             else:
-                print(f"✗ 無法獲取 {code} 的資訊（返回 None）")
+                print(f"[X] 無法獲取 {code} 的資訊（返回 None）")
         except Exception as e:
-            print(f"✗ 錯誤: {str(e)}")
+            print(f"[X] 錯誤: {str(e)}")
 
 def test_intraday_data():
     """測試獲取盤中即時數據"""
@@ -51,14 +51,14 @@ def test_intraday_data():
                 try:
                     data = get_intraday_data(code, period=period, interval=interval)
                     if data:
-                        print(f"✓ 成功獲取 {len(data)} 筆數據")
+                        print(f"[OK] 成功獲取 {len(data)} 筆數據")
                         if len(data) > 0:
                             print(f"  第一筆數據: {data[0]}")
                             print(f"  最後一筆數據: {data[-1]}")
                     else:
-                        print(f"⚠ 返回空數據（可能是市場休市或數據不可用）")
+                        print(f"[警告] 返回空數據（可能是市場休市或數據不可用）")
                 except Exception as e:
-                    print(f"✗ 錯誤: {str(e)}")
+                    print(f"[X] 錯誤: {str(e)}")
 
 def test_daily_trade_data():
     """測試獲取日交易檔數據"""
@@ -75,7 +75,7 @@ def test_daily_trade_data():
             try:
                 data = get_daily_trade_data(code, days=days)
                 if data:
-                    print(f"✓ 成功獲取 {len(data)} 筆數據")
+                    print(f"[OK] 成功獲取 {len(data)} 筆數據")
                     if len(data) > 0:
                         first = data[0]
                         print(f"  第一筆數據:")
@@ -84,9 +84,9 @@ def test_daily_trade_data():
                         print(f"    漲跌: {first.get('change')}")
                         print(f"    成交量: {first.get('totalVolume')}")
                 else:
-                    print(f"⚠ 返回空數據")
+                    print(f"[警告] 返回空數據")
             except Exception as e:
-                print(f"✗ 錯誤: {str(e)}")
+                print(f"[X] 錯誤: {str(e)}")
 
 def test_market_index_data():
     """測試獲取大盤指數數據"""
@@ -103,7 +103,7 @@ def test_market_index_data():
             try:
                 data = get_market_index_data(index_code, days=days)
                 if data:
-                    print(f"✓ 成功獲取 {len(data)} 筆數據")
+                    print(f"[OK] 成功獲取 {len(data)} 筆數據")
                     if len(data) > 0:
                         first = data[0]
                         print(f"  第一筆數據:")
@@ -112,9 +112,9 @@ def test_market_index_data():
                         print(f"    收盤價: {first.get('closePrice')}")
                         print(f"    漲跌: {first.get('change')}")
                 else:
-                    print(f"⚠ 返回空數據")
+                    print(f"[警告] 返回空數據")
             except Exception as e:
-                print(f"✗ 錯誤: {str(e)}")
+                print(f"[X] 錯誤: {str(e)}")
 
 def test_error_handling():
     """測試錯誤處理"""
@@ -129,11 +129,11 @@ def test_error_handling():
         try:
             info = get_stock_info(code)
             if info is None:
-                print(f"✓ 正確處理無效代號（返回 None）")
+                print(f"[OK] 正確處理無效代號（返回 None）")
             else:
-                print(f"⚠ 返回了數據（可能代號有效）")
+                print(f"[警告] 返回了數據（可能代號有效）")
         except Exception as e:
-            print(f"✓ 正確捕獲錯誤: {str(e)}")
+            print(f"[OK] 正確捕獲錯誤: {str(e)}")
 
 def main():
     """執行所有測試"""

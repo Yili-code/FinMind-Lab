@@ -28,9 +28,9 @@ missing_modules = []
 for module in required_modules:
     try:
         __import__(module)
-        print(f"   {module}  ✓")
+        print(f"   {module}  [OK]")
     except ImportError:
-        print(f"   ✗ {module}")
+        print(f"   [X] {module}")
         missing_modules.append(module)
 
 if missing_modules:
@@ -46,9 +46,9 @@ try:
         get_daily_trade_data,
         get_market_index_data
     )
-    print("   services.yfinance_service  ✓")
+    print("   services.yfinance_service  [OK]")
 except ImportError as e:
-    print(f"   services.yfinance_service  ✗: {e}")
+    print(f"   services.yfinance_service  [X]: {e}")
     try:
         from backend.services.yfinance_service import (
             get_stock_info,
@@ -56,18 +56,18 @@ except ImportError as e:
             get_daily_trade_data,
             get_market_index_data
         )
-        print("   backend.services.yfinance_service  ✓")
+        print("   backend.services.yfinance_service  [OK]")
     except ImportError as e2:
-        print(f"   backend.services.yfinance_service  ✗: {e2}")
+        print(f"   backend.services.yfinance_service  [X]: {e2}")
 
 # 5. 檢查 main.py 導入
 print("\n5. 檢查 main.py 導入...")
 try:
     import main
-    print("   main.py  ✓")
+    print("   main.py  [OK]")
     print(f"   FastAPI app: {main.app}")
 except Exception as e:
-    print(f"   main.py  ✗: {e}")
+    print(f"   main.py  [X]: {e}")
     import traceback
     traceback.print_exc()
 
@@ -79,10 +79,10 @@ result = sock.connect_ex(('127.0.0.1', 8000))
 sock.close()
 
 if result == 0:
-    print("   ⚠ 端口 8000 已被占用")
+    print("   [警告] 端口 8000 已被占用")
     print("   請關閉占用該端口的程序，或使用其他端口")
 else:
-    print("   端口 8000  ✓")
+    print("   端口 8000  [OK]")
 
 # 7. 檢查文件結構
 print("\n7. 檢查文件結構...")
@@ -94,9 +94,9 @@ required_files = [
 
 for file in required_files:
     if os.path.exists(file):
-        print(f"   {file}  ✓")
+        print(f"   {file}  [OK]")
     else:
-        print(f"   {file}  ✗")
+        print(f"   {file}  [X]")
 
 print("\n" + "=" * 5)
 print("DONE!")

@@ -86,7 +86,7 @@ function BalanceSheetForm({ onSubmit, initialData, onCancel }: BalanceSheetFormP
 
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="totalAssets">總資產 *</label>
+            <label htmlFor="totalAssets">總資產（萬元） *</label>
             <input
               type="number"
               id="totalAssets"
@@ -96,6 +96,7 @@ function BalanceSheetForm({ onSubmit, initialData, onCancel }: BalanceSheetFormP
               required
               min="0"
               step="0.01"
+              placeholder="例如: 1000000"
             />
           </div>
           <div className="form-group">
@@ -107,10 +108,11 @@ function BalanceSheetForm({ onSubmit, initialData, onCancel }: BalanceSheetFormP
               value={formData.totalAssetsRatio}
               onChange={handleChange}
               step="0.01"
+              placeholder="例如: 50.5"
             />
           </div>
           <div className="form-group">
-            <label htmlFor="shareholdersEquity">股東權益 *</label>
+            <label htmlFor="shareholdersEquity">股東權益（萬元） *</label>
             <input
               type="number"
               id="shareholdersEquity"
@@ -119,6 +121,7 @@ function BalanceSheetForm({ onSubmit, initialData, onCancel }: BalanceSheetFormP
               onChange={handleChange}
               required
               step="0.01"
+              placeholder="例如: 500000"
             />
           </div>
         </div>
@@ -133,10 +136,11 @@ function BalanceSheetForm({ onSubmit, initialData, onCancel }: BalanceSheetFormP
               value={formData.shareholdersEquityRatio}
               onChange={handleChange}
               step="0.01"
+              placeholder="例如: 45.5"
             />
           </div>
           <div className="form-group">
-            <label htmlFor="currentAssets">流動資產 *</label>
+            <label htmlFor="currentAssets">流動資產（萬元） *</label>
             <input
               type="number"
               id="currentAssets"
@@ -145,6 +149,7 @@ function BalanceSheetForm({ onSubmit, initialData, onCancel }: BalanceSheetFormP
               onChange={handleChange}
               required
               step="0.01"
+              placeholder="例如: 300000"
             />
           </div>
           <div className="form-group">
@@ -156,13 +161,14 @@ function BalanceSheetForm({ onSubmit, initialData, onCancel }: BalanceSheetFormP
               value={formData.currentAssetsRatio}
               onChange={handleChange}
               step="0.01"
+              placeholder="例如: 30.0"
             />
           </div>
         </div>
 
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="currentLiabilities">流動負債 *</label>
+            <label htmlFor="currentLiabilities">流動負債（萬元） *</label>
             <input
               type="number"
               id="currentLiabilities"
@@ -171,6 +177,7 @@ function BalanceSheetForm({ onSubmit, initialData, onCancel }: BalanceSheetFormP
               onChange={handleChange}
               required
               step="0.01"
+              placeholder="例如: 200000"
             />
           </div>
           <div className="form-group">
@@ -182,6 +189,7 @@ function BalanceSheetForm({ onSubmit, initialData, onCancel }: BalanceSheetFormP
               value={formData.currentLiabilitiesRatio}
               onChange={handleChange}
               step="0.01"
+              placeholder="例如: 20.0"
             />
           </div>
         </div>

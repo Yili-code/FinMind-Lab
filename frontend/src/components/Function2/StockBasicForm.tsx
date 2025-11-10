@@ -188,6 +188,7 @@ function StockBasicForm({ onSubmit, initialData, onCancel }: StockBasicFormProps
                 value={formData.issuedShares}
                 onChange={handleChange}
                 min="0"
+                placeholder="例如: 25930380000"
               />
             </div>
             <div className="form-group">
@@ -248,7 +249,7 @@ function StockBasicForm({ onSubmit, initialData, onCancel }: StockBasicFormProps
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="employees">員工人數</label>
+              <label htmlFor="employees">員工人數（人）</label>
               <input
                 type="number"
                 id="employees"
@@ -256,10 +257,11 @@ function StockBasicForm({ onSubmit, initialData, onCancel }: StockBasicFormProps
                 value={formData.employees}
                 onChange={handleChange}
                 min="0"
+                placeholder="例如: 50000"
               />
             </div>
             <div className="form-group">
-              <label htmlFor="dividend">股利</label>
+              <label htmlFor="dividend">股利（元）</label>
               <input
                 type="number"
                 id="dividend"
@@ -267,6 +269,7 @@ function StockBasicForm({ onSubmit, initialData, onCancel }: StockBasicFormProps
                 value={formData.dividend}
                 onChange={handleChange}
                 step="0.01"
+                placeholder="例如: 5.5"
               />
             </div>
             <div className="form-group">
@@ -278,13 +281,14 @@ function StockBasicForm({ onSubmit, initialData, onCancel }: StockBasicFormProps
                 value={formData.yield}
                 onChange={handleChange}
                 step="0.01"
+                placeholder="例如: 3.5"
               />
             </div>
           </div>
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="dividendPerShare">股息</label>
+              <label htmlFor="dividendPerShare">股息（元/股）</label>
               <input
                 type="number"
                 id="dividendPerShare"
@@ -292,10 +296,11 @@ function StockBasicForm({ onSubmit, initialData, onCancel }: StockBasicFormProps
                 value={formData.dividendPerShare}
                 onChange={handleChange}
                 step="0.01"
+                placeholder="例如: 5.0"
               />
             </div>
             <div className="form-group">
-              <label htmlFor="closingPrice">收價</label>
+              <label htmlFor="closingPrice">收價（元）</label>
               <input
                 type="number"
                 id="closingPrice"
@@ -303,6 +308,7 @@ function StockBasicForm({ onSubmit, initialData, onCancel }: StockBasicFormProps
                 value={formData.closingPrice}
                 onChange={handleChange}
                 step="0.01"
+                placeholder="例如: 580.0"
               />
             </div>
             <div className="form-group">
@@ -319,7 +325,7 @@ function StockBasicForm({ onSubmit, initialData, onCancel }: StockBasicFormProps
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="peRatio">本益比</label>
+              <label htmlFor="peRatio">本益比（倍）</label>
               <input
                 type="number"
                 id="peRatio"
@@ -327,6 +333,7 @@ function StockBasicForm({ onSubmit, initialData, onCancel }: StockBasicFormProps
                 value={formData.peRatio}
                 onChange={handleChange}
                 step="0.01"
+                placeholder="例如: 15.5"
               />
             </div>
             <div className="form-group">
@@ -338,6 +345,7 @@ function StockBasicForm({ onSubmit, initialData, onCancel }: StockBasicFormProps
                 value={formData.equityRatio}
                 onChange={handleChange}
                 step="0.01"
+                placeholder="例如: 45.5"
               />
             </div>
           </div>
@@ -355,10 +363,11 @@ function StockBasicForm({ onSubmit, initialData, onCancel }: StockBasicFormProps
                 value={formData.industryChange}
                 onChange={handleChange}
                 step="0.01"
+                placeholder="例如: 2.5"
               />
             </div>
             <div className="form-group">
-              <label htmlFor="industryEPS">同業EPS</label>
+              <label htmlFor="industryEPS">同業EPS（元）</label>
               <input
                 type="number"
                 id="industryEPS"
@@ -366,6 +375,7 @@ function StockBasicForm({ onSubmit, initialData, onCancel }: StockBasicFormProps
                 value={formData.industryEPS}
                 onChange={handleChange}
                 step="0.01"
+                placeholder="例如: 8.5"
               />
             </div>
             <div className="form-group">
@@ -377,6 +387,7 @@ function StockBasicForm({ onSubmit, initialData, onCancel }: StockBasicFormProps
                 value={formData.industryYield}
                 onChange={handleChange}
                 step="0.01"
+                placeholder="例如: 3.2"
               />
             </div>
           </div>

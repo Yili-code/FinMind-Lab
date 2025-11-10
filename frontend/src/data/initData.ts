@@ -175,6 +175,6 @@ export function initializeData() {
 
   // 標記為已初始化
   localStorage.setItem('finmind_data_initialized', 'true')
-  console.log('✅ 資料初始化完成：已為每個 Table 生成兩組資料')
+  console.log('[完成] 資料初始化完成：已為每個 Table 生成兩組資料')
 }
 

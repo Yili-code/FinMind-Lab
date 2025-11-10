@@ -311,7 +311,7 @@ function FinancialReportsPage() {
               <li><strong>現金流量表 (Table 6):</strong> 顯示公司現金流動情況</li>
             </ul>
             <p className="info-note">
-              💡 點擊任一表格的股票代號，三個表格會同步篩選顯示該股票的財務資料。
+              <strong>提示：</strong> 點擊任一表格的股票代號，三個表格會同步篩選顯示該股票的財務資料。
               所有資料由使用者自行輸入並儲存於本地資料庫。
             </p>
           </div>

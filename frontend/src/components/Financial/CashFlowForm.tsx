@@ -89,7 +89,7 @@ function CashFlowForm({ onSubmit, initialData, onCancel }: CashFlowFormProps) {
 
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="operatingCashFlow">營業現金 *</label>
+            <label htmlFor="operatingCashFlow">營業現金（萬元） *</label>
             <input
               type="number"
               id="operatingCashFlow"
@@ -98,10 +98,11 @@ function CashFlowForm({ onSubmit, initialData, onCancel }: CashFlowFormProps) {
               onChange={handleChange}
               required
               step="0.01"
+              placeholder="例如: 150000"
             />
           </div>
           <div className="form-group">
-            <label htmlFor="investingCashFlow">投資現金 *</label>
+            <label htmlFor="investingCashFlow">投資現金（萬元） *</label>
             <input
               type="number"
               id="investingCashFlow"
@@ -110,6 +111,7 @@ function CashFlowForm({ onSubmit, initialData, onCancel }: CashFlowFormProps) {
               onChange={handleChange}
               required
               step="0.01"
+              placeholder="例如: -50000"
             />
           </div>
           <div className="form-group">
@@ -121,13 +123,14 @@ function CashFlowForm({ onSubmit, initialData, onCancel }: CashFlowFormProps) {
               value={formData.investingCashFlowRatio}
               onChange={handleChange}
               step="0.01"
+              placeholder="例如: -10.0"
             />
           </div>
         </div>
 
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="financingCashFlow">融資現金 *</label>
+            <label htmlFor="financingCashFlow">融資現金（萬元） *</label>
             <input
               type="number"
               id="financingCashFlow"
@@ -136,6 +139,7 @@ function CashFlowForm({ onSubmit, initialData, onCancel }: CashFlowFormProps) {
               onChange={handleChange}
               required
               step="0.01"
+              placeholder="例如: -30000"
             />
           </div>
           <div className="form-group">
@@ -147,10 +151,11 @@ function CashFlowForm({ onSubmit, initialData, onCancel }: CashFlowFormProps) {
               value={formData.financingCashFlowRatio}
               onChange={handleChange}
               step="0.01"
+              placeholder="例如: -6.0"
             />
           </div>
           <div className="form-group">
-            <label htmlFor="freeCashFlow">自由現金 *</label>
+            <label htmlFor="freeCashFlow">自由現金（萬元） *</label>
             <input
               type="number"
               id="freeCashFlow"
@@ -159,6 +164,7 @@ function CashFlowForm({ onSubmit, initialData, onCancel }: CashFlowFormProps) {
               onChange={handleChange}
               required
               step="0.01"
+              placeholder="例如: 100000"
             />
           </div>
         </div>
@@ -173,10 +179,11 @@ function CashFlowForm({ onSubmit, initialData, onCancel }: CashFlowFormProps) {
               value={formData.freeCashFlowRatio}
               onChange={handleChange}
               step="0.01"
+              placeholder="例如: 20.0"
             />
           </div>
           <div className="form-group">
-            <label htmlFor="netCashFlow">淨現金流 *</label>
+            <label htmlFor="netCashFlow">淨現金流（萬元） *</label>
             <input
               type="number"
               id="netCashFlow"
@@ -185,6 +192,7 @@ function CashFlowForm({ onSubmit, initialData, onCancel }: CashFlowFormProps) {
               onChange={handleChange}
               required
               step="0.01"
+              placeholder="例如: 70000"
             />
           </div>
           <div className="form-group">
@@ -196,6 +204,7 @@ function CashFlowForm({ onSubmit, initialData, onCancel }: CashFlowFormProps) {
               value={formData.netCashFlowRatio}
               onChange={handleChange}
               step="0.01"
+              placeholder="例如: 14.0"
             />
           </div>
         </div>

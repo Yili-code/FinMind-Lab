@@ -16,11 +16,11 @@ python test_yfinance.py
 ```
 
 **預期結果：**
-- ✓ 所有股票資訊獲取成功
-- ✓ 盤中數據獲取成功
-- ✓ 日交易數據獲取成功
-- ✓ 大盤指數數據獲取成功
-- ✓ 錯誤處理正確（無效代號返回 None）
+- [OK] 所有股票資訊獲取成功
+- [OK] 盤中數據獲取成功
+- [OK] 日交易數據獲取成功
+- [OK] 大盤指數數據獲取成功
+- [OK] 錯誤處理正確（無效代號返回 None）
 
 ### 2. 啟動後端服務器
 
@@ -50,12 +50,12 @@ python test_api.py
 ```
 
 **預期結果：**
-- ✓ /api/hello - 連接成功
-- ✓ /api/stock/info/{stock_code} - 獲取股票資訊成功
-- ✓ /api/stock/intraday/{stock_code} - 獲取盤中數據成功
-- ✓ /api/stock/daily/{stock_code} - 獲取日交易數據成功
-- ✓ /api/stock/market-index - 獲取大盤指數成功
-- ✓ /api/stock/batch - 批量獲取成功
+- [OK] /api/hello - 連接成功
+- [OK] /api/stock/info/{stock_code} - 獲取股票資訊成功
+- [OK] /api/stock/intraday/{stock_code} - 獲取盤中數據成功
+- [OK] /api/stock/daily/{stock_code} - 獲取日交易數據成功
+- [OK] /api/stock/market-index - 獲取大盤指數成功
+- [OK] /api/stock/batch - 批量獲取成功
 
 ### 4. 測試前端整合
 

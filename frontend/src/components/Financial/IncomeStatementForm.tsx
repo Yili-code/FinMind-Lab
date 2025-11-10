@@ -89,7 +89,7 @@ function IncomeStatementForm({ onSubmit, initialData, onCancel }: IncomeStatemen
 
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="revenue">營業收入 *</label>
+            <label htmlFor="revenue">營業收入（萬元） *</label>
             <input
               type="number"
               id="revenue"
@@ -99,10 +99,11 @@ function IncomeStatementForm({ onSubmit, initialData, onCancel }: IncomeStatemen
               required
               min="0"
               step="0.01"
+              placeholder="例如: 500000"
             />
           </div>
           <div className="form-group">
-            <label htmlFor="grossProfit">營業毛利 *</label>
+            <label htmlFor="grossProfit">營業毛利（萬元） *</label>
             <input
               type="number"
               id="grossProfit"
@@ -111,6 +112,7 @@ function IncomeStatementForm({ onSubmit, initialData, onCancel }: IncomeStatemen
               onChange={handleChange}
               required
               step="0.01"
+              placeholder="例如: 200000"
             />
           </div>
           <div className="form-group">
@@ -122,13 +124,14 @@ function IncomeStatementForm({ onSubmit, initialData, onCancel }: IncomeStatemen
               value={formData.grossProfitRatio}
               onChange={handleChange}
               step="0.01"
+              placeholder="例如: 40.0"
             />
           </div>
         </div>
 
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="operatingExpenses">營業費用 *</label>
+            <label htmlFor="operatingExpenses">營業費用（萬元） *</label>
             <input
               type="number"
               id="operatingExpenses"
@@ -137,6 +140,7 @@ function IncomeStatementForm({ onSubmit, initialData, onCancel }: IncomeStatemen
               onChange={handleChange}
               required
               step="0.01"
+              placeholder="例如: 100000"
             />
           </div>
           <div className="form-group">
@@ -148,10 +152,11 @@ function IncomeStatementForm({ onSubmit, initialData, onCancel }: IncomeStatemen
               value={formData.operatingExpensesRatio}
               onChange={handleChange}
               step="0.01"
+              placeholder="例如: 20.0"
             />
           </div>
           <div className="form-group">
-            <label htmlFor="operatingIncome">營業利益 *</label>
+            <label htmlFor="operatingIncome">營業利益（萬元） *</label>
             <input
               type="number"
               id="operatingIncome"
@@ -160,6 +165,7 @@ function IncomeStatementForm({ onSubmit, initialData, onCancel }: IncomeStatemen
               onChange={handleChange}
               required
               step="0.01"
+              placeholder="例如: 100000"
             />
           </div>
         </div>
@@ -174,10 +180,11 @@ function IncomeStatementForm({ onSubmit, initialData, onCancel }: IncomeStatemen
               value={formData.operatingIncomeRatio}
               onChange={handleChange}
               step="0.01"
+              placeholder="例如: 20.0"
             />
           </div>
           <div className="form-group">
-            <label htmlFor="netIncome">稅後淨利 *</label>
+            <label htmlFor="netIncome">稅後淨利（萬元） *</label>
             <input
               type="number"
               id="netIncome"
@@ -186,10 +193,11 @@ function IncomeStatementForm({ onSubmit, initialData, onCancel }: IncomeStatemen
               onChange={handleChange}
               required
               step="0.01"
+              placeholder="例如: 80000"
             />
           </div>
           <div className="form-group">
-            <label htmlFor="otherIncome">其他損益</label>
+            <label htmlFor="otherIncome">其他損益（萬元）</label>
             <input
               type="number"
               id="otherIncome"
@@ -197,6 +205,7 @@ function IncomeStatementForm({ onSubmit, initialData, onCancel }: IncomeStatemen
               value={formData.otherIncome}
               onChange={handleChange}
               step="0.01"
+              placeholder="例如: 5000"
             />
           </div>
         </div>

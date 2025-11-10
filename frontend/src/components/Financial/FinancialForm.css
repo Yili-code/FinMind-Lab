@@ -42,13 +42,26 @@
 }
 
 .form-group input {
-  padding: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   background: var(--bg-secondary);
   color: var(--text-primary);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   transition: all var(--transition-base);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 移除 number input 的 spinner（上下箭頭） */
+.form-group input[type="number"]::-webkit-inner-spin-button,
+.form-group input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.form-group input[type="number"] {
+  -moz-appearance: textfield;
 }
 
 .form-group input:focus {
