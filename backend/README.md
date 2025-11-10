@@ -5,22 +5,23 @@
 ### 方法 1: 從 backend 目錄運行（推薦）
 ```bash
 cd backend
-python -m uvicorn main:app --reload --port 8000
+python -m uvicorn main:app --reload --port 8000 --log-level warning
 ```
 
 ### 方法 2: 從項目根目錄運行
 ```bash
-python -m uvicorn backend.main:app --reload --port 8000
+python -m uvicorn backend.main:app --reload --port 8000 --log-level warning
 ```
 
-**注意：** 推薦使用方法 1，從 `backend` 目錄運行，這樣可以避免模組導入問題。
+**注意：** 
+- 推薦使用方法 1，從 `backend` 目錄運行，這樣可以避免模組導入問題。
+- 使用 `--log-level warning` 可以減少非必要的日誌輸出，只顯示警告和錯誤訊息。
 
 服務啟動後，您應該看到：
 ```
 INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
 INFO:     Started reloader process
 INFO:     Started server process
-INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 ```
 

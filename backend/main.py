@@ -11,13 +11,13 @@ import logging
 from typing import Optional, List
 try:
     # 從 backend 目錄運行時
-from services.yfinance_service import (
-    get_stock_info,
-    get_intraday_data,
-    get_daily_trade_data,
-    get_market_index_data
-)
-    except ImportError:
+    from services.yfinance_service import (
+        get_stock_info,
+        get_intraday_data,
+        get_daily_trade_data,
+        get_market_index_data
+    )
+except ImportError:
     # 從項目根目錄運行時
     from backend.services.yfinance_service import (
         get_stock_info,
@@ -26,10 +26,13 @@ from services.yfinance_service import (
         get_market_index_data
     )
 
-# 抑制不必要的警告
+# 抑制不必要的警告和日誌
 warnings.filterwarnings('ignore')
 logging.getLogger('yfinance').setLevel(logging.ERROR)
 logging.getLogger('urllib3').setLevel(logging.ERROR)
+logging.getLogger('uvicorn').setLevel(logging.WARNING)
+logging.getLogger('uvicorn.access').setLevel(logging.WARNING)
+logging.getLogger('fastapi').setLevel(logging.WARNING)
 
 app = FastAPI(title="FinMind Lab API")
 
