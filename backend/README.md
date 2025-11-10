@@ -44,6 +44,40 @@ python test_connection.py
 curl http://localhost:8000/api/hello
 ```
 
+## 故障排除
+
+### 如果後端無法啟動
+
+1. **運行診斷工具**：
+   ```bash
+   cd backend
+   python check_backend.py
+   ```
+   這會檢查所有必要的組件和配置。
+
+2. **檢查端口是否被占用**：
+   - Windows: `netstat -ano | findstr :8000`
+   - Linux/Mac: `lsof -i :8000`
+   - 如果端口被占用，可以：
+     - 關閉占用端口的程序
+     - 或使用其他端口：`--port 8001`
+
+3. **檢查 Python 環境**：
+   ```bash
+   python --version  # 應該顯示 Python 3.8+
+   pip list | findstr fastapi  # 檢查是否安裝了 fastapi
+   ```
+
+4. **重新安裝依賴**：
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+5. **檢查錯誤訊息**：
+   - 如果看到 `IndentationError`，檢查 `main.py` 的縮排
+   - 如果看到 `ModuleNotFoundError`，確認在 `backend` 目錄下運行
+   - 如果看到 `Address already in use`，端口被占用
+
 ## 常見問題
 
 ### 1. yfinance 警告訊息
@@ -62,6 +96,7 @@ yfinance 在運行時會產生許多警告訊息（如 FutureWarning、UserWarni
 - `GET /api/stock/intraday/{stock_code}` - 獲取盤中即時數據
 - `GET /api/stock/daily/{stock_code}` - 獲取日交易檔數據
 - `GET /api/stock/batch?stock_codes=2330,2317` - 批量獲取股票資訊
+- `GET /api/stock/market-index` - 獲取大盤指數數據
 
 ## 依賴
 
