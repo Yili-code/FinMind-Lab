@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import TradeDetailTable from '../components/Function1/TradeDetailTable'
 import DailyTradeTable from '../components/Function1/DailyTradeTable'
 import StockChart from '../components/Function1/StockChart'
 import { useStock } from '../contexts/StockContext'
-import { getIntradayData, getDailyTradeData, getMarketIndexData, testBackendConnection } from '../services/stockApi'
+import { getIntradayData, getDailyTradeData, getMarketIndexData, testBackendConnection, type MarketIndexResponse } from '../services/stockApi'
 import type { TradeDetail, DailyTrade } from '../types/stock'
 import './Function1Page.css'
 
@@ -11,13 +11,15 @@ function Function1Page() {
   const { selectedStockCode, setSelectedStockCode } = useStock()
   const [tradeDetails, setTradeDetails] = useState<TradeDetail[]>([])
   const [dailyTrades, setDailyTrades] = useState<DailyTrade[]>([])
-  const [marketIndexData, setMarketIndexData] = useState<any[]>([])
+  const [marketIndexData, setMarketIndexData] = useState<MarketIndexResponse['data']>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [stockCodeInput, setStockCodeInput] = useState('2330,2317')
+  const [selectedDate, setSelectedDate] = useState<string>('')
+  const [days, setDays] = useState<number>(5)
 
-  // 載入股票數據
-  const loadStockData = async (stockCodes: string[]) => {
+  // 載入股票數據 - 優化：並行請求
+  const loadStockData = useCallback(async (stockCodes: string[]) => {
     setLoading(true)
     setError(null)
     
@@ -33,17 +35,19 @@ function Function1Page() {
     }
     
     try {
-      const allTradeDetails: TradeDetail[] = []
-      const allDailyTrades: DailyTrade[] = []
-
-      for (const code of stockCodes) {
+      // 優化：並行請求所有股票的數據
+      const stockDataPromises = stockCodes.map(async (code) => {
         try {
-          // 獲取盤中數據
-          const intradayResponse = await getIntradayData(code, '1d', '5m')
+          // 並行獲取盤中數據和日交易數據
+          const [intradayResponse, dailyResponse] = await Promise.all([
+            getIntradayData(code, '1d', '5m'),
+            getDailyTradeData(code, days)
+          ])
+
           const intradayData = intradayResponse.data.map((item, index) => ({
             id: `${code}_intraday_${index}`,
             stockCode: item.stockCode,
-            stockName: code, // yfinance 可能沒有中文名稱
+            stockName: code,
             date: item.date,
             time: item.time,
             price: item.price,
@@ -57,10 +61,7 @@ function Function1Page() {
             totalVolume: item.totalVolume,
             estimatedVolume: item.estimatedVolume,
           }))
-          allTradeDetails.push(...intradayData)
 
-          // 獲取日交易數據
-          const dailyResponse = await getDailyTradeData(code, 5)
           const dailyData = dailyResponse.data.map((item, index) => ({
             id: `${code}_daily_${index}`,
             stockCode: item.stockCode,
@@ -88,23 +89,28 @@ function Function1Page() {
             monthLow: item.monthLow,
             quarterHigh: item.quarterHigh,
           }))
-          allDailyTrades.push(...dailyData)
+
+          return { intradayData, dailyData }
         } catch (err) {
           console.error(`Error loading data for ${code}:`, err)
-          // 繼續處理其他股票
+          return { intradayData: [], dailyData: [] }
         }
-      }
+      })
+
+      // 等待所有請求完成
+      const results = await Promise.all(stockDataPromises)
+      const allTradeDetails = results.flatMap(r => r.intradayData)
+      const allDailyTrades = results.flatMap(r => r.dailyData)
 
       setTradeDetails(allTradeDetails)
       setDailyTrades(allDailyTrades)
 
-      // 載入大盤指數數據
+      // 並行載入大盤指數數據
       try {
         const marketResponse = await getMarketIndexData('^TWII', 5)
         setMarketIndexData(marketResponse.data)
       } catch (err) {
         console.error('Error loading market index data:', err)
-        // 大盤數據載入失敗不影響其他功能
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : '載入數據時發生錯誤')
@@ -115,28 +121,47 @@ function Function1Page() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [days])
+
+  // 優化：使用 useMemo 計算股票代號列表
+  const stockCodes = useMemo(() => {
+    return stockCodeInput.split(',').map(c => c.trim()).filter(c => c)
+  }, [stockCodeInput])
 
   // 初始載入
   useEffect(() => {
-    const codes = stockCodeInput.split(',').map(c => c.trim()).filter(c => c)
-    if (codes.length > 0) {
-      loadStockData(codes)
+    if (stockCodes.length > 0) {
+      loadStockData(stockCodes)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const handleTable1Click = (stockCode: string) => {
-    setSelectedStockCode(selectedStockCode === stockCode ? undefined : stockCode)
-  }
+  // 當天數改變時重新載入數據
+  useEffect(() => {
+    if (stockCodes.length > 0) {
+      loadStockData(stockCodes)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [days, loadStockData, stockCodes])
 
-  const handleTable2Click = (stockCode: string) => {
-    setSelectedStockCode(selectedStockCode === stockCode ? undefined : stockCode)
-  }
+  // 優化：使用 useCallback 避免不必要的重新渲染
+  const handleTable1Click = useCallback((stockCode: string) => {
+    setSelectedStockCode(prev => prev === stockCode ? undefined : stockCode)
+  }, [setSelectedStockCode])
 
-  const handleClearFilter = () => {
+  const handleTable2Click = useCallback((stockCode: string) => {
+    setSelectedStockCode(prev => prev === stockCode ? undefined : stockCode)
+  }, [setSelectedStockCode])
+
+  const handleClearFilter = useCallback(() => {
     setSelectedStockCode(undefined)
-  }
+  }, [setSelectedStockCode])
+
+  const handleLoadData = useCallback(() => {
+    if (stockCodes.length > 0) {
+      loadStockData(stockCodes)
+    }
+  }, [stockCodes, loadStockData])
 
   return (
     <div className="function1-page">
@@ -163,25 +188,76 @@ function Function1Page() {
                 style={{ padding: '0.5rem', minWidth: '300px' }}
                 onKeyPress={(e) => {
                   if (e.key === 'Enter') {
-                    const codes = stockCodeInput.split(',').map(c => c.trim()).filter(c => c)
-                    if (codes.length > 0) {
-                      loadStockData(codes)
-                    }
+                    handleLoadData()
                   }
                 }}
               />
               <button
-                onClick={() => {
-                  const codes = stockCodeInput.split(',').map(c => c.trim()).filter(c => c)
-                  if (codes.length > 0) {
-                    loadStockData(codes)
-                  }
-                }}
+                onClick={handleLoadData}
                 style={{ padding: '0.5rem 1rem', marginLeft: '0.5rem' }}
               >
                 載入數據
               </button>
             </div>
+          </div>
+          <div className="date-filter-control">
+            <label htmlFor="days-input" style={{ marginRight: '0.5rem', color: 'var(--text-primary)' }}>
+              天數設定：
+            </label>
+            <input
+              id="days-input"
+              type="number"
+              min="1"
+              max="30"
+              value={days}
+              onChange={(e) => {
+                const value = parseInt(e.target.value) || 5
+                setDays(Math.max(1, Math.min(30, value)))
+              }}
+              style={{
+                padding: '0.5rem',
+                width: '80px',
+                border: '1px solid var(--border-color)',
+                borderRadius: 'var(--radius-sm)',
+                background: 'var(--bg-secondary)',
+                color: 'var(--text-primary)',
+                fontSize: '0.9rem'
+              }}
+            />
+            <label htmlFor="date-filter" style={{ marginLeft: '1rem', marginRight: '0.5rem', color: 'var(--text-primary)' }}>
+              選擇日期：
+            </label>
+            <input
+              id="date-filter"
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              style={{
+                padding: '0.5rem',
+                border: '1px solid var(--border-color)',
+                borderRadius: 'var(--radius-sm)',
+                background: 'var(--bg-secondary)',
+                color: 'var(--text-primary)',
+                fontSize: '0.9rem'
+              }}
+            />
+            {selectedDate && (
+              <button
+                onClick={() => setSelectedDate('')}
+                style={{
+                  padding: '0.5rem 1rem',
+                  marginLeft: '0.5rem',
+                  background: 'rgba(255, 51, 102, 0.2)',
+                  color: 'var(--error)',
+                  border: '1px solid var(--error)',
+                  borderRadius: 'var(--radius-sm)',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem'
+                }}
+              >
+                清除日期
+              </button>
+            )}
           </div>
           {selectedStockCode && (
             <div className="filter-control">
@@ -215,13 +291,18 @@ function Function1Page() {
             <TradeDetailTable
               data={tradeDetails}
               selectedStockCode={selectedStockCode}
+              selectedDate={selectedDate}
               onRowClick={handleTable1Click}
             />
 
             <DailyTradeTable
               data={dailyTrades}
               selectedStockCode={selectedStockCode}
+              selectedDate={selectedDate}
               onRowClick={handleTable2Click}
+              onDataUpdate={useCallback((updatedData: DailyTrade[]) => {
+                setDailyTrades(updatedData)
+              }, [])}
             />
           </div>
         </div>

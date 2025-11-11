@@ -2,9 +2,9 @@
 
 export const formatNumber = (num: number): string => {
   if (num >= 100000000) {
-    return (num / 100000000).toFixed(2) + '億'
+    return (num / 100000000).toFixed(1) + '億'
   } else if (num >= 10000) {
-    return (num / 10000).toFixed(2) + '萬'
+    return (num / 10000).toFixed(1) + '萬'
   }
   return num.toLocaleString('zh-TW')
 }
@@ -13,12 +13,12 @@ export const formatCurrency = (num: number): string => {
   return formatNumber(num) + '元'
 }
 
-export const formatPercent = (num: number, decimals: number = 2): string => {
+export const formatPercent = (num: number, decimals: number = 1): string => {
   const sign = num >= 0 ? '+' : ''
   return `${sign}${num.toFixed(decimals)}%`
 }
 
-export const formatPrice = (price: number, decimals: number = 2): string => {
+export const formatPrice = (price: number, decimals: number = 1): string => {
   return price.toFixed(decimals)
 }
 

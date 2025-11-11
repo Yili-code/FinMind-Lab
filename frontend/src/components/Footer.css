@@ -1,9 +1,13 @@
 .footer {
-  background: var(--bg-secondary);
+  background: rgba(30, 42, 74, 0.4);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
   border-top: 1px solid var(--border-color);
   padding: var(--spacing-xl) 0;
   margin-top: auto;
-  backdrop-filter: blur(10px);
+  box-shadow: 0 -2px 20px rgba(77, 208, 225, 0.08);
+  position: relative;
+  z-index: 1;
 }
 
 .footer-container {

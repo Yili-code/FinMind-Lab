@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, useCallback, useMemo } from 'react'
 import type { ReactNode } from 'react'
 
 interface StockContextType {
@@ -9,10 +9,21 @@ interface StockContextType {
 const StockContext = createContext<StockContextType | undefined>(undefined)
 
 export function StockProvider({ children }: { children: ReactNode }) {
-  const [selectedStockCode, setSelectedStockCode] = useState<string | undefined>(undefined)
+  const [selectedStockCode, setSelectedStockCodeState] = useState<string | undefined>(undefined)
+
+  // 優化：使用 useCallback 避免不必要的重新渲染
+  const setSelectedStockCode = useCallback((code: string | undefined) => {
+    setSelectedStockCodeState(code)
+  }, [])
+
+  // 優化：使用 useMemo 緩存 context 值
+  const value = useMemo(() => ({
+    selectedStockCode,
+    setSelectedStockCode
+  }), [selectedStockCode, setSelectedStockCode])
 
   return (
-    <StockContext.Provider value={{ selectedStockCode, setSelectedStockCode }}>
+    <StockContext.Provider value={value}>
       {children}
     </StockContext.Provider>
   )

@@ -241,3 +241,161 @@ def get_daily_trade_data(stock_code: str, days: int = 5) -> List[Dict]:
         logger.error(f"Error fetching daily trade data for {stock_code}: {str(e)}")
         return []
 
+def get_financial_statements(stock_code: str) -> Optional[Dict]:
+    """獲取財務報表數據（損益表、資產負債表、現金流量表）"""
+    try:
+        ticker = get_yfinance_ticker(stock_code)
+        stock = yf.Ticker(ticker)
+        
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            # 獲取財務報表
+            financials = stock.financials  # 損益表
+            balance_sheet = stock.balance_sheet  # 資產負債表
+            cashflow = stock.cashflow  # 現金流量表
+            
+            # 獲取股票資訊
+            info = stock.info
+            stock_name = info.get('longName', info.get('shortName', stock_code)) if info else stock_code
+        
+        def to_float(value):
+            if value is None or pd.isna(value):
+                return 0.0
+            try:
+                return float(value)
+            except (ValueError, TypeError):
+                return 0.0
+        
+        # 處理損益表（取最新一期的數據）
+        income_data = None
+        if not financials.empty and len(financials.columns) > 0:
+            latest_period = financials.columns[0]  # 最新一期
+            period_str = latest_period.strftime('%Y-%m-%d') if hasattr(latest_period, 'strftime') else str(latest_period)
+            
+            # 從 financials DataFrame 中提取數據
+            # yfinance 的 financials 使用英文欄位名，需要映射
+            revenue = to_float(financials.loc['Total Revenue', latest_period]) if 'Total Revenue' in financials.index else 0
+            if revenue == 0:
+                revenue = to_float(financials.loc['Revenue', latest_period]) if 'Revenue' in financials.index else 0
+            
+            gross_profit = to_float(financials.loc['Gross Profit', latest_period]) if 'Gross Profit' in financials.index else 0
+            operating_expenses = to_float(financials.loc['Operating Expenses', latest_period]) if 'Operating Expenses' in financials.index else 0
+            if operating_expenses == 0:
+                operating_expenses = to_float(financials.loc['Total Operating Expenses', latest_period]) if 'Total Operating Expenses' in financials.index else 0
+            
+            operating_income = to_float(financials.loc['Operating Income', latest_period]) if 'Operating Income' in financials.index else 0
+            if operating_income == 0:
+                operating_income = to_float(financials.loc['EBIT', latest_period]) if 'EBIT' in financials.index else 0
+            
+            net_income = to_float(financials.loc['Net Income', latest_period]) if 'Net Income' in financials.index else 0
+            if net_income == 0:
+                net_income = to_float(financials.loc['Net Income Common Stockholders', latest_period]) if 'Net Income Common Stockholders' in financials.index else 0
+            
+            other_income = to_float(financials.loc['Other Income', latest_period]) if 'Other Income' in financials.index else 0
+            
+            # 計算比率
+            gross_profit_ratio = (gross_profit / revenue * 100) if revenue > 0 else 0
+            operating_expenses_ratio = (operating_expenses / revenue * 100) if revenue > 0 else 0
+            operating_income_ratio = (operating_income / revenue * 100) if revenue > 0 else 0
+            
+            income_data = {
+                'stockCode': stock_code,
+                'stockName': stock_name,
+                'period': period_str,
+                'revenue': revenue,
+                'grossProfit': gross_profit,
+                'grossProfitRatio': round(gross_profit_ratio, 1),
+                'operatingExpenses': operating_expenses,
+                'operatingExpensesRatio': round(operating_expenses_ratio, 1),
+                'operatingIncome': operating_income,
+                'operatingIncomeRatio': round(operating_income_ratio, 1),
+                'netIncome': net_income,
+                'otherIncome': other_income,
+            }
+        
+        # 處理資產負債表
+        balance_data = None
+        if not balance_sheet.empty and len(balance_sheet.columns) > 0:
+            latest_period = balance_sheet.columns[0]
+            period_str = latest_period.strftime('%Y-%m-%d') if hasattr(latest_period, 'strftime') else str(latest_period)
+            
+            total_assets = to_float(balance_sheet.loc['Total Assets', latest_period]) if 'Total Assets' in balance_sheet.index else 0
+            shareholders_equity = to_float(balance_sheet.loc['Stockholders Equity', latest_period]) if 'Stockholders Equity' in balance_sheet.index else 0
+            if shareholders_equity == 0:
+                shareholders_equity = to_float(balance_sheet.loc['Total Stockholders Equity', latest_period]) if 'Total Stockholders Equity' in balance_sheet.index else 0
+            
+            current_assets = to_float(balance_sheet.loc['Current Assets', latest_period]) if 'Current Assets' in balance_sheet.index else 0
+            current_liabilities = to_float(balance_sheet.loc['Current Liabilities', latest_period]) if 'Current Liabilities' in balance_sheet.index else 0
+            
+            # 計算比率
+            total_assets_ratio = 100.0  # 基準
+            shareholders_equity_ratio = (shareholders_equity / total_assets * 100) if total_assets > 0 else 0
+            current_assets_ratio = (current_assets / total_assets * 100) if total_assets > 0 else 0
+            current_liabilities_ratio = (current_liabilities / total_assets * 100) if total_assets > 0 else 0
+            
+            balance_data = {
+                'stockCode': stock_code,
+                'stockName': stock_name,
+                'period': period_str,
+                'totalAssets': total_assets,
+                'totalAssetsRatio': round(total_assets_ratio, 1),
+                'shareholdersEquity': shareholders_equity,
+                'shareholdersEquityRatio': round(shareholders_equity_ratio, 1),
+                'currentAssets': current_assets,
+                'currentAssetsRatio': round(current_assets_ratio, 1),
+                'currentLiabilities': current_liabilities,
+                'currentLiabilitiesRatio': round(current_liabilities_ratio, 1),
+            }
+        
+        # 處理現金流量表
+        cashflow_data = None
+        if not cashflow.empty and len(cashflow.columns) > 0:
+            latest_period = cashflow.columns[0]
+            period_str = latest_period.strftime('%Y-%m-%d') if hasattr(latest_period, 'strftime') else str(latest_period)
+            
+            operating_cash_flow = to_float(cashflow.loc['Operating Cash Flow', latest_period]) if 'Operating Cash Flow' in cashflow.index else 0
+            if operating_cash_flow == 0:
+                operating_cash_flow = to_float(cashflow.loc['Total Cash From Operating Activities', latest_period]) if 'Total Cash From Operating Activities' in cashflow.index else 0
+            
+            investing_cash_flow = to_float(cashflow.loc['Investing Cash Flow', latest_period]) if 'Investing Cash Flow' in cashflow.index else 0
+            if investing_cash_flow == 0:
+                investing_cash_flow = to_float(cashflow.loc['Total Cashflows From Investing Activities', latest_period]) if 'Total Cashflows From Investing Activities' in cashflow.index else 0
+            
+            financing_cash_flow = to_float(cashflow.loc['Financing Cash Flow', latest_period]) if 'Financing Cash Flow' in cashflow.index else 0
+            if financing_cash_flow == 0:
+                financing_cash_flow = to_float(cashflow.loc['Total Cash From Financing Activities', latest_period]) if 'Total Cash From Financing Activities' in cashflow.index else 0
+            
+            free_cash_flow = to_float(cashflow.loc['Free Cash Flow', latest_period]) if 'Free Cash Flow' in cashflow.index else 0
+            net_cash_flow = operating_cash_flow + investing_cash_flow + financing_cash_flow
+            
+            # 計算比率（以 operating_cash_flow 為基準）
+            base = abs(operating_cash_flow) if operating_cash_flow != 0 else 1
+            investing_cash_flow_ratio = (investing_cash_flow / base * 100) if base > 0 else 0
+            financing_cash_flow_ratio = (financing_cash_flow / base * 100) if base > 0 else 0
+            free_cash_flow_ratio = (free_cash_flow / base * 100) if base > 0 else 0
+            net_cash_flow_ratio = (net_cash_flow / base * 100) if base > 0 else 0
+            
+            cashflow_data = {
+                'stockCode': stock_code,
+                'stockName': stock_name,
+                'period': period_str,
+                'operatingCashFlow': operating_cash_flow,
+                'investingCashFlow': investing_cash_flow,
+                'investingCashFlowRatio': round(investing_cash_flow_ratio, 1),
+                'financingCashFlow': financing_cash_flow,
+                'financingCashFlowRatio': round(financing_cash_flow_ratio, 1),
+                'freeCashFlow': free_cash_flow,
+                'freeCashFlowRatio': round(free_cash_flow_ratio, 1),
+                'netCashFlow': net_cash_flow,
+                'netCashFlowRatio': round(net_cash_flow_ratio, 1),
+            }
+        
+        return {
+            'incomeStatement': income_data,
+            'balanceSheet': balance_data,
+            'cashFlow': cashflow_data,
+        }
+    except Exception as e:
+        logger.error(f"Error fetching financial statements for {stock_code}: {str(e)}")
+        return None
+

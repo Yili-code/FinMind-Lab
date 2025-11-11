@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { CashFlowItem } from '../../types/financial'
 import './FinancialTable.css'
 
@@ -10,15 +11,47 @@ interface CashFlowTableProps {
 }
 
 function CashFlowTable({ data, selectedStockCode, onRowClick, onEdit, onDelete }: CashFlowTableProps) {
-  const filteredData = selectedStockCode
+  const [sortConfig, setSortConfig] = useState<{ key: keyof CashFlowItem; direction: 'asc' | 'desc' } | null>(null)
+
+  const handleSort = (key: keyof CashFlowItem) => {
+    let direction: 'asc' | 'desc' = 'asc'
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc'
+    }
+    setSortConfig({ key, direction })
+  }
+
+  let filteredData = selectedStockCode
     ? data.filter(item => item.stockCode === selectedStockCode)
     : data
 
+  // 排序數據
+  if (sortConfig) {
+    filteredData = [...filteredData].sort((a, b) => {
+      const aValue = a[sortConfig.key]
+      const bValue = b[sortConfig.key]
+      
+      if (aValue == null && bValue == null) return 0
+      if (aValue == null) return 1
+      if (bValue == null) return -1
+      
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue
+      }
+      
+      const aStr = String(aValue)
+      const bStr = String(bValue)
+      return sortConfig.direction === 'asc' 
+        ? aStr.localeCompare(bStr)
+        : bStr.localeCompare(aStr)
+    })
+  }
+
   const formatNumber = (num: number) => {
     if (num >= 100000000) {
-      return (num / 100000000).toFixed(2) + '億'
+      return (num / 100000000).toFixed(1) + '億'
     } else if (num >= 10000) {
-      return (num / 10000).toFixed(2) + '萬'
+      return (num / 10000).toFixed(1) + '萬'
     }
     return num.toLocaleString('zh-TW')
   }
@@ -29,7 +62,7 @@ function CashFlowTable({ data, selectedStockCode, onRowClick, onEdit, onDelete }
   }
 
   const formatPercent = (num: number) => {
-    return num.toFixed(2) + '%'
+    return num.toFixed(1) + '%'
   }
 
   return (
@@ -39,17 +72,39 @@ function CashFlowTable({ data, selectedStockCode, onRowClick, onEdit, onDelete }
         <table className="financial-table">
           <thead>
             <tr>
-              <th>代號</th>
-              <th>年/季</th>
-              <th>營業現金</th>
-              <th>投資現金</th>
-              <th>比重</th>
-              <th>融資現金</th>
-              <th>比重</th>
-              <th>自由現金</th>
-              <th>比重</th>
-              <th>淨現金流</th>
-              <th>比重</th>
+              <th onClick={() => handleSort('stockCode')}>
+                代號 {sortConfig?.key === 'stockCode' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('period')}>
+                年/季 {sortConfig?.key === 'period' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('operatingCashFlow')}>
+                營業現金 {sortConfig?.key === 'operatingCashFlow' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('investingCashFlow')}>
+                投資現金 {sortConfig?.key === 'investingCashFlow' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('investingCashFlowRatio')} style={{ cursor: 'pointer' }}>
+                比重 {sortConfig?.key === 'investingCashFlowRatio' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('financingCashFlow')}>
+                融資現金 {sortConfig?.key === 'financingCashFlow' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('financingCashFlowRatio')} style={{ cursor: 'pointer' }}>
+                比重 {sortConfig?.key === 'financingCashFlowRatio' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('freeCashFlow')}>
+                自由現金 {sortConfig?.key === 'freeCashFlow' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('freeCashFlowRatio')} style={{ cursor: 'pointer' }}>
+                比重 {sortConfig?.key === 'freeCashFlowRatio' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('netCashFlow')}>
+                淨現金流 {sortConfig?.key === 'netCashFlow' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('netCashFlowRatio')} style={{ cursor: 'pointer' }}>
+                比重 {sortConfig?.key === 'netCashFlowRatio' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
               {(onEdit || onDelete) && <th>操作</th>}
             </tr>
           </thead>

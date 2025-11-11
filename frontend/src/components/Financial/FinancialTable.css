@@ -39,6 +39,14 @@
   font-weight: 600;
   border-bottom: 2px solid var(--border-color);
   white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition: all var(--transition-base);
+}
+
+.financial-table th:hover {
+  background: var(--bg-hover);
+  color: var(--primary-color);
 }
 
 .financial-table td {

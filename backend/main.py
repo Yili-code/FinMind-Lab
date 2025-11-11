@@ -15,7 +15,8 @@ try:
         get_stock_info,
         get_intraday_data,
         get_daily_trade_data,
-        get_market_index_data
+        get_market_index_data,
+        get_financial_statements
     )
 except ImportError:
     # 從項目根目錄運行時
@@ -23,7 +24,8 @@ except ImportError:
         get_stock_info,
         get_intraday_data,
         get_daily_trade_data,
-        get_market_index_data
+        get_market_index_data,
+        get_financial_statements
     )
 
 # 抑制不必要的警告和日誌
@@ -179,3 +181,16 @@ async def get_market_index(
 		}
 	except Exception as e:
 		raise HTTPException(status_code=500, detail=f"獲取大盤指數數據時發生錯誤: {str(e)}")
+
+@app.get("/api/stock/financial/{stock_code}")
+async def get_stock_financial(stock_code: str):
+	"""獲取股票財務報表數據（損益表、資產負債表、現金流量表）"""
+	try:
+		data = get_financial_statements(stock_code)
+		if data is None:
+			raise HTTPException(status_code=404, detail=f"無法獲取股票 {stock_code} 的財務報表數據")
+		return data
+	except HTTPException:
+		raise
+	except Exception as e:
+		raise HTTPException(status_code=500, detail=f"獲取財務報表數據時發生錯誤: {str(e)}")

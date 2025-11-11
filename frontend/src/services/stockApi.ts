@@ -202,3 +202,65 @@ export async function getMarketIndexData(
   }
 }
 
+// 財務報表數據接口
+export interface FinancialStatementsResponse {
+  incomeStatement: {
+    stockCode: string
+    stockName: string
+    period: string
+    revenue: number
+    grossProfit: number
+    grossProfitRatio: number
+    operatingExpenses: number
+    operatingExpensesRatio: number
+    operatingIncome: number
+    operatingIncomeRatio: number
+    netIncome: number
+    otherIncome: number
+  } | null
+  balanceSheet: {
+    stockCode: string
+    stockName: string
+    period: string
+    totalAssets: number
+    totalAssetsRatio: number
+    shareholdersEquity: number
+    shareholdersEquityRatio: number
+    currentAssets: number
+    currentAssetsRatio: number
+    currentLiabilities: number
+    currentLiabilitiesRatio: number
+  } | null
+  cashFlow: {
+    stockCode: string
+    stockName: string
+    period: string
+    operatingCashFlow: number
+    investingCashFlow: number
+    investingCashFlowRatio: number
+    financingCashFlow: number
+    financingCashFlowRatio: number
+    freeCashFlow: number
+    freeCashFlowRatio: number
+    netCashFlow: number
+    netCashFlowRatio: number
+  } | null
+}
+
+// 獲取財務報表數據
+export async function getFinancialStatements(stockCode: string): Promise<FinancialStatementsResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/stock/financial/${stockCode}`)
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`無法獲取股票 ${stockCode} 的財務報表數據: ${errorText}`)
+    }
+    return response.json()
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('無法連接到後端服務器，請確認後端是否正在運行 (http://localhost:8000)')
+    }
+    throw error
+  }
+}
+

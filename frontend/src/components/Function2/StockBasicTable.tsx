@@ -39,15 +39,15 @@ function StockBasicTable({ data, selectedStockCode, onRowClick, onEdit, onDelete
 
   const formatNumber = (num: number) => {
     if (num >= 100000000) {
-      return (num / 100000000).toFixed(2) + '億'
+      return (num / 100000000).toFixed(1) + '億'
     } else if (num >= 10000) {
-      return (num / 10000).toFixed(2) + '萬'
+      return (num / 10000).toFixed(1) + '萬'
     }
     return num.toLocaleString('zh-TW')
   }
 
   const formatPercent = (num: number) => {
-    return num.toFixed(2) + '%'
+    return num.toFixed(1) + '%'
   }
 
   return (
@@ -156,17 +156,17 @@ function StockBasicTable({ data, selectedStockCode, onRowClick, onEdit, onDelete
                   <td>{item.market || '-'}</td>
                   <td>{item.group || '-'}</td>
                   <td className="volume">{item.employees ? formatNumber(item.employees) : '-'}</td>
-                  <td className="price">{item.dividend ? item.dividend.toFixed(2) : '-'}</td>
+                  <td className="price">{item.dividend ? item.dividend.toFixed(1) : '-'}</td>
                   <td className="yield">{item.yield ? formatPercent(item.yield) : '-'}</td>
-                  <td className="price">{item.dividendPerShare ? item.dividendPerShare.toFixed(2) : '-'}</td>
-                  <td className="price">{item.closingPrice ? item.closingPrice.toFixed(2) : '-'}</td>
+                  <td className="price">{item.dividendPerShare ? item.dividendPerShare.toFixed(1) : '-'}</td>
+                  <td className="price">{item.closingPrice ? item.closingPrice.toFixed(1) : '-'}</td>
                   <td>{item.exDividendDate || '-'}</td>
-                  <td className="pe">{item.peRatio ? item.peRatio.toFixed(2) : '-'}</td>
+                  <td className="pe">{item.peRatio ? item.peRatio.toFixed(1) : '-'}</td>
                   <td className="yield">{item.equityRatio ? formatPercent(item.equityRatio) : '-'}</td>
                   <td className={item.industryChange && item.industryChange >= 0 ? 'positive' : 'negative'}>
-                    {item.industryChange ? (item.industryChange >= 0 ? '+' : '') + item.industryChange.toFixed(2) : '-'}
+                    {item.industryChange ? (item.industryChange >= 0 ? '+' : '') + item.industryChange.toFixed(1) : '-'}
                   </td>
-                  <td className="eps">{item.industryEPS ? item.industryEPS.toFixed(2) : '-'}</td>
+                  <td className="eps">{item.industryEPS ? item.industryEPS.toFixed(1) : '-'}</td>
                   <td className="yield">{item.industryYield ? formatPercent(item.industryYield) : '-'}</td>
                   <td className="actions" onClick={(e) => e.stopPropagation()}>
                     {onEdit && (

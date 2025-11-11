@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { ComposedChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, Customized } from 'recharts'
 import './StockChart.css'
 
@@ -17,9 +18,30 @@ interface StockChartProps {
   marketIndexData?: MarketIndexData[]
 }
 
+interface ChartDataPoint {
+  date: string
+  open: number
+  high: number
+  low: number
+  close: number
+  成交量: number
+  isUp: boolean
+}
+
+interface CustomizedComponentProps {
+  xAxis?: {
+    scale: (value: string) => number | undefined
+  }
+  yAxis?: {
+    scale: (value: number) => number | undefined
+  }
+  data?: ChartDataPoint[]
+  width?: number
+}
+
 function StockChart({ marketIndexData = [] }: StockChartProps) {
-  // 格式化數據：準備K線圖數據
-  const formatChartData = marketIndexData.map((item) => {
+  // 優化：使用 useMemo 緩存格式化數據
+  const formatChartData = useMemo(() => marketIndexData.map((item) => {
     // 提取日期（例如：2025-11-10 -> 11/10）
     let dateLabel = item.date
     try {
@@ -43,29 +65,31 @@ function StockChart({ marketIndexData = [] }: StockChartProps) {
       成交量: item.volume || 0,
       isUp: (item.closePrice || 0) >= (item.openPrice || 0),
     }
-  })
+  }), [marketIndexData])
   
-  // 計算 Y 軸範圍（用於K線圖）
-  const allPrices = formatChartData.flatMap(d => [d.high, d.low]).filter(p => p > 0)
-  if (allPrices.length === 0) {
+  // 優化：使用 useMemo 緩存 Y 軸範圍計算
+  const { yAxisMin, yAxisMax, hasData } = useMemo(() => {
+    const allPrices = formatChartData.flatMap(d => [d.high, d.low]).filter(p => p > 0)
+    if (allPrices.length === 0) {
+      return { yAxisMin: 0, yAxisMax: 0, hasData: false }
+    }
+    const minPrice = Math.min(...allPrices)
+    const maxPrice = Math.max(...allPrices)
+    const priceRange = maxPrice - minPrice
+    return {
+      yAxisMin: Math.floor((minPrice - priceRange * 0.05) / 100) * 100,
+      yAxisMax: Math.ceil((maxPrice + priceRange * 0.05) / 100) * 100,
+      hasData: true
+    }
+  }, [formatChartData])
+
+  if (!hasData || formatChartData.length === 0) {
     return (
       <div className="stock-chart-container">
         <h3>大盤走勢圖（日K線）</h3>
-        <div className="chart-loading">無大盤數據可顯示</div>
-      </div>
-    )
-  }
-  const minPrice = Math.min(...allPrices)
-  const maxPrice = Math.max(...allPrices)
-  const priceRange = maxPrice - minPrice
-  const yAxisMin = Math.floor((minPrice - priceRange * 0.05) / 100) * 100
-  const yAxisMax = Math.ceil((maxPrice + priceRange * 0.05) / 100) * 100
-
-  if (formatChartData.length === 0) {
-    return (
-      <div className="stock-chart-container">
-        <h3>大盤走勢圖</h3>
-        <div className="chart-loading">載入大盤數據中...</div>
+        <div className="chart-loading">
+          {formatChartData.length === 0 ? '載入大盤數據中...' : '無大盤數據可顯示'}
+        </div>
       </div>
     )
   }
@@ -85,54 +109,55 @@ function StockChart({ marketIndexData = [] }: StockChartProps) {
         >
           <CartesianGrid 
             strokeDasharray="3 3" 
-            stroke="#d0d0d0" 
+            stroke="rgba(77, 208, 225, 0.15)" 
             horizontal={true}
             vertical={true}
             opacity={0.5}
           />
           <XAxis 
             dataKey="date" 
-            stroke="#666"
-            tick={{ fill: '#666', fontSize: 12 }}
+            stroke="#E0E8FF"
+            tick={{ fill: '#E0E8FF', fontSize: 12 }}
             height={40}
-            axisLine={{ stroke: '#999' }}
-            tickLine={{ stroke: '#999' }}
+            axisLine={{ stroke: 'rgba(77, 208, 225, 0.3)' }}
+            tickLine={{ stroke: 'rgba(77, 208, 225, 0.3)' }}
           />
           <YAxis 
             yAxisId="left"
-            stroke="#666"
-            tick={{ fill: '#666', fontSize: 12 }}
+            stroke="#E0E8FF"
+            tick={{ fill: '#E0E8FF', fontSize: 12 }}
             domain={[yAxisMin, yAxisMax]}
-            tickFormatter={(value) => value.toFixed(2)}
+            tickFormatter={(value) => value.toFixed(1)}
             width={80}
-            axisLine={{ stroke: '#999' }}
-            tickLine={{ stroke: '#999' }}
-            label={{ value: '指數', angle: -90, position: 'insideLeft', fill: '#666' }}
+            axisLine={{ stroke: 'rgba(77, 208, 225, 0.3)' }}
+            tickLine={{ stroke: 'rgba(77, 208, 225, 0.3)' }}
+            label={{ value: '指數', angle: -90, position: 'insideLeft', fill: '#E0E8FF' }}
           />
           <YAxis 
             yAxisId="right"
             orientation="right"
-            stroke="#666"
-            tick={{ fill: '#666', fontSize: 12 }}
+            stroke="#E0E8FF"
+            tick={{ fill: '#E0E8FF', fontSize: 12 }}
             width={60}
-            axisLine={{ stroke: '#999' }}
-            tickLine={{ stroke: '#999' }}
+            axisLine={{ stroke: 'rgba(77, 208, 225, 0.3)' }}
+            tickLine={{ stroke: 'rgba(77, 208, 225, 0.3)' }}
           />
           <Tooltip 
             contentStyle={{ 
-              backgroundColor: 'rgba(255, 255, 255, 0.98)', 
-              border: '1px solid #ccc',
+              backgroundColor: 'rgba(10, 15, 36, 0.95)', 
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(77, 208, 225, 0.3)',
               borderRadius: '6px',
-              color: '#333',
+              color: '#E0E8FF',
               padding: '10px 14px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+              boxShadow: '0 0 15px rgba(77, 208, 225, 0.2)'
             }}
             formatter={(value: number, name: string) => {
               if (name === '開盤' || name === '最高' || name === '最低' || name === '收盤') {
-                return [value.toFixed(2), name]
+                return [value.toFixed(1), name]
               }
               if (name === '成交量') {
-                return [(value / 100000000).toFixed(2) + '億', '成交量']
+                return [(value / 100000000).toFixed(1) + '億', '成交量']
               }
               return [value, name]
             }}
@@ -142,27 +167,28 @@ function StockChart({ marketIndexData = [] }: StockChartProps) {
                 const data = payload[0].payload
                 return (
                   <div style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.98)',
-                    border: '1px solid #ccc',
+                    backgroundColor: 'rgba(10, 15, 36, 0.95)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(77, 208, 225, 0.3)',
                     borderRadius: '6px',
                     padding: '10px 14px',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                    boxShadow: '0 0 15px rgba(77, 208, 225, 0.2)'
                   }}>
-                    <p style={{ fontWeight: 600, marginBottom: '8px' }}>{data.date}</p>
-                    <p style={{ color: data.isUp ? '#ef4444' : '#22c55e', margin: '4px 0' }}>
-                      開盤: {data.open.toFixed(2)}
+                    <p style={{ fontWeight: 600, marginBottom: '8px', color: '#E0E8FF' }}>{data.date}</p>
+                    <p style={{ color: data.isUp ? '#FF3366' : '#00FF88', margin: '4px 0' }}>
+                      開盤: {data.open.toFixed(1)}
                     </p>
-                    <p style={{ color: '#333', margin: '4px 0' }}>
-                      最高: {data.high.toFixed(2)}
+                    <p style={{ color: '#E0E8FF', margin: '4px 0' }}>
+                      最高: {data.high.toFixed(1)}
                     </p>
-                    <p style={{ color: '#333', margin: '4px 0' }}>
-                      最低: {data.low.toFixed(2)}
+                    <p style={{ color: '#E0E8FF', margin: '4px 0' }}>
+                      最低: {data.low.toFixed(1)}
                     </p>
-                    <p style={{ color: data.isUp ? '#ef4444' : '#22c55e', margin: '4px 0' }}>
-                      收盤: {data.close.toFixed(2)}
+                    <p style={{ color: data.isUp ? '#FF3366' : '#00FF88', margin: '4px 0' }}>
+                      收盤: {data.close.toFixed(1)}
                     </p>
-                    <p style={{ color: '#666', margin: '4px 0', marginTop: '8px' }}>
-                      成交量: {(data.成交量 / 100000000).toFixed(2)}億
+                    <p style={{ color: 'rgba(224, 232, 255, 0.8)', margin: '4px 0', marginTop: '8px' }}>
+                      成交量: {(data.成交量 / 100000000).toFixed(1)}億
                     </p>
                   </div>
                 )
@@ -172,22 +198,22 @@ function StockChart({ marketIndexData = [] }: StockChartProps) {
           />
           <Legend 
             wrapperStyle={{ 
-              color: '#666', 
+              color: '#E0E8FF', 
               paddingTop: '15px',
               fontSize: '13px'
             }}
           />
           {/* 自定義K線繪製 */}
           <Customized 
-            component={(props: any) => {
+            component={(props: CustomizedComponentProps) => {
               const { xAxis, yAxis, data, width } = props
-              if (!xAxis || !yAxis || !data) return null
+              if (!xAxis || !yAxis || !data || !width) return null
               
               const barWidth = (width / data.length) * 0.6
               
               return (
                 <g>
-                  {data.map((entry: any, index: number) => {
+                  {data.map((entry: ChartDataPoint, index: number) => {
                     const x = xAxis.scale(entry.date) || 0
                     const openY = yAxis.scale(entry.open) || 0
                     const closeY = yAxis.scale(entry.close) || 0

@@ -14,11 +14,15 @@
 
 .table-wrapper {
   overflow-x: auto;
-  background: var(--bg-card);
+  background: rgba(30, 42, 74, 0.3);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: var(--radius-lg);
   padding: var(--spacing-md);
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-md);
+  position: relative;
+  z-index: 1;
 }
 
 .daily-trade-table {
@@ -116,6 +120,41 @@
   color: var(--success);
 }
 
+.volume.editable,
+.volume.investor.editable,
+.volume.chips.editable,
+.volume.buy.editable,
+.volume.sell.editable {
+  cursor: pointer;
+  position: relative;
+  transition: all var(--transition-base);
+}
+
+.volume.editable:hover,
+.volume.investor.editable:hover,
+.volume.chips.editable:hover,
+.volume.buy.editable:hover,
+.volume.sell.editable:hover {
+  background: rgba(77, 208, 225, 0.1);
+  border-radius: var(--radius-sm);
+}
+
+.volume.editable::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 1px dashed transparent;
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+}
+
+.volume.editable:hover::after {
+  border-color: var(--primary-color);
+}
+
 .daily-trade-table .change .positive {
   color: var(--error);
   font-weight: 600;
@@ -136,13 +175,14 @@
 }
 
 .filter-badge {
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  color: var(--bg-primary);
+  font-weight: 600;
   padding: var(--spacing-xs) var(--spacing-md);
   border-radius: var(--radius-sm);
   font-size: 0.75rem;
-  font-weight: 500;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-neon);
+  text-shadow: 0 0 8px rgba(77, 208, 225, 0.3);
 }
 
 @media (max-width: 768px) {

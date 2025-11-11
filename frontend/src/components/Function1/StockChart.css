@@ -1,13 +1,17 @@
 @import '../../styles/design-system.css';
 
 .stock-chart-container {
-  background: #f0f0f0;
+  background: rgba(30, 42, 74, 0.3);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: var(--radius-lg);
   padding: 24px;
   margin-bottom: var(--spacing-xl);
-  border: 1px solid #ddd;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md), 0 0 15px rgba(77, 208, 225, 0.08);
   animation: fadeIn var(--transition-base);
+  position: relative;
+  z-index: 1;
 }
 
 .stock-chart-container h3 {

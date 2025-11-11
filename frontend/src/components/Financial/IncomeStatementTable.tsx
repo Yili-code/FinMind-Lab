@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { IncomeStatementItem } from '../../types/financial'
 import './FinancialTable.css'
 
@@ -10,21 +11,53 @@ interface IncomeStatementTableProps {
 }
 
 function IncomeStatementTable({ data, selectedStockCode, onRowClick, onEdit, onDelete }: IncomeStatementTableProps) {
-  const filteredData = selectedStockCode
+  const [sortConfig, setSortConfig] = useState<{ key: keyof IncomeStatementItem; direction: 'asc' | 'desc' } | null>(null)
+
+  const handleSort = (key: keyof IncomeStatementItem) => {
+    let direction: 'asc' | 'desc' = 'asc'
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc'
+    }
+    setSortConfig({ key, direction })
+  }
+
+  let filteredData = selectedStockCode
     ? data.filter(item => item.stockCode === selectedStockCode)
     : data
 
+  // 排序數據
+  if (sortConfig) {
+    filteredData = [...filteredData].sort((a, b) => {
+      const aValue = a[sortConfig.key]
+      const bValue = b[sortConfig.key]
+      
+      if (aValue == null && bValue == null) return 0
+      if (aValue == null) return 1
+      if (bValue == null) return -1
+      
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue
+      }
+      
+      const aStr = String(aValue)
+      const bStr = String(bValue)
+      return sortConfig.direction === 'asc' 
+        ? aStr.localeCompare(bStr)
+        : bStr.localeCompare(aStr)
+    })
+  }
+
   const formatNumber = (num: number) => {
     if (num >= 100000000) {
-      return (num / 100000000).toFixed(2) + '億'
+      return (num / 100000000).toFixed(1) + '億'
     } else if (num >= 10000) {
-      return (num / 10000).toFixed(2) + '萬'
+      return (num / 10000).toFixed(1) + '萬'
     }
     return num.toLocaleString('zh-TW')
   }
 
   const formatPercent = (num: number) => {
-    return num.toFixed(2) + '%'
+    return num.toFixed(1) + '%'
   }
 
   return (
@@ -34,17 +67,39 @@ function IncomeStatementTable({ data, selectedStockCode, onRowClick, onEdit, onD
         <table className="financial-table">
           <thead>
             <tr>
-              <th>代號</th>
-              <th>年/季</th>
-              <th>營業收入</th>
-              <th>營業毛利</th>
-              <th>比重</th>
-              <th>營業費用</th>
-              <th>比重</th>
-              <th>營業利益</th>
-              <th>比重</th>
-              <th>稅後淨利</th>
-              <th>其他損益</th>
+              <th onClick={() => handleSort('stockCode')}>
+                代號 {sortConfig?.key === 'stockCode' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('period')}>
+                年/季 {sortConfig?.key === 'period' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('revenue')}>
+                營業收入 {sortConfig?.key === 'revenue' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('grossProfit')}>
+                營業毛利 {sortConfig?.key === 'grossProfit' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('grossProfitRatio')} style={{ cursor: 'pointer' }}>
+                比重 {sortConfig?.key === 'grossProfitRatio' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('operatingExpenses')}>
+                營業費用 {sortConfig?.key === 'operatingExpenses' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('operatingExpensesRatio')} style={{ cursor: 'pointer' }}>
+                比重 {sortConfig?.key === 'operatingExpensesRatio' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('operatingIncome')}>
+                營業利益 {sortConfig?.key === 'operatingIncome' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('operatingIncomeRatio')} style={{ cursor: 'pointer' }}>
+                比重 {sortConfig?.key === 'operatingIncomeRatio' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('netIncome')}>
+                稅後淨利 {sortConfig?.key === 'netIncome' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
+              <th onClick={() => handleSort('otherIncome')}>
+                其他損益 {sortConfig?.key === 'otherIncome' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+              </th>
               {(onEdit || onDelete) && <th>操作</th>}
             </tr>
           </thead>
