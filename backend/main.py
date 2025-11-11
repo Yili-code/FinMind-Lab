@@ -36,6 +36,7 @@ logging.getLogger('uvicorn').setLevel(logging.WARNING)
 logging.getLogger('uvicorn.access').setLevel(logging.WARNING)
 logging.getLogger('fastapi').setLevel(logging.WARNING)
 
+# 建立 FastAPI 實例
 app = FastAPI(title="FinMind Lab API")
 
 # 允許前端存取後端 API: 加入 CORS 中介層設定
@@ -103,9 +104,9 @@ async def submit_contact(form: ContactForm):
 
 # ========== 股票數據 API ==========
 
+# 獲取股票基本資訊
 @app.get("/api/stock/info/{stock_code}")
 async def get_stock_information(stock_code: str):
-	"""獲取股票基本資訊"""
 	try:
 		info = get_stock_info(stock_code)
 		if info is None:
@@ -114,13 +115,13 @@ async def get_stock_information(stock_code: str):
 	except Exception as e:
 		raise HTTPException(status_code=500, detail=f"獲取股票資訊時發生錯誤: {str(e)}")
 
+# 獲取股票盤中即時數據（成交明細）
 @app.get("/api/stock/intraday/{stock_code}")
 async def get_stock_intraday(
 	stock_code: str,
 	period: str = Query("1d", description="時間週期: 1d, 5d, 1mo 等"),
 	interval: str = Query("1m", description="時間間隔: 1m, 5m, 15m, 1h, 1d 等")
 ):
-	"""獲取股票盤中即時數據（成交明細）"""
 	try:
 		data = get_intraday_data(stock_code, period=period, interval=interval)
 		return {
@@ -131,12 +132,12 @@ async def get_stock_intraday(
 	except Exception as e:
 		raise HTTPException(status_code=500, detail=f"獲取盤中數據時發生錯誤: {str(e)}")
 
+# 獲取股票日交易檔數據
 @app.get("/api/stock/daily/{stock_code}")
 async def get_stock_daily(
 	stock_code: str,
 	days: int = Query(5, description="獲取最近幾天的數據", ge=1, le=30)
 ):
-	"""獲取股票日交易檔數據"""
 	try:
 		data = get_daily_trade_data(stock_code, days=days)
 		return {
@@ -147,11 +148,11 @@ async def get_stock_daily(
 	except Exception as e:
 		raise HTTPException(status_code=500, detail=f"獲取日交易數據時發生錯誤: {str(e)}")
 
+# 批量獲取多個股票的基本資訊
 @app.get("/api/stock/batch")
 async def get_multiple_stocks(
 	stock_codes: str = Query(..., description="股票代號，用逗號分隔，例如: 2330,2317")
 ):
-	"""批量獲取多個股票的基本資訊"""
 	try:
 		codes = [code.strip() for code in stock_codes.split(',')]
 		results = []
@@ -166,12 +167,12 @@ async def get_multiple_stocks(
 	except Exception as e:
 		raise HTTPException(status_code=500, detail=f"批量獲取股票資訊時發生錯誤: {str(e)}")
 
+# 獲取大盤指數數據
 @app.get("/api/stock/market-index")
 async def get_market_index(
 	index_code: str = Query("^TWII", description="指數代號，預設為 ^TWII (加權指數)"),
 	days: int = Query(5, description="獲取最近幾天的數據", ge=1, le=30)
 ):
-	"""獲取大盤指數數據"""
 	try:
 		data = get_market_index_data(index_code, days=days)
 		return {
@@ -182,9 +183,9 @@ async def get_market_index(
 	except Exception as e:
 		raise HTTPException(status_code=500, detail=f"獲取大盤指數數據時發生錯誤: {str(e)}")
 
+# 獲取股票財務報表數據（損益表、資產負債表、現金流量表）
 @app.get("/api/stock/financial/{stock_code}")
 async def get_stock_financial(stock_code: str):
-	"""獲取股票財務報表數據（損益表、資產負債表、現金流量表）"""
 	try:
 		data = get_financial_statements(stock_code)
 		if data is None:
