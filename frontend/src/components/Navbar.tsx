@@ -16,12 +16,12 @@ function Navbar() {
           </li>
           <li className="navbar-item">
             <Link to="/function2" className="navbar-link">
-              Response Dashboard
+              Stock Management
             </Link>
           </li>
           <li className="navbar-item">
             <Link to="/financial-reports" className="navbar-link">
-              財務報表
+              Financial Reports
             </Link>
           </li>
         </ul>

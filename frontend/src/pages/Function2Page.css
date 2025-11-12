@@ -20,12 +20,8 @@
   font-size: 2.5rem;
   font-weight: 700;
   margin-bottom: var(--spacing-md);
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 0 0 20px rgba(77, 208, 225, 0.3);
-  filter: drop-shadow(0 0 8px rgba(77, 208, 225, 0.2));
+  color: var(--primary-color);
+  text-shadow: 0 0 12px rgba(77, 208, 225, 0.2);
   position: relative;
   z-index: 1;
 }
@@ -46,7 +42,7 @@
 
 .add-btn {
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  background: var(--primary-color);
   color: var(--bg-primary);
   font-weight: 600;
   border: none;
@@ -54,16 +50,16 @@
   font-size: 1rem;
   cursor: pointer;
   transition: all var(--transition-base);
-  box-shadow: var(--shadow-neon);
-  text-shadow: 0 0 8px rgba(77, 208, 225, 0.3);
+  box-shadow: var(--shadow-sm);
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-sm);
 }
 
 .add-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+  background: var(--primary-hover);
 }
 
 .filter-control {
@@ -71,13 +67,11 @@
   align-items: center;
   gap: var(--spacing-md);
   padding: var(--spacing-md) var(--spacing-lg);
-  background: rgba(30, 42, 74, 0.4);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(20, 30, 50, 0.85);
   border-radius: var(--radius-lg);
   border-left: 4px solid var(--primary-color);
   flex: 1;
-  box-shadow: var(--shadow-md), 0 0 12px rgba(77, 208, 225, 0.15);
+  box-shadow: var(--shadow-md);
   position: relative;
   z-index: 1;
 }
@@ -100,7 +94,7 @@
 .clear-filter-btn {
   margin-left: auto;
   padding: var(--spacing-sm) var(--spacing-md);
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  background: var(--primary-color);
   color: var(--bg-primary);
   font-weight: 600;
   border: none;
@@ -108,13 +102,13 @@
   cursor: pointer;
   font-size: 0.9rem;
   transition: all var(--transition-base);
-  box-shadow: var(--shadow-neon);
-  text-shadow: 0 0 8px rgba(77, 208, 225, 0.3);
+  box-shadow: var(--shadow-sm);
 }
 
 .clear-filter-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+  background: var(--primary-hover);
 }
 
 .function2-content {
@@ -129,9 +123,7 @@
 }
 
 .info-card {
-  background: rgba(30, 42, 74, 0.3);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(20, 30, 50, 0.85);
   padding: var(--spacing-lg);
   border-radius: var(--radius-lg);
   border-top: 3px solid var(--primary-color);
@@ -143,10 +135,10 @@
 }
 
 .info-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-primary);
-  border-color: var(--primary-color);
-  background: rgba(30, 42, 74, 0.5);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-border);
+  background: rgba(25, 35, 55, 0.9);
 }
 
 .info-card h4 {

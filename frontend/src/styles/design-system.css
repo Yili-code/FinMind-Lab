@@ -1,51 +1,53 @@
-/* Design System - Cyber Blue / Neo Tech 風格 */
+/* Design System - 金融感色調 */
 
 :root {
-  /* 主色調 - 柔和的電光藍系 */
-  --primary-color: #4DD0E1; /* 柔和的青藍色 */
-  --primary-hover: #26C6DA;
-  --primary-light: rgba(77, 208, 225, 0.12);
-  --primary-border: rgba(77, 208, 225, 0.3);
+  /* 主色調 - 金融感深藍 */
+  --primary-color: #1E3A8A; /* 深藍 */
+  --primary-hover: #1E40AF;
+  --primary-light: rgba(30, 58, 138, 0.15);
+  --primary-border: rgba(30, 58, 138, 0.4);
   
-  /* 次要強調色 */
-  --secondary-color: #64B5F6; /* 柔和的藍色 */
-  --secondary-hover: #42A5F5;
-  --secondary-light: rgba(100, 181, 246, 0.12);
+  /* 輔助色 - 亮藍、金色 */
+  --secondary-color: #3B82F6; /* 亮藍 */
+  --secondary-hover: #2563EB;
+  --secondary-light: rgba(59, 130, 246, 0.15);
+  --accent-gold: #F59E0B; /* 金色 */
+  --accent-gold-light: rgba(245, 158, 11, 0.15);
   
-  /* 背景色 - 深藍黑系 */
-  --bg-primary: #0A0F24; /* 深藍黑，主背景色 */
-  --bg-secondary: rgba(30, 42, 74, 0.6); /* 深藍灰，半透明 */
-  --bg-tertiary: rgba(30, 42, 74, 0.4);
-  --bg-card: rgba(30, 42, 74, 0.3); /* 玻璃效果卡片 */
-  --bg-hover: rgba(77, 208, 225, 0.08);
+  /* 背景色 - 深色系 */
+  --bg-primary: #0F172A; /* 深藍黑 */
+  --bg-secondary: rgba(15, 23, 42, 0.8);
+  --bg-tertiary: rgba(30, 41, 59, 0.6);
+  --bg-card: rgba(30, 41, 59, 0.7);
+  --bg-hover: rgba(30, 58, 138, 0.1);
   
-  /* 文字顏色 - 微藍白字 */
-  --text-primary: #E0E8FF; /* 微藍白字 */
-  --text-secondary: rgba(224, 232, 255, 0.8);
-  --text-tertiary: rgba(224, 232, 255, 0.6);
-  --text-muted: rgba(224, 232, 255, 0.5);
+  /* 文字顏色 - 高對比 */
+  --text-primary: #F8FAFC; /* 亮白 */
+  --text-secondary: rgba(248, 250, 252, 0.85);
+  --text-tertiary: rgba(248, 250, 252, 0.7);
+  --text-muted: rgba(248, 250, 252, 0.6);
   
-  /* 邊框 - 深藍灰 */
-  --border-color: #1E2A4A; /* 深藍灰 */
-  --border-hover: rgba(77, 208, 225, 0.4);
+  /* 邊框 */
+  --border-color: #1E293B;
+  --border-hover: rgba(30, 58, 138, 0.5);
   
-  /* 狀態顏色 - 保持藍色調 */
-  --success: #00FF88;
-  --success-light: rgba(0, 255, 136, 0.15);
-  --error: #FF3366;
-  --error-light: rgba(255, 51, 102, 0.15);
-  --warning: #FFAA00;
-  --warning-light: rgba(255, 170, 0, 0.15);
-  --info: #4DD0E1;
-  --info-light: rgba(77, 208, 225, 0.12);
+  /* 狀態顏色 - 金融感 */
+  --success: #10B981; /* 亮綠 */
+  --success-light: rgba(16, 185, 129, 0.15);
+  --error: #EF4444; /* 亮紅 */
+  --error-light: rgba(239, 68, 68, 0.15);
+  --warning: #F59E0B;
+  --warning-light: rgba(245, 158, 11, 0.15);
+  --info: #3B82F6;
+  --info-light: rgba(59, 130, 246, 0.15);
   
-  /* 陰影 - 柔和的藍光效果 */
-  --shadow-sm: 0 2px 8px rgba(77, 208, 225, 0.08);
-  --shadow-md: 0 4px 16px rgba(77, 208, 225, 0.15);
-  --shadow-lg: 0 8px 32px rgba(77, 208, 225, 0.2);
-  --shadow-primary: 0 0 15px rgba(77, 208, 225, 0.25), 0 4px 20px rgba(77, 208, 225, 0.15);
-  --shadow-primary-hover: 0 0 20px rgba(77, 208, 225, 0.35), 0 8px 30px rgba(77, 208, 225, 0.2);
-  --shadow-neon: 0 0 8px rgba(77, 208, 225, 0.3), 0 0 15px rgba(77, 208, 225, 0.2), 0 0 25px rgba(77, 208, 225, 0.15);
+  /* 陰影 - 金融感陰影 */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.4), 0 3px 6px rgba(0, 0, 0, 0.3);
+  --shadow-primary: 0 4px 12px rgba(30, 58, 138, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+  --shadow-primary-hover: 0 6px 16px rgba(30, 58, 138, 0.4), 0 3px 6px rgba(0, 0, 0, 0.3);
+  --shadow-neon: 0 2px 8px rgba(30, 58, 138, 0.2);
   
   /* 間距 */
   --spacing-xs: 0.25rem;
@@ -72,11 +74,9 @@
   --font-mono: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Courier New', monospace;
 }
 
-/* 通用卡片樣式 - Glassmorphism 效果 */
+/* 通用卡片樣式 - 更真實的設計 */
 .card {
-  background: var(--bg-card);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(20, 30, 50, 0.85);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   padding: var(--spacing-xl);
@@ -85,10 +85,10 @@
 }
 
 .card:hover {
-  border-color: var(--primary-color);
-  box-shadow: var(--shadow-primary);
-  transform: translateY(-2px);
-  background: rgba(30, 42, 74, 0.5);
+  border-color: var(--primary-border);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-1px);
+  background: rgba(25, 35, 55, 0.9);
 }
 
 /* 通用按鈕樣式 */
@@ -107,17 +107,16 @@
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  background: var(--primary-color);
   color: var(--bg-primary);
   font-weight: 600;
-  box-shadow: var(--shadow-neon);
-  text-shadow: 0 0 8px rgba(77, 208, 225, 0.3);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-primary-hover);
-  background: linear-gradient(135deg, var(--primary-hover) 0%, var(--secondary-hover) 100%);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-primary);
+  background: var(--primary-hover);
 }
 
 .btn-secondary {
@@ -179,14 +178,9 @@
   border: 1px solid var(--primary-border);
 }
 
-/* 漸層文字 - 柔和的藍漸層 */
+/* 漸層文字 - 更節制的使用 */
 .gradient-text {
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 0 0 20px rgba(77, 208, 225, 0.3);
-  filter: drop-shadow(0 0 8px rgba(77, 208, 225, 0.2));
+  color: var(--primary-color);
 }
 
 /* 頁面容器 */
@@ -206,8 +200,8 @@
   right: 0;
   bottom: 0;
   background-image: 
-    linear-gradient(rgba(77, 208, 225, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(77, 208, 225, 0.02) 1px, transparent 1px);
+    linear-gradient(rgba(30, 58, 138, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30, 58, 138, 0.03) 1px, transparent 1px);
   background-size: 50px 50px;
   pointer-events: none;
   z-index: 0;
@@ -228,12 +222,7 @@
   font-size: 2.5rem;
   font-weight: 700;
   margin-bottom: var(--spacing-md);
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 0 0 20px rgba(77, 208, 225, 0.3);
-  filter: drop-shadow(0 0 8px rgba(77, 208, 225, 0.2));
+  color: var(--text-primary);
   position: relative;
   z-index: 1;
 }
@@ -244,11 +233,9 @@
   line-height: 1.6;
 }
 
-/* 表格樣式增強 - Glassmorphism */
+/* 表格樣式增強 - 更真實的設計 */
 .table-container {
-  background: var(--bg-card);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(20, 30, 50, 0.85);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-color);
   overflow: hidden;
@@ -288,34 +275,26 @@
   animation: slideIn var(--transition-base);
 }
 
-/* Glassmorphism 工具類 */
+/* 簡化的卡片工具類 */
 .glass {
-  background: rgba(30, 42, 74, 0.3);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(77, 208, 225, 0.15);
+  background: rgba(20, 30, 50, 0.85);
+  border: 1px solid var(--border-color);
   box-shadow: var(--shadow-md);
 }
 
 .glass:hover {
-  background: rgba(30, 42, 74, 0.5);
-  border-color: var(--primary-color);
-  box-shadow: var(--shadow-primary);
+  background: rgba(25, 35, 55, 0.9);
+  border-color: var(--primary-border);
+  box-shadow: var(--shadow-lg);
 }
 
-/* 柔和的藍光效果 */
+/* 更節制的發光效果 */
 .neon-glow {
-  text-shadow: 
-    0 0 4px rgba(77, 208, 225, 0.4),
-    0 0 8px rgba(77, 208, 225, 0.3),
-    0 0 12px rgba(77, 208, 225, 0.2);
+  text-shadow: 0 0 6px rgba(30, 58, 138, 0.3);
 }
 
 .neon-border {
-  box-shadow: 
-    0 0 4px rgba(77, 208, 225, 0.3),
-    0 0 8px rgba(77, 208, 225, 0.2),
-    inset 0 0 4px rgba(77, 208, 225, 0.2);
+  box-shadow: 0 0 4px rgba(30, 58, 138, 0.2);
 }
 
 /* 響應式 */

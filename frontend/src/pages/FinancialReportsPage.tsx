@@ -237,7 +237,7 @@ function FinancialReportsPage() {
     <div className="financial-reports-page">
       <div className="financial-reports-container">
         <div className="financial-reports-header">
-          <h1>財務報表</h1>
+          <h1>Financial Reports</h1>
           <p className="financial-reports-description">
             使用 yfinance 獲取股票財務報表數據 - 輸入股票編號即可加入群組進行分析
           </p>

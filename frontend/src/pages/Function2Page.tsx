@@ -68,7 +68,7 @@ function Function2Page() {
     <div className="function2-page">
       <div className="function2-container">
         <div className="function2-header">
-          <h1>Response Dashboard</h1>
+          <h1>Stock Management</h1>
           <p className="function2-description">
             股票基本檔管理與財務報表查詢 - 管理股票基本資訊
           </p>

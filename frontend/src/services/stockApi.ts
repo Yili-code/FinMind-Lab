@@ -157,9 +157,33 @@ export async function getMultipleStocks(stockCodes: string[]): Promise<StockInfo
 // 測試後端連接
 export async function testBackendConnection(): Promise<boolean> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/hello`)
-    return response.ok
-  } catch {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 3000) // 3秒超時
+    
+    const response = await fetch(`${API_BASE_URL}/api/hello`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+      signal: controller.signal
+    })
+    
+    clearTimeout(timeoutId)
+    
+    // 檢查是否返回正確的 JSON 響應
+    if (response.ok) {
+      const data = await response.json()
+      // 檢查是否是 FinMind Lab 的後端（返回特定格式）
+      return data && (data.message === 'Hello from FastAPI' || data.message)
+    }
+    return false
+  } catch (error) {
+    // 連接失敗或超時
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.error('後端連接超時（3秒）')
+    } else {
+      console.error('後端連接測試失敗:', error)
+    }
     return false
   }
 }

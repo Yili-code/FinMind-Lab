@@ -15,7 +15,17 @@ function Function1Page() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [stockCodeInput, setStockCodeInput] = useState('2330,2317')
-  const [selectedDate, setSelectedDate] = useState<string>('')
+  
+  // 獲取今天的日期（YYYY-MM-DD 格式）
+  const getTodayDate = () => {
+    const today = new Date()
+    const year = today.getFullYear()
+    const month = String(today.getMonth() + 1).padStart(2, '0')
+    const day = String(today.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+  
+  const [selectedDate, setSelectedDate] = useState<string>(getTodayDate())
   const [days, setDays] = useState<number>(5)
 
   // 載入股票數據 - 優化：並行請求
@@ -26,7 +36,7 @@ function Function1Page() {
     // 先測試後端連接
     const isConnected = await testBackendConnection()
     if (!isConnected) {
-      setError('無法連接到後端服務器。請確認：\n1. 後端服務是否正在運行 (http://localhost:8000)\n2. 運行命令: cd backend && python -m uvicorn main:app --reload --port 8000')
+      setError('無法連接到 FinMind Lab 後端服務器。\n\n請確認：\n1. 端口 8000 是否被其他專案占用\n2. 後端服務是否正在運行\n\n啟動後端的方法：\n• Windows: 在 backend 目錄執行 start_server.bat\n• Linux/Mac: 在 backend 目錄執行 ./start_server.sh\n• 手動啟動: cd backend && python -m uvicorn main:app --reload --port 8000\n\n如果端口 8000 被占用，請先關閉占用該端口的程序。')
       setLoading(false)
       setTradeDetails([])
       setDailyTrades([])
@@ -158,9 +168,11 @@ function Function1Page() {
   }, [setSelectedStockCode])
 
   const handleLoadData = useCallback(() => {
-    if (stockCodes.length > 0) {
-      loadStockData(stockCodes)
+    if (stockCodes.length === 0) {
+      setError('請輸入至少一個股票代號')
+      return
     }
+    loadStockData(stockCodes)
   }, [stockCodes, loadStockData])
 
   return (
@@ -274,8 +286,11 @@ function Function1Page() {
             </div>
           )}
           {error && (
-            <div className="error-message" style={{ color: 'var(--error)', padding: '0.5rem' }}>
-              {error}
+            <div className="error-message">
+              <strong>錯誤：</strong>
+              {error.split('\n').map((line, index) => (
+                <div key={index}>{line}</div>
+              ))}
             </div>
           )}
         </div>

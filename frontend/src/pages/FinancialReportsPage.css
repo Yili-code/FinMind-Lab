@@ -20,12 +20,8 @@
   font-size: 2.5rem;
   font-weight: 700;
   margin-bottom: var(--spacing-md);
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 0 0 20px rgba(77, 208, 225, 0.3);
-  filter: drop-shadow(0 0 8px rgba(77, 208, 225, 0.2));
+  color: var(--primary-color);
+  text-shadow: 0 0 12px rgba(77, 208, 225, 0.2);
   position: relative;
   z-index: 1;
 }
