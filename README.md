@@ -38,10 +38,6 @@ npm run dev
 
 > 在開發模式下，`frontend/vite.config.ts` 已設定代理 `/api` → `http://localhost:8000`。
 
-## 驗證
-- 進入前端頁面可看到「Backend: Hello from FastAPI」字樣。
-- 若顯示「無法連線到後端」，請確認後端已啟動且埠號為 8000。
-
 ## 部署建議
 - 後端：以 `uvicorn`/`gunicorn`（Linux）或容器化部署，設定 CORS 允許實際前端域名。
 - 前端：`npm run build` 產物放置於 CDN 或靜態伺服器；正式環境建議由反向代理（例如 Nginx）統一轉發 `/api` 到後端。
