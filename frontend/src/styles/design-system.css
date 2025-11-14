@@ -2,7 +2,7 @@
 
 :root {
   /* 主色調 - 金融感深藍 */
-  --primary-color: #1E3A8A; /* 深藍 */
+  --primary-color: #3B82F6; /* 深藍 */
   --primary-hover: #1E40AF;
   --primary-light: rgba(30, 58, 138, 0.15);
   --primary-border: rgba(30, 58, 138, 0.4);

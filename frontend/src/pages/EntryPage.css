@@ -289,7 +289,7 @@
 .philosophy-title {
   font-size: 2rem;
   font-weight: 600;
-  color: var(--primary-color);
+  color: var(--text-primary);
   margin-bottom: var(--spacing-xl);
 }
 
