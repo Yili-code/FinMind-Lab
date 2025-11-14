@@ -477,3 +477,7 @@ async def generate_stock_chart(
 		raise
 	except Exception as e:
 		raise HTTPException(status_code=500, detail=f"生成圖表時發生錯誤: {str(e)}")
+
+if __name__ == "__main__":
+	import uvicorn
+	uvicorn.run("main:app", host="0.0.0.0", port=8000, log_level="info", reload=True)
