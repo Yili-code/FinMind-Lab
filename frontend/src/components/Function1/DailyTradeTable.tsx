@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, memo } from 'react'
+import { useState, useEffect, memo } from 'react'
 import type { DailyTrade } from '../../types/stock'
 import './DailyTradeTable.css'
 
@@ -20,11 +20,17 @@ const DailyTradeTable = memo(function DailyTradeTable({ data, selectedStockCode,
     const saved = localStorage.getItem('dailyTradeUserInputs')
     if (saved) {
       try {
-        const userInputs = JSON.parse(saved)
+        const parsed = JSON.parse(saved)
+        // 驗證解析結果是否為對象
+        if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+          setEditableData(data)
+          return
+        }
+        const userInputs = parsed as Record<string, unknown>
         const updated = data.map(item => {
           const key = `${item.stockCode}_${item.date}`
-          if (userInputs[key]) {
-            return { ...item, ...userInputs[key] }
+          if (userInputs[key] && typeof userInputs[key] === 'object' && userInputs[key] !== null) {
+            return { ...item, ...(userInputs[key] as Partial<DailyTrade>) }
           }
           return item
         })
@@ -33,7 +39,6 @@ const DailyTradeTable = memo(function DailyTradeTable({ data, selectedStockCode,
           onDataUpdate(updated)
         }
       } catch (e) {
-        console.error('載入使用者輸入數據失敗:', e)
         setEditableData(data)
       }
     } else {
@@ -45,7 +50,17 @@ const DailyTradeTable = memo(function DailyTradeTable({ data, selectedStockCode,
   const saveUserInput = (id: string, stockCode: string, date: string, field: keyof DailyTrade, value: number) => {
     const key = `${stockCode}_${date}`
     const saved = localStorage.getItem('dailyTradeUserInputs')
-    const userInputs = saved ? JSON.parse(saved) : {}
+    let userInputs: Record<string, Partial<DailyTrade>> = {}
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
+        if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+          userInputs = parsed as Record<string, Partial<DailyTrade>>
+        }
+      } catch {
+        // 如果解析失敗，使用空對象
+      }
+    }
     
     if (!userInputs[key]) {
       userInputs[key] = {}

@@ -39,3 +39,54 @@
   font-size: 1rem;
 }
 
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.chart-header h3 {
+  margin: 0;
+}
+
+.time-unit-selector {
+  display: flex;
+  align-items: center;
+}
+
+.time-unit-select {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.time-unit-select:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 8px rgba(77, 208, 225, 0.2);
+}
+
+.time-unit-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 12px rgba(77, 208, 225, 0.3);
+}
+
+.chart-image-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-md);
+  background: rgba(10, 15, 36, 0.5);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+

@@ -26,9 +26,13 @@ function FinancialReportsPage() {
     const saved = localStorage.getItem('financialStockGroups')
     if (saved) {
       try {
-        setStockGroups(JSON.parse(saved))
+        const parsed = JSON.parse(saved)
+        // 驗證解析結果是否為數組
+        if (Array.isArray(parsed)) {
+          setStockGroups(parsed as StockGroup[])
+        }
       } catch (e) {
-        console.error('載入財務報表群組失敗:', e)
+        // 靜默處理載入錯誤
       }
     }
   }, [])
@@ -108,9 +112,7 @@ function FinancialReportsPage() {
     setError(null)
 
     try {
-      console.log(`[FinancialReportsPage] 開始獲取股票 ${stockCode} 的財務報表數據`)
       const financialData = await getFinancialStatements(stockCode)
-      console.log(`[FinancialReportsPage] 獲取到的財務數據:`, financialData)
       
       if (!financialData.incomeStatement && !financialData.balanceSheet && !financialData.cashFlow) {
         const errorMsg = `無法獲取股票 ${stockCode} 的財務報表數據。\n\n可能的原因：\n1. 該股票代號不存在\n2. yfinance 無法獲取該股票的財務數據\n3. 該股票可能已下市或暫停交易\n\n請嘗試其他股票代號，例如：2330 (台積電)、2317 (鴻海)`
@@ -139,9 +141,7 @@ function FinancialReportsPage() {
       const updatedGroups = [...stockGroups, newGroup]
       saveGroups(updatedGroups)
       setInputStockCode('')
-      console.log(`[FinancialReportsPage] 成功添加股票 ${stockCode} 到群組`)
     } catch (err) {
-      console.error(`[FinancialReportsPage] 獲取財務報表數據失敗:`, err)
       const errorMessage = err instanceof Error ? err.message : `獲取股票 ${stockCode} 的財務報表數據失敗`
       
       // 提供更詳細的錯誤訊息

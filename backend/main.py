@@ -2,6 +2,7 @@
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
 import json
@@ -9,6 +10,15 @@ import os
 import warnings
 import logging
 from typing import Optional, List
+import sys
+from pathlib import Path
+
+# 添加項目根目錄到 Python 路徑（如果從項目根目錄運行）
+backend_dir = Path(__file__).parent
+project_root = backend_dir.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
 try:
     # 從 backend 目錄運行時
     from services.yfinance_service import (
@@ -18,15 +28,30 @@ try:
         get_market_index_data,
         get_financial_statements
     )
+    from services.chart_service import generate_candlestick_chart
 except ImportError:
-    # 從項目根目錄運行時
-    from backend.services.yfinance_service import (
-        get_stock_info,
-        get_intraday_data,
-        get_daily_trade_data,
-        get_market_index_data,
-        get_financial_statements
-    )
+    try:
+        # 從項目根目錄運行時
+        from backend.services.yfinance_service import (
+            get_stock_info,
+            get_intraday_data,
+            get_daily_trade_data,
+            get_market_index_data,
+            get_financial_statements
+        )
+        from backend.services.chart_service import generate_candlestick_chart
+    except ImportError:
+        # 如果兩種方式都失敗，嘗試直接導入（假設在 backend 目錄）
+        import os
+        os.chdir(backend_dir)
+        from services.yfinance_service import (
+            get_stock_info,
+            get_intraday_data,
+            get_daily_trade_data,
+            get_market_index_data,
+            get_financial_statements
+        )
+        from services.chart_service import generate_candlestick_chart
 
 # 抑制不必要的警告和日誌
 warnings.filterwarnings('ignore')
@@ -60,10 +85,129 @@ class ContactForm(BaseModel):
 	subject: str
 	message: str
 
+# Favicon 端點
+@app.get("/favicon.ico")
+async def favicon():
+	"""返回 favicon 圖標"""
+	import os
+	favicon_path = backend_dir / "backend.png"
+	# 使用絕對路徑確保找到正確的文件
+	absolute_path = os.path.abspath(favicon_path)
+	if os.path.exists(absolute_path):
+		# 獲取文件修改時間作為版本標識
+		file_mtime = os.path.getmtime(absolute_path)
+		return FileResponse(
+			path=absolute_path,
+			media_type="image/png",
+			headers={
+				"Cache-Control": "no-cache, no-store, must-revalidate",
+				"Pragma": "no-cache",
+				"Expires": "0",
+				"Last-Modified": datetime.fromtimestamp(file_mtime).strftime("%a, %d %b %Y %H:%M:%S GMT"),
+				"ETag": f'"{int(file_mtime)}"'
+			}
+		)
+	else:
+		raise HTTPException(status_code=404, detail=f"Favicon not found at {absolute_path}")
+
 # 測試 API 是否正常運作
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 def read_root():
-	return {"message": "Hello from FastAPI"}
+	"""返回主頁 HTML"""
+	html_content = """
+	<!DOCTYPE html>
+	<html lang="zh-TW">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>FinMind Lab API</title>
+		<link rel="icon" type="image/png" href="/favicon.ico?v=2">
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+			body {
+				font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+				background: black;
+				min-height: 100vh;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				padding: 10px;
+			}
+			.container {
+				background: white;
+				border-radius: 20px;
+				box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+				padding: 40px;
+				max-width: 600px;
+				width: 100%;
+				text-align: center;
+			}
+			h1 {
+				color: #333;
+				margin-bottom: 10px;
+				font-size: 2.5em;
+			}
+			.status {
+				display: inline-block;
+				background: #10b981;
+				color: white;
+				padding: 8px 16px;
+				border-radius: 20px;
+				font-size: 0.9em;
+				margin-top: 30px;
+				margin-bottom: 15x;
+			}
+			.links {
+				display: flex;
+				flex-direction: column;
+				gap: 15px;
+				margin-top: 30px;
+			}
+			a {
+				display: inline-block;
+				padding: 12px 24px;
+				background: white;
+				color: black;
+				text-decoration: none;
+				border-radius: 8px;
+				transition: transform 0.2s, box-shadow 0.2s;
+				font-weight: 500;
+			}
+			a:hover {
+				transform: translateY(-2px);
+				box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+			}
+			.info {
+				margin-top: 30px;
+				padding-top: 30px;
+				border-top: 1px solid #eee;
+				color: #666;
+				font-size: 0.9em;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<h1>FinMind Lab API</h1>
+			<span class="status">OPERATING</span>
+			<div class="links">
+				<a href="/docs" target="_blank">Swagger API 文檔</a>
+				<a href="/redoc" target="_blank">ReDoc API 文檔</a>
+				<a href="/api/hello" target="_blank">測試 API 端點</a>
+			</div>
+			<div class="info">
+				<p><strong>API 基礎 URL:</strong> http://127.0.0.1:8000</p>
+				<p>使用 Swagger UI 來探索所有可用的 API 端點</p>
+			</div>
+		</div>
+	</body>
+	</html>
+	"""
+	return HTMLResponse(content=html_content)
 
 # 測試前端是否能夠正常存取後端 API
 @app.get("/api/hello")
@@ -136,7 +280,7 @@ async def get_stock_intraday(
 @app.get("/api/stock/daily/{stock_code}")
 async def get_stock_daily(
 	stock_code: str,
-	days: int = Query(5, description="獲取最近幾天的數據", ge=1, le=30)
+	days: int = Query(5, description="獲取最近幾天的數據", ge=1, le=2000)
 ):
 	try:
 		data = get_daily_trade_data(stock_code, days=days)
@@ -195,3 +339,77 @@ async def get_stock_financial(stock_code: str):
 		raise
 	except Exception as e:
 		raise HTTPException(status_code=500, detail=f"獲取財務報表數據時發生錯誤: {str(e)}")
+
+# 生成 K 線圖
+@app.post("/api/stock/chart/{stock_code}")
+async def generate_stock_chart(
+	stock_code: str,
+	period: str = Query("1d", description="時間週期: 1d, 5d, 1mo 等"),
+	interval: str = Query("1d", description="時間間隔: 1m, 5m, 15m, 1h, 1d 等"),
+	days: int = Query(100, description="獲取最近幾天的數據（用於日交易數據）", ge=1, le=2000)
+):
+	"""
+	生成股票 K 線圖
+	
+	根據 interval 參數決定使用盤中數據還是日交易數據
+	"""
+	try:
+		# 判斷使用哪種數據源
+		use_intraday = interval in ['5m', '15m', '30m', '1h', '1mo']
+		
+		if use_intraday:
+			# 使用盤中數據
+			data_list = get_intraday_data(stock_code, period=period, interval=interval)
+			stock_info = get_stock_info(stock_code)
+			stock_name = stock_info.get('stockName', stock_code) if stock_info else stock_code
+			
+			# 轉換數據格式
+			chart_data = []
+			for item in data_list[:100]:  # 限制為 100 個數據點
+				chart_data.append({
+					'date': item.get('date', ''),
+					'open': item.get('openPrice', 0),
+					'high': item.get('highPrice', 0),
+					'low': item.get('lowPrice', 0),
+					'close': item.get('price', 0),
+					'volume': item.get('totalVolume', item.get('estimatedVolume', 0))
+				})
+		else:
+			# 使用日交易數據
+			data_list = get_daily_trade_data(stock_code, days=days)
+			stock_info = get_stock_info(stock_code)
+			stock_name = stock_info.get('stockName', stock_code) if stock_info else stock_code
+			
+			# 轉換數據格式
+			chart_data = []
+			for item in data_list[:100]:  # 限制為 100 個數據點
+				chart_data.append({
+					'date': item.get('date', ''),
+					'open': item.get('openPrice', 0),
+					'high': item.get('highPrice', 0),
+					'low': item.get('lowPrice', 0),
+					'close': item.get('closePrice', 0),
+					'volume': item.get('totalVolume', 0)
+				})
+		
+		if not chart_data:
+			raise HTTPException(status_code=404, detail=f"無法獲取股票 {stock_code} 的數據")
+		
+		# 生成圖表
+		img_base64 = generate_candlestick_chart(
+			data=chart_data,
+			stock_code=stock_code,
+			stock_name=stock_name,
+			title=f"{stock_code} - {stock_name} ({interval})"
+		)
+		
+		return JSONResponse(content={
+			"stockCode": stock_code,
+			"stockName": stock_name,
+			"image": f"data:image/png;base64,{img_base64}",
+			"dataCount": len(chart_data)
+		})
+	except HTTPException:
+		raise
+	except Exception as e:
+		raise HTTPException(status_code=500, detail=f"生成圖表時發生錯誤: {str(e)}")

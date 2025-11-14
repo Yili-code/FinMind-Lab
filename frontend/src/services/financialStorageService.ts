@@ -12,7 +12,6 @@ export const financialStorageService = {
       const data = localStorage.getItem(INCOME_STORAGE_KEY)
       return data ? JSON.parse(data) : []
     } catch (error) {
-      console.error('Error reading income statements from storage:', error)
       return []
     }
   },
@@ -26,7 +25,7 @@ export const financialStorageService = {
     const all = this.getAllIncomeStatements()
     const newIncome: IncomeStatementItem = {
       ...income,
-      id: `income_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      id: `income_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
     }
     all.push(newIncome)
     localStorage.setItem(INCOME_STORAGE_KEY, JSON.stringify(all))
@@ -58,7 +57,6 @@ export const financialStorageService = {
       const data = localStorage.getItem(BALANCE_STORAGE_KEY)
       return data ? JSON.parse(data) : []
     } catch (error) {
-      console.error('Error reading balance sheets from storage:', error)
       return []
     }
   },
@@ -72,7 +70,7 @@ export const financialStorageService = {
     const all = this.getAllBalanceSheets()
     const newBalance: BalanceSheetItem = {
       ...balance,
-      id: `balance_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      id: `balance_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
     }
     all.push(newBalance)
     localStorage.setItem(BALANCE_STORAGE_KEY, JSON.stringify(all))
@@ -104,7 +102,6 @@ export const financialStorageService = {
       const data = localStorage.getItem(CASHFLOW_STORAGE_KEY)
       return data ? JSON.parse(data) : []
     } catch (error) {
-      console.error('Error reading cash flows from storage:', error)
       return []
     }
   },
@@ -118,7 +115,7 @@ export const financialStorageService = {
     const all = this.getAllCashFlows()
     const newCashFlow: CashFlowItem = {
       ...cashFlow,
-      id: `cashflow_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      id: `cashflow_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
     }
     all.push(newCashFlow)
     localStorage.setItem(CASHFLOW_STORAGE_KEY, JSON.stringify(all))

@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import TradeDetailTable from '../components/Function1/TradeDetailTable'
 import DailyTradeTable from '../components/Function1/DailyTradeTable'
-import StockChart from '../components/Function1/StockChart'
+import StockChartMatplotlib from '../components/Function1/StockChartMatplotlib'
+import type { TimeUnit } from '../components/Function1/StockChart'
 import { useStock } from '../contexts/StockContext'
-import { getIntradayData, getDailyTradeData, getMarketIndexData, testBackendConnection, type MarketIndexResponse } from '../services/stockApi'
+import { getIntradayData, getDailyTradeData, testBackendConnection } from '../services/stockApi'
 import type { TradeDetail, DailyTrade } from '../types/stock'
 import './Function1Page.css'
 
@@ -11,7 +12,6 @@ function Function1Page() {
   const { selectedStockCode, setSelectedStockCode } = useStock()
   const [tradeDetails, setTradeDetails] = useState<TradeDetail[]>([])
   const [dailyTrades, setDailyTrades] = useState<DailyTrade[]>([])
-  const [marketIndexData, setMarketIndexData] = useState<MarketIndexResponse['data']>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [stockCodeInput, setStockCodeInput] = useState('2330,2317')
@@ -27,9 +27,25 @@ function Function1Page() {
   
   const [selectedDate, setSelectedDate] = useState<string>(getTodayDate())
   const [days, setDays] = useState<number>(5)
+  const [chartTimeUnit, setChartTimeUnit] = useState<TimeUnit>('1d')
+
+  // 根據時間單位獲取對應的 interval 和 period
+  const getIntervalAndPeriod = (timeUnit: TimeUnit) => {
+    const timeUnitMap: Record<TimeUnit, { interval: string; period: string }> = {
+      '5m': { interval: '5m', period: '5d' },
+      '15m': { interval: '15m', period: '15d' },
+      '30m': { interval: '30m', period: '30d' },
+      '1h': { interval: '1h', period: '5d' },
+      '1d': { interval: '1d', period: '100d' },
+      '5d': { interval: '5d', period: '500d' },
+      '15d': { interval: '15d', period: '1500d' },
+      '1mo': { interval: '1mo', period: '100mo' },
+    }
+    return timeUnitMap[timeUnit]
+  }
 
   // 載入股票數據 - 優化：並行請求
-  const loadStockData = useCallback(async (stockCodes: string[]) => {
+  const loadStockData = useCallback(async (stockCodes: string[], timeUnit?: TimeUnit) => {
     setLoading(true)
     setError(null)
     
@@ -40,19 +56,39 @@ function Function1Page() {
       setLoading(false)
       setTradeDetails([])
       setDailyTrades([])
-      setMarketIndexData([])
       return
     }
     
     try {
+      // 使用傳入的 timeUnit 或默認使用 chartTimeUnit
+      const currentTimeUnit = timeUnit || chartTimeUnit
+      // 根據時間單位決定使用哪種數據獲取方式
+      const { interval, period } = getIntervalAndPeriod(currentTimeUnit)
+      // 使用盤中數據的時間單位（包括 1mo，因為 yfinance 支持月間隔）
+      const useIntraday = ['5m', '15m', '30m', '1h', '1mo'].includes(currentTimeUnit)
+      
       // 優化：並行請求所有股票的數據
       const stockDataPromises = stockCodes.map(async (code) => {
         try {
-          // 並行獲取盤中數據和日交易數據
-          const [intradayResponse, dailyResponse] = await Promise.all([
-            getIntradayData(code, '1d', '5m'),
-            getDailyTradeData(code, days)
-          ])
+          let intradayResponse, dailyResponse
+          
+          if (useIntraday) {
+            // 短時間單位和月單位使用盤中數據
+            intradayResponse = await getIntradayData(code, period, interval)
+            // 同時獲取日交易數據用於表格顯示（月單位除外）
+            if (currentTimeUnit !== '1mo') {
+              dailyResponse = await getDailyTradeData(code, days)
+            } else {
+              // 對於月單位，不需要日交易數據
+              dailyResponse = { stockCode: code, data: [], count: 0 }
+            }
+          } else {
+            // 長時間單位（1d, 5d, 15d）使用日交易數據
+            const daysCount = currentTimeUnit === '1d' ? 100 : currentTimeUnit === '5d' ? 500 : currentTimeUnit === '15d' ? 1500 : 100
+            dailyResponse = await getDailyTradeData(code, daysCount)
+            // 為了保持數據結構一致，也獲取盤中數據（但可能為空）
+            intradayResponse = await getIntradayData(code, period, interval).catch(() => ({ stockCode: code, data: [], count: 0 }))
+          }
 
           const intradayData = intradayResponse.data.map((item, index) => ({
             id: `${code}_intraday_${index}`,
@@ -102,66 +138,92 @@ function Function1Page() {
 
           return { intradayData, dailyData }
         } catch (err) {
-          console.error(`Error loading data for ${code}:`, err)
+          // 靜默處理錯誤，返回空數據
           return { intradayData: [], dailyData: [] }
         }
       })
 
       // 等待所有請求完成
       const results = await Promise.all(stockDataPromises)
-      const allTradeDetails = results.flatMap(r => r.intradayData)
-      const allDailyTrades = results.flatMap(r => r.dailyData)
-
-      setTradeDetails(allTradeDetails)
-      setDailyTrades(allDailyTrades)
-
-      // 並行載入大盤指數數據
-      try {
-        const marketResponse = await getMarketIndexData('^TWII', 5)
-        setMarketIndexData(marketResponse.data)
-      } catch (err) {
-        console.error('Error loading market index data:', err)
+      
+      // 根據時間單位決定使用哪種數據
+      if (useIntraday) {
+        // 短時間單位：使用盤中數據
+        const allTradeDetails = results.flatMap(r => r.intradayData)
+        const allDailyTrades = results.flatMap(r => r.dailyData)
+        setTradeDetails(allTradeDetails)
+        setDailyTrades(allDailyTrades)
+      } else {
+        // 長時間單位：將日交易數據轉換為 TradeDetail 格式供圖表使用
+        const allDailyTrades = results.flatMap(r => r.dailyData)
+        const allTradeDetails = allDailyTrades.map((item, index) => ({
+          id: `${item.stockCode}_chart_${index}`,
+          stockCode: item.stockCode,
+          stockName: item.stockName,
+          date: item.date,
+          time: '', // 日交易數據沒有時間
+          price: item.closePrice, // 使用收盤價作為價格
+          change: item.change,
+          changePercent: item.changePercent,
+          lots: 0,
+          period: '',
+          openPrice: item.openPrice,
+          highPrice: item.highPrice,
+          lowPrice: item.lowPrice,
+          totalVolume: item.totalVolume,
+          estimatedVolume: item.totalVolume,
+        }))
+        setTradeDetails(allTradeDetails)
+        setDailyTrades(allDailyTrades)
       }
+
     } catch (err) {
       setError(err instanceof Error ? err.message : '載入數據時發生錯誤')
-      console.error('Error loading stock data:', err)
       setTradeDetails([])
       setDailyTrades([])
-      setMarketIndexData([])
     } finally {
       setLoading(false)
     }
-  }, [days])
+  }, [days, chartTimeUnit])
 
   // 優化：使用 useMemo 計算股票代號列表
   const stockCodes = useMemo(() => {
     return stockCodeInput.split(',').map(c => c.trim()).filter(c => c)
   }, [stockCodeInput])
 
+  // 處理時間單位改變
+  const handleTimeUnitChange = useCallback((timeUnit: TimeUnit) => {
+    setChartTimeUnit(timeUnit)
+    // 重新載入數據
+    if (stockCodes.length > 0) {
+      loadStockData(stockCodes, timeUnit)
+    }
+  }, [stockCodes, loadStockData])
+
   // 初始載入
   useEffect(() => {
     if (stockCodes.length > 0) {
-      loadStockData(stockCodes)
+      loadStockData(stockCodes, chartTimeUnit)
     }
+    // 只在組件掛載時執行一次
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // 當天數改變時重新載入數據
+  // 當天數改變時重新載入數據（但保持當前時間單位）
   useEffect(() => {
     if (stockCodes.length > 0) {
-      loadStockData(stockCodes)
+      loadStockData(stockCodes, chartTimeUnit)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [days, loadStockData, stockCodes])
+  }, [days, loadStockData, stockCodes, chartTimeUnit])
 
   // 優化：使用 useCallback 避免不必要的重新渲染
   const handleTable1Click = useCallback((stockCode: string) => {
-    setSelectedStockCode(prev => prev === stockCode ? undefined : stockCode)
-  }, [setSelectedStockCode])
+    setSelectedStockCode(selectedStockCode === stockCode ? undefined : stockCode)
+  }, [selectedStockCode, setSelectedStockCode])
 
   const handleTable2Click = useCallback((stockCode: string) => {
-    setSelectedStockCode(prev => prev === stockCode ? undefined : stockCode)
-  }, [setSelectedStockCode])
+    setSelectedStockCode(selectedStockCode === stockCode ? undefined : stockCode)
+  }, [selectedStockCode, setSelectedStockCode])
 
   const handleClearFilter = useCallback(() => {
     setSelectedStockCode(undefined)
@@ -297,8 +359,9 @@ function Function1Page() {
 
         <div className="function1-content">
           <div className="visualization-section">
-            <StockChart 
-              marketIndexData={marketIndexData}
+            <StockChartMatplotlib 
+              selectedStockCode={selectedStockCode}
+              onTimeUnitChange={handleTimeUnitChange}
             />
           </div>
 

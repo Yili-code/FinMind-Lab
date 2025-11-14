@@ -10,7 +10,6 @@ export const storageService = {
       const data = localStorage.getItem(STORAGE_KEY)
       return data ? JSON.parse(data) : []
     } catch (error) {
-      console.error('Error reading from storage:', error)
       return []
     }
   },
@@ -26,7 +25,7 @@ export const storageService = {
     const all = this.getAll()
     const newStock: StockBasic = {
       ...stock,
-      id: `stock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `stock_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
       createdAt: new Date().toISOString()
     }
     all.push(newStock)
