@@ -43,60 +43,134 @@ function FinancialReportsPage() {
     setStockGroups(groups)
   }
 
+  // 驗證轉換後的數據是否有效
+  const validateBalanceSheetData = (data: BalanceSheetItem): { valid: boolean; errors: string[] } => {
+    const errors: string[] = []
+    
+    if (!data.stockCode) errors.push('stockCode（股票代號）為空')
+    if (!data.period) errors.push('period（期間）為空')
+    if (data.totalAssets === undefined || data.totalAssets === null || isNaN(data.totalAssets)) {
+      errors.push('totalAssets（總資產）無效或為空')
+    }
+    if (data.shareholdersEquity === undefined || data.shareholdersEquity === null || isNaN(data.shareholdersEquity)) {
+      errors.push('shareholdersEquity（股東權益）無效或為空')
+    }
+    if (data.currentAssets === undefined || data.currentAssets === null || isNaN(data.currentAssets)) {
+      errors.push('currentAssets（流動資產）無效或為空')
+    }
+    if (data.currentLiabilities === undefined || data.currentLiabilities === null || isNaN(data.currentLiabilities)) {
+      errors.push('currentLiabilities（流動負債）無效或為空')
+    }
+    
+    return {
+      valid: errors.length === 0,
+      errors
+    }
+  }
+
   // 將 API 數據轉換為表格格式
-  const convertToIncomeStatement = (data: NonNullable<FinancialStatementsResponse['incomeStatement']>, stockCode: string): IncomeStatementItem => {
-    return {
-      id: `${stockCode}-${data.period}`,
-      stockCode: data.stockCode,
-      period: data.period,
-      revenue: data.revenue,
-      grossProfit: data.grossProfit,
-      grossProfitRatio: data.grossProfitRatio,
-      operatingExpenses: data.operatingExpenses,
-      operatingExpensesRatio: data.operatingExpensesRatio,
-      operatingIncome: data.operatingIncome,
-      operatingIncomeRatio: data.operatingIncomeRatio,
-      netIncome: data.netIncome,
-      otherIncome: data.otherIncome || 0,
+  const convertToIncomeStatement = (data: NonNullable<FinancialStatementsResponse['incomeStatement']>, stockCode: string): IncomeStatementItem | null => {
+    try {
+      // 驗證必需的字段
+      if (!data.period || !data.revenue) {
+        console.warn('[轉換失敗] 損益表數據缺少必需字段', data)
+        return null
+      }
+
+      const result: IncomeStatementItem = {
+        id: `${stockCode}-${data.period}`,
+        stockCode: data.stockCode || stockCode,
+        period: data.period,
+        revenue: Number(data.revenue) || 0,
+        grossProfit: Number(data.grossProfit) || 0,
+        grossProfitRatio: Number(data.grossProfitRatio) || 0,
+        operatingExpenses: Number(data.operatingExpenses) || 0,
+        operatingExpensesRatio: Number(data.operatingExpensesRatio) || 0,
+        operatingIncome: Number(data.operatingIncome) || 0,
+        operatingIncomeRatio: Number(data.operatingIncomeRatio) || 0,
+        netIncome: Number(data.netIncome) || 0,
+        otherIncome: Number(data.otherIncome) || 0,
+      }
+
+      console.log('[轉換成功] 損益表數據:', result)
+      return result
+    } catch (err) {
+      console.error('[轉換錯誤] 損益表數據轉換失敗:', err, data)
+      return null
     }
   }
 
-  const convertToBalanceSheet = (data: NonNullable<FinancialStatementsResponse['balanceSheet']>, stockCode: string): BalanceSheetItem => {
-    return {
-      id: `${stockCode}-${data.period}`,
-      stockCode: data.stockCode,
-      period: data.period,
-      totalAssets: data.totalAssets,
-      totalAssetsRatio: data.totalAssetsRatio,
-      shareholdersEquity: data.shareholdersEquity,
-      shareholdersEquityRatio: data.shareholdersEquityRatio,
-      currentAssets: data.currentAssets,
-      currentAssetsRatio: data.currentAssetsRatio,
-      currentLiabilities: data.currentLiabilities,
-      currentLiabilitiesRatio: data.currentLiabilitiesRatio,
+  const convertToBalanceSheet = (data: NonNullable<FinancialStatementsResponse['balanceSheet']>, stockCode: string): BalanceSheetItem | null => {
+    try {
+      // 驗證必需的字段
+      if (!data.period || data.totalAssets === undefined) {
+        console.warn('[轉換失敗] 資產負債表數據缺少必需字段', data)
+        return null
+      }
+
+      const result: BalanceSheetItem = {
+        id: `${stockCode}-${data.period}`,
+        stockCode: data.stockCode || stockCode,
+        period: data.period,
+        totalAssets: Number(data.totalAssets) || 0,
+        totalAssetsRatio: Number(data.totalAssetsRatio) || 0,
+        shareholdersEquity: Number(data.shareholdersEquity) || 0,
+        shareholdersEquityRatio: Number(data.shareholdersEquityRatio) || 0,
+        currentAssets: Number(data.currentAssets) || 0,
+        currentAssetsRatio: Number(data.currentAssetsRatio) || 0,
+        currentLiabilities: Number(data.currentLiabilities) || 0,
+        currentLiabilitiesRatio: Number(data.currentLiabilitiesRatio) || 0,
+      }
+
+      // 驗證轉換後的數據
+      const validation = validateBalanceSheetData(result)
+      if (!validation.valid) {
+        console.warn('[驗證失敗] 資產負債表數據驗證失敗:', validation.errors)
+        return null
+      }
+
+      console.log('[轉換成功] 資產負債表數據:', result)
+      return result
+    } catch (err) {
+      console.error('[轉換錯誤] 資產負債表數據轉換失敗:', err, data)
+      return null
     }
   }
 
-  const convertToCashFlow = (data: NonNullable<FinancialStatementsResponse['cashFlow']>, stockCode: string): CashFlowItem => {
-    return {
-      id: `${stockCode}-${data.period}`,
-      stockCode: data.stockCode,
-      period: data.period,
-      operatingCashFlow: data.operatingCashFlow,
-      investingCashFlow: data.investingCashFlow,
-      investingCashFlowRatio: data.investingCashFlowRatio,
-      financingCashFlow: data.financingCashFlow,
-      financingCashFlowRatio: data.financingCashFlowRatio,
-      freeCashFlow: data.freeCashFlow,
-      freeCashFlowRatio: data.freeCashFlowRatio,
-      netCashFlow: data.netCashFlow,
-      netCashFlowRatio: data.netCashFlowRatio,
+  const convertToCashFlow = (data: NonNullable<FinancialStatementsResponse['cashFlow']>, stockCode: string): CashFlowItem | null => {
+    try {
+      // 驗證必需的字段
+      if (!data.period || data.operatingCashFlow === undefined) {
+        console.warn('[轉換失敗] 現金流量表數據缺少必需字段', data)
+        return null
+      }
+
+      const result: CashFlowItem = {
+        id: `${stockCode}-${data.period}`,
+        stockCode: data.stockCode || stockCode,
+        period: data.period,
+        operatingCashFlow: Number(data.operatingCashFlow) || 0,
+        investingCashFlow: Number(data.investingCashFlow) || 0,
+        investingCashFlowRatio: Number(data.investingCashFlowRatio) || 0,
+        financingCashFlow: Number(data.financingCashFlow) || 0,
+        financingCashFlowRatio: Number(data.financingCashFlowRatio) || 0,
+        freeCashFlow: Number(data.freeCashFlow) || 0,
+        freeCashFlowRatio: Number(data.freeCashFlowRatio) || 0,
+        netCashFlow: Number(data.netCashFlow) || 0,
+        netCashFlowRatio: Number(data.netCashFlowRatio) || 0,
+      }
+
+      console.log('[轉換成功] 現金流量表數據:', result)
+      return result
+    } catch (err) {
+      console.error('[轉換錯誤] 現金流量表數據轉換失敗:', err, data)
+      return null
     }
   }
 
   // 添加股票到群組
   const handleAddStock = async () => {
-    const stockCode = inputStockCode.trim()
+    const stockCode = inputStockCode.trim().toUpperCase()
     if (!stockCode) {
       setError('請輸入股票編號')
       return
@@ -112,7 +186,9 @@ function FinancialReportsPage() {
     setError(null)
 
     try {
+      console.log(`[API] 開始獲取股票 ${stockCode} 的財務報表數據...`)
       const financialData = await getFinancialStatements(stockCode)
+      console.log(`[API] 獲取成功，響應數據:`, financialData)
       
       if (!financialData.incomeStatement && !financialData.balanceSheet && !financialData.cashFlow) {
         const errorMsg = `無法獲取股票 ${stockCode} 的財務報表數據。\n\n可能的原因：\n1. 該股票代號不存在\n2. yfinance 無法獲取該股票的財務數據\n3. 該股票可能已下市或暫停交易\n\n請嘗試其他股票代號，例如：2330 (台積電)、2317 (鴻海)`
@@ -121,35 +197,55 @@ function FinancialReportsPage() {
         return
       }
 
+      // 轉換數據
+      const incomeStatement = financialData.incomeStatement 
+        ? convertToIncomeStatement(financialData.incomeStatement, stockCode)
+        : null
+      
+      const balanceSheet = financialData.balanceSheet
+        ? convertToBalanceSheet(financialData.balanceSheet, stockCode)
+        : null
+      
+      const cashFlow = financialData.cashFlow
+        ? convertToCashFlow(financialData.cashFlow, stockCode)
+        : null
+
+      // 檢查是否至少轉換了一個報表
+      if (!incomeStatement && !balanceSheet && !cashFlow) {
+        const errorMsg = `股票 ${stockCode} 的財務報表數據格式無效，無法轉換。\n\n請檢查後端日誌獲取詳細信息。`
+        setError(errorMsg)
+        setLoading(false)
+        return
+      }
+
+      // 創建新群組
       const newGroup: StockGroup = {
         stockCode,
         stockName: financialData.incomeStatement?.stockName || 
                    financialData.balanceSheet?.stockName || 
                    financialData.cashFlow?.stockName || 
                    stockCode,
-        incomeStatement: financialData.incomeStatement 
-          ? convertToIncomeStatement(financialData.incomeStatement, stockCode)
-          : null,
-        balanceSheet: financialData.balanceSheet
-          ? convertToBalanceSheet(financialData.balanceSheet, stockCode)
-          : null,
-        cashFlow: financialData.cashFlow
-          ? convertToCashFlow(financialData.cashFlow, stockCode)
-          : null,
+        incomeStatement,
+        balanceSheet,
+        cashFlow,
       }
+
+      console.log(`[本地] 創建新群組:`, newGroup)
 
       const updatedGroups = [...stockGroups, newGroup]
       saveGroups(updatedGroups)
       setInputStockCode('')
+      console.log(`[成功] 股票 ${stockCode} 已成功添加到群組`)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : `獲取股票 ${stockCode} 的財務報表數據失敗`
+      console.error(`[錯誤] ${errorMessage}`, err)
       
       // 提供更詳細的錯誤訊息
       let detailedError = errorMessage
       if (errorMessage.includes('無法連接到後端服務器')) {
         detailedError = `無法連接到後端服務器。\n\n請確認：\n1. 後端服務是否正在運行 (http://localhost:8000)\n2. 端口 8000 是否被其他程序占用\n\n啟動後端的方法：\n• Windows: 在 backend 目錄執行 start_server.bat\n• Linux/Mac: 在 backend 目錄執行 ./start_server.sh\n• 手動啟動: cd backend && python -m uvicorn main:app --reload --port 8000`
       } else if (errorMessage.includes('404') || errorMessage.includes('無法獲取')) {
-        detailedError = `${errorMessage}\n\n可能的原因：\n1. 股票代號不存在或格式錯誤\n2. yfinance 無法獲取該股票的財務數據\n3. 該股票可能已下市或暫停交易\n\n請嘗試其他股票代號，例如：2330 (台積電)、2317 (鴻海)`
+        detailedError = `${errorMessage}\n\n重要提示：\n⚠️ yfinance 對台股財務報表的支持可能有限\n\n可能的原因：\n1. yfinance 對台股 (.TW) 財務報表數據支持不完整\n2. Yahoo Finance 數據源可能沒有該股票的財務報表數據\n3. 股票代號不存在或格式錯誤\n4. 該股票可能已下市或暫停交易\n\n建議：\n• 請查看後端日誌獲取詳細錯誤信息\n• 嘗試使用美股代號測試（例如：AAPL, MSFT）\n• 如果確實需要台股財務數據，可能需要使用其他數據源\n\n請嘗試其他股票代號，例如：\n• 美股：AAPL (蘋果), MSFT (微軟), TSLA (特斯拉)\n• 台股：2330 (台積電), 2317 (鴻海) - 但可能無法獲取財務報表`
       }
       
       setError(detailedError)
@@ -175,29 +271,40 @@ function FinancialReportsPage() {
     setError(null)
 
     try {
+      console.log(`[刷新] 開始刷新股票 ${stockCode} 的財務報表數據...`)
       const financialData = await getFinancialStatements(stockCode)
+      console.log(`[刷新] 獲取成功，響應數據:`, financialData)
       
       const updatedGroups = stockGroups.map(group => {
         if (group.stockCode === stockCode) {
+          const incomeStatement = financialData.incomeStatement 
+            ? convertToIncomeStatement(financialData.incomeStatement, stockCode)
+            : null
+          
+          const balanceSheet = financialData.balanceSheet
+            ? convertToBalanceSheet(financialData.balanceSheet, stockCode)
+            : null
+          
+          const cashFlow = financialData.cashFlow
+            ? convertToCashFlow(financialData.cashFlow, stockCode)
+            : null
+
           return {
             ...group,
-            incomeStatement: financialData.incomeStatement 
-              ? convertToIncomeStatement(financialData.incomeStatement, stockCode)
-              : null,
-            balanceSheet: financialData.balanceSheet
-              ? convertToBalanceSheet(financialData.balanceSheet, stockCode)
-              : null,
-            cashFlow: financialData.cashFlow
-              ? convertToCashFlow(financialData.cashFlow, stockCode)
-              : null,
+            incomeStatement,
+            balanceSheet,
+            cashFlow,
           }
         }
         return group
       })
 
       saveGroups(updatedGroups)
+      console.log(`[刷新成功] 股票 ${stockCode} 已成功刷新`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : `刷新股票 ${stockCode} 的財務報表數據失敗`)
+      const errorMsg = err instanceof Error ? err.message : `刷新股票 ${stockCode} 的財務報表數據失敗`
+      console.error(`[刷新錯誤] ${errorMsg}`, err)
+      setError(errorMsg)
     } finally {
       setLoading(false)
     }

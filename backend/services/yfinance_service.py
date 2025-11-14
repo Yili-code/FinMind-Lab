@@ -6,6 +6,10 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, List
 import logging
 import warnings
+import requests
+import json
+import re
+from bs4 import BeautifulSoup
 
 # 抑制 yfinance 和 pandas 的警告訊息
 warnings.filterwarnings('ignore', category=FutureWarning)
@@ -13,7 +17,7 @@ warnings.filterwarnings('ignore', category=UserWarning)
 warnings.filterwarnings('ignore', message='.*pandas.*')
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.ERROR)  # 只顯示錯誤級別的日誌
+logger.setLevel(logging.INFO)  # 顯示 INFO 級別以上的日誌，便於調試
 
 # 台股代號映射（yfinance 使用 .TW 後綴）
 def get_yfinance_ticker(stock_code: str) -> str:
@@ -175,18 +179,37 @@ def get_daily_trade_data(stock_code: str, days: int = 5) -> List[Dict]:
     """獲取日交易檔數據"""
     try:
         ticker = get_yfinance_ticker(stock_code)
+        logger.info(f"嘗試獲取股票 {stock_code} (yfinance ticker: {ticker}) 的日交易數據，天數: {days}")
         stock = yf.Ticker(ticker)
         
         # 獲取歷史數據，抑制警告
         end_date = datetime.now()
         start_date = end_date - timedelta(days=days)
+        logger.info(f"查詢日期範圍: {start_date.strftime('%Y-%m-%d')} 到 {end_date.strftime('%Y-%m-%d')}")
         
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             hist = stock.history(start=start_date, end=end_date, timeout=10)
         
+        logger.info(f"yfinance 返回的歷史數據行數: {len(hist)}")
+        
         if hist.empty:
-            return []
+            logger.warning(f"股票 {stock_code} 的歷史數據為空。可能原因：1) 非交易時間 2) 股票代號錯誤 3) yfinance API 限制 4) 網絡問題")
+            # 嘗試使用 period 參數獲取數據（作為備選方案）
+            try:
+                logger.info(f"嘗試使用 period 參數獲取股票 {stock_code} 的數據...")
+                hist_period = stock.history(period=f"{days}d", timeout=10)
+                logger.info(f"使用 period 參數獲得的數據行數: {len(hist_period)}")
+                if not hist_period.empty:
+                    hist = hist_period
+                    logger.info(f"成功使用 period 參數獲取到數據")
+                else:
+                    logger.warning(f"使用 period 參數也無法獲取數據")
+            except Exception as e:
+                logger.warning(f"使用 period 參數獲取數據失敗: {str(e)}")
+            
+            if hist.empty:
+                return []
         
         # 獲取股票資訊
         with warnings.catch_warnings():
@@ -236,27 +259,255 @@ def get_daily_trade_data(stock_code: str, days: int = 5) -> List[Dict]:
                 'quarterHigh': float(hist['High'].max()),  # 季高（簡化為月高）
             })
         
+        logger.info(f"成功處理股票 {stock_code} 的日交易數據，共 {len(daily_trades)} 筆")
         return daily_trades
     except Exception as e:
-        logger.error(f"Error fetching daily trade data for {stock_code}: {str(e)}")
+        error_msg = f"獲取股票 {stock_code} 的日交易數據時發生錯誤: {str(e)}"
+        logger.error(error_msg)
+        logger.error(f"錯誤類型: {type(e).__name__}")
+        import traceback
+        logger.error(f"錯誤堆棧:\n{traceback.format_exc()}")
         return []
+
+def get_financial_statements_from_yahoo_web(ticker: str) -> Optional[Dict]:
+    """從 Yahoo Finance 網頁直接抓取財務報表數據"""
+    try:
+        logger.info(f"嘗試從 Yahoo Finance 網頁獲取 {ticker} 的財務報表數據")
+        
+        # 獲取股票資訊以獲取股票名稱
+        stock = yf.Ticker(ticker)
+        info = stock.info
+        stock_name = info.get('longName', info.get('shortName', ticker)) if info else ticker
+        
+        # Yahoo Finance API 端點（用於獲取財務報表數據）
+        base_url = "https://query1.finance.yahoo.com/v10/finance/quoteSummary"
+        modules = "incomeStatementHistory,incomeStatementHistoryQuarterly,balanceSheetHistory,balanceSheetHistoryQuarterly,cashflowStatementHistory,cashflowStatementHistoryQuarterly"
+        
+        url = f"{base_url}/{ticker}?modules={modules}"
+        
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'application/json',
+        }
+        
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        
+        data = response.json()
+        
+        if 'quoteSummary' not in data or 'result' not in data['quoteSummary'] or len(data['quoteSummary']['result']) == 0:
+            logger.warning(f"Yahoo Finance API 返回的數據格式不正確")
+            return None
+        
+        result = data['quoteSummary']['result'][0]
+        
+        def to_float(value):
+            if value is None:
+                return 0.0
+            try:
+                return float(value)
+            except (ValueError, TypeError):
+                return 0.0
+        
+        # 處理損益表（Income Statement）
+        income_data = None
+        income_history = result.get('incomeStatementHistory', {}).get('incomeStatementHistory', [])
+        if income_history:
+            latest = income_history[0]  # 最新一期
+            period_str = latest.get('endDate', {}).get('fmt', '') if isinstance(latest.get('endDate'), dict) else str(latest.get('endDate', ''))
+            
+            revenue = to_float(latest.get('totalRevenue', {}).get('raw', 0))
+            gross_profit = to_float(latest.get('grossProfit', {}).get('raw', 0))
+            operating_expenses = to_float(latest.get('totalOperatingExpenses', {}).get('raw', 0))
+            operating_income = to_float(latest.get('operatingIncome', {}).get('raw', 0))
+            net_income = to_float(latest.get('netIncome', {}).get('raw', 0))
+            other_income = to_float(latest.get('otherIncomeExpenseNet', {}).get('raw', 0))
+            
+            if revenue > 0 or gross_profit != 0 or operating_income != 0 or net_income != 0:
+                gross_profit_ratio = (gross_profit / revenue * 100) if revenue > 0 else 0
+                operating_expenses_ratio = (operating_expenses / revenue * 100) if revenue > 0 else 0
+                operating_income_ratio = (operating_income / revenue * 100) if revenue > 0 else 0
+                
+                income_data = {
+                    'stockCode': ticker.replace('.TW', ''),
+                    'stockName': stock_name,
+                    'period': period_str,
+                    'revenue': revenue,
+                    'grossProfit': gross_profit,
+                    'grossProfitRatio': round(gross_profit_ratio, 1),
+                    'operatingExpenses': operating_expenses,
+                    'operatingExpensesRatio': round(operating_expenses_ratio, 1),
+                    'operatingIncome': operating_income,
+                    'operatingIncomeRatio': round(operating_income_ratio, 1),
+                    'netIncome': net_income,
+                    'otherIncome': other_income,
+                }
+                logger.info(f"成功從 Yahoo Finance 獲取損益表數據")
+        
+        # 處理資產負債表（Balance Sheet）
+        balance_data = None
+        balance_history = result.get('balanceSheetHistory', {}).get('balanceSheetStatements', [])
+        if not balance_history:
+            # 嘗試其他可能的鍵名
+            balance_history = result.get('balanceSheetHistory', {}).get('balanceSheetHistory', [])
+        if balance_history:
+            latest = balance_history[0]
+            period_str = latest.get('endDate', {}).get('fmt', '') if isinstance(latest.get('endDate'), dict) else str(latest.get('endDate', ''))
+            
+            total_assets = to_float(latest.get('totalAssets', {}).get('raw', 0))
+            shareholders_equity = to_float(latest.get('totalStockholderEquity', {}).get('raw', 0))
+            current_assets = to_float(latest.get('currentAssets', {}).get('raw', 0))
+            current_liabilities = to_float(latest.get('currentLiabilities', {}).get('raw', 0))
+            
+            if total_assets > 0:
+                total_assets_ratio = 100.0
+                shareholders_equity_ratio = (shareholders_equity / total_assets * 100) if total_assets > 0 else 0
+                current_assets_ratio = (current_assets / total_assets * 100) if total_assets > 0 else 0
+                current_liabilities_ratio = (current_liabilities / total_assets * 100) if total_assets > 0 else 0
+                
+                balance_data = {
+                    'stockCode': ticker.replace('.TW', ''),
+                    'stockName': stock_name,
+                    'period': period_str,
+                    'totalAssets': total_assets,
+                    'totalAssetsRatio': round(total_assets_ratio, 1),
+                    'shareholdersEquity': shareholders_equity,
+                    'shareholdersEquityRatio': round(shareholders_equity_ratio, 1),
+                    'currentAssets': current_assets,
+                    'currentAssetsRatio': round(current_assets_ratio, 1),
+                    'currentLiabilities': current_liabilities,
+                    'currentLiabilitiesRatio': round(current_liabilities_ratio, 1),
+                }
+                logger.info(f"成功從 Yahoo Finance 獲取資產負債表數據")
+        
+        # 處理現金流量表（Cash Flow）
+        cashflow_data = None
+        cashflow_history = result.get('cashflowStatementHistory', {}).get('cashflowStatements', [])
+        if not cashflow_history:
+            # 嘗試其他可能的鍵名
+            cashflow_history = result.get('cashflowStatementHistory', {}).get('cashflowStatementHistory', [])
+        if cashflow_history:
+            latest = cashflow_history[0]
+            period_str = latest.get('endDate', {}).get('fmt', '') if isinstance(latest.get('endDate'), dict) else str(latest.get('endDate', ''))
+            
+            operating_cash_flow = to_float(latest.get('totalCashFromOperatingActivities', {}).get('raw', 0))
+            investing_cash_flow = to_float(latest.get('totalCashflowsFromInvestingActivities', {}).get('raw', 0))
+            financing_cash_flow = to_float(latest.get('totalCashFromFinancingActivities', {}).get('raw', 0))
+            free_cash_flow = to_float(latest.get('freeCashFlow', {}).get('raw', 0))
+            net_cash_flow = operating_cash_flow + investing_cash_flow + financing_cash_flow
+            
+            if operating_cash_flow != 0 or investing_cash_flow != 0 or financing_cash_flow != 0:
+                base = abs(operating_cash_flow) if operating_cash_flow != 0 else 1
+                investing_cash_flow_ratio = (investing_cash_flow / base * 100) if base > 0 else 0
+                financing_cash_flow_ratio = (financing_cash_flow / base * 100) if base > 0 else 0
+                free_cash_flow_ratio = (free_cash_flow / base * 100) if base > 0 else 0
+                net_cash_flow_ratio = (net_cash_flow / base * 100) if base > 0 else 0
+                
+                cashflow_data = {
+                    'stockCode': ticker.replace('.TW', ''),
+                    'stockName': stock_name,
+                    'period': period_str,
+                    'operatingCashFlow': operating_cash_flow,
+                    'investingCashFlow': investing_cash_flow,
+                    'investingCashFlowRatio': round(investing_cash_flow_ratio, 1),
+                    'financingCashFlow': financing_cash_flow,
+                    'financingCashFlowRatio': round(financing_cash_flow_ratio, 1),
+                    'freeCashFlow': free_cash_flow,
+                    'freeCashFlowRatio': round(free_cash_flow_ratio, 1),
+                    'netCashFlow': net_cash_flow,
+                    'netCashFlowRatio': round(net_cash_flow_ratio, 1),
+                }
+                logger.info(f"成功從 Yahoo Finance 獲取現金流量表數據")
+        
+        result_data = {
+            'incomeStatement': income_data,
+            'balanceSheet': balance_data,
+            'cashFlow': cashflow_data,
+        }
+        
+        if not income_data and not balance_data and not cashflow_data:
+            logger.warning(f"從 Yahoo Finance 網頁獲取的財務報表數據都為空")
+            return None
+        
+        logger.info(f"成功從 Yahoo Finance 網頁獲取財務報表數據")
+        return result_data
+        
+    except requests.exceptions.RequestException as e:
+        logger.error(f"從 Yahoo Finance 網頁獲取數據時發生網絡錯誤: {str(e)}")
+        return None
+    except Exception as e:
+        logger.error(f"從 Yahoo Finance 網頁獲取財務報表數據時發生錯誤: {str(e)}")
+        import traceback
+        logger.error(f"錯誤堆棧:\n{traceback.format_exc()}")
+        return None
 
 def get_financial_statements(stock_code: str) -> Optional[Dict]:
     """獲取財務報表數據（損益表、資產負債表、現金流量表）"""
     try:
         ticker = get_yfinance_ticker(stock_code)
+        logger.info(f"開始獲取股票 {stock_code} (yfinance ticker: {ticker}) 的財務報表數據")
+        
+        # 先嘗試從 Yahoo Finance 網頁直接獲取（更可靠）
+        web_data = get_financial_statements_from_yahoo_web(ticker)
+        if web_data and (web_data.get('incomeStatement') or web_data.get('balanceSheet') or web_data.get('cashFlow')):
+            logger.info(f"成功從 Yahoo Finance 網頁獲取財務報表數據，使用網頁數據")
+            return web_data
+        
+        # 如果網頁獲取失敗，嘗試使用 yfinance
+        logger.info(f"網頁獲取失敗或數據不完整，嘗試使用 yfinance...")
         stock = yf.Ticker(ticker)
         
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             # 獲取財務報表
+            logger.info(f"正在從 yfinance 獲取財務報表數據...")
+            
+            # 先嘗試獲取年度財務報表
             financials = stock.financials  # 損益表
             balance_sheet = stock.balance_sheet  # 資產負債表
             cashflow = stock.cashflow  # 現金流量表
             
+            # 如果年度報表為空，嘗試季度報表
+            if financials.empty:
+                logger.info(f"年度損益表為空，嘗試獲取季度損益表...")
+                financials = stock.quarterly_financials
+            if balance_sheet.empty:
+                logger.info(f"年度資產負債表為空，嘗試獲取季度資產負債表...")
+                balance_sheet = stock.quarterly_balance_sheet
+            if cashflow.empty:
+                logger.info(f"年度現金流量表為空，嘗試獲取季度現金流量表...")
+                cashflow = stock.quarterly_cashflow
+            
             # 獲取股票資訊
             info = stock.info
             stock_name = info.get('longName', info.get('shortName', stock_code)) if info else stock_code
+        
+        logger.info(f"財務報表數據狀態 - financials: {'空' if financials.empty else f'{len(financials)} 行'}, "
+                   f"balance_sheet: {'空' if balance_sheet.empty else f'{len(balance_sheet)} 行'}, "
+                   f"cashflow: {'空' if cashflow.empty else f'{len(cashflow)} 行'}")
+        
+        # 詳細記錄 DataFrame 的內容（用於調試）
+        if not financials.empty:
+            logger.info(f"損益表欄位列表（前20個）: {list(financials.index)[:20]}")
+            logger.info(f"損益表期間列表: {list(financials.columns)}")
+        if not balance_sheet.empty:
+            logger.info(f"資產負債表欄位列表（前20個）: {list(balance_sheet.index)[:20]}")
+            logger.info(f"資產負債表期間列表: {list(balance_sheet.columns)}")
+        if not cashflow.empty:
+            logger.info(f"現金流量表欄位列表（前20個）: {list(cashflow.index)[:20]}")
+            logger.info(f"現金流量表期間列表: {list(cashflow.columns)}")
+        
+        # 如果所有 DataFrame 都是空的，記錄警告
+        if financials.empty and balance_sheet.empty and cashflow.empty:
+            logger.warning(f"警告：股票 {stock_code} 的所有財務報表 DataFrame 都是空的。這可能是因為：")
+            logger.warning(f"1. yfinance 對台股財務報表支持有限")
+            logger.warning(f"2. 該股票在 yfinance 中沒有財務數據")
+            logger.warning(f"3. 網絡問題或 API 限制")
+            # 嘗試檢查股票是否存在
+            if info:
+                logger.info(f"股票資訊存在，股票名稱: {stock_name}")
+            else:
+                logger.warning(f"股票資訊也不存在，可能股票代號錯誤或 yfinance 無法識別")
         
         def to_float(value):
             if value is None or pd.isna(value):
@@ -266,136 +517,182 @@ def get_financial_statements(stock_code: str) -> Optional[Dict]:
             except (ValueError, TypeError):
                 return 0.0
         
+        def safe_get_value(df, row_name, period, alternatives=None):
+            """安全地從 DataFrame 獲取值"""
+            if alternatives is None:
+                alternatives = []
+            # 嘗試主要欄位名
+            if row_name in df.index:
+                try:
+                    value = df.loc[row_name, period]
+                    result = to_float(value)
+                    if result != 0:
+                        return result
+                except (KeyError, IndexError) as e:
+                    logger.debug(f"無法從 DataFrame 獲取 {row_name}: {e}")
+            # 嘗試替代欄位名
+            for alt in alternatives:
+                if alt in df.index:
+                    try:
+                        value = df.loc[alt, period]
+                        result = to_float(value)
+                        if result != 0:
+                            return result
+                    except (KeyError, IndexError) as e:
+                        logger.debug(f"無法從 DataFrame 獲取 {alt}: {e}")
+            return 0.0
+        
         # 處理損益表（取最新一期的數據）
         income_data = None
-        if not financials.empty and len(financials.columns) > 0:
-            latest_period = financials.columns[0]  # 最新一期
-            period_str = latest_period.strftime('%Y-%m-%d') if hasattr(latest_period, 'strftime') else str(latest_period)
-            
-            # 從 financials DataFrame 中提取數據
-            # yfinance 的 financials 使用英文欄位名，需要映射
-            revenue = to_float(financials.loc['Total Revenue', latest_period]) if 'Total Revenue' in financials.index else 0
-            if revenue == 0:
-                revenue = to_float(financials.loc['Revenue', latest_period]) if 'Revenue' in financials.index else 0
-            
-            gross_profit = to_float(financials.loc['Gross Profit', latest_period]) if 'Gross Profit' in financials.index else 0
-            operating_expenses = to_float(financials.loc['Operating Expenses', latest_period]) if 'Operating Expenses' in financials.index else 0
-            if operating_expenses == 0:
-                operating_expenses = to_float(financials.loc['Total Operating Expenses', latest_period]) if 'Total Operating Expenses' in financials.index else 0
-            
-            operating_income = to_float(financials.loc['Operating Income', latest_period]) if 'Operating Income' in financials.index else 0
-            if operating_income == 0:
-                operating_income = to_float(financials.loc['EBIT', latest_period]) if 'EBIT' in financials.index else 0
-            
-            net_income = to_float(financials.loc['Net Income', latest_period]) if 'Net Income' in financials.index else 0
-            if net_income == 0:
-                net_income = to_float(financials.loc['Net Income Common Stockholders', latest_period]) if 'Net Income Common Stockholders' in financials.index else 0
-            
-            other_income = to_float(financials.loc['Other Income', latest_period]) if 'Other Income' in financials.index else 0
-            
-            # 計算比率
-            gross_profit_ratio = (gross_profit / revenue * 100) if revenue > 0 else 0
-            operating_expenses_ratio = (operating_expenses / revenue * 100) if revenue > 0 else 0
-            operating_income_ratio = (operating_income / revenue * 100) if revenue > 0 else 0
-            
-            income_data = {
-                'stockCode': stock_code,
-                'stockName': stock_name,
-                'period': period_str,
-                'revenue': revenue,
-                'grossProfit': gross_profit,
-                'grossProfitRatio': round(gross_profit_ratio, 1),
-                'operatingExpenses': operating_expenses,
-                'operatingExpensesRatio': round(operating_expenses_ratio, 1),
-                'operatingIncome': operating_income,
-                'operatingIncomeRatio': round(operating_income_ratio, 1),
-                'netIncome': net_income,
-                'otherIncome': other_income,
-            }
+        try:
+            if not financials.empty and len(financials.columns) > 0:
+                latest_period = financials.columns[0]  # 最新一期
+                period_str = latest_period.strftime('%Y-%m-%d') if hasattr(latest_period, 'strftime') else str(latest_period)
+                
+                logger.info(f"處理損益表，期間: {period_str}, 可用欄位: {list(financials.index)[:10]}")
+                
+                # 從 financials DataFrame 中提取數據
+                revenue = safe_get_value(financials, 'Total Revenue', latest_period, ['Revenue', 'Total Revenues'])
+                gross_profit = safe_get_value(financials, 'Gross Profit', latest_period)
+                operating_expenses = safe_get_value(financials, 'Operating Expenses', latest_period, ['Total Operating Expenses'])
+                operating_income = safe_get_value(financials, 'Operating Income', latest_period, ['EBIT', 'Operating Income or Loss'])
+                net_income = safe_get_value(financials, 'Net Income', latest_period, ['Net Income Common Stockholders', 'Net Income From Continuing Operations'])
+                other_income = safe_get_value(financials, 'Other Income', latest_period, ['Other Income/Expenses'])
+                
+                # 計算比率
+                gross_profit_ratio = (gross_profit / revenue * 100) if revenue > 0 else 0
+                operating_expenses_ratio = (operating_expenses / revenue * 100) if revenue > 0 else 0
+                operating_income_ratio = (operating_income / revenue * 100) if revenue > 0 else 0
+                
+                # 只有當至少有一些有效數據時才創建 income_data
+                if revenue > 0 or gross_profit != 0 or operating_income != 0 or net_income != 0:
+                    income_data = {
+                        'stockCode': stock_code,
+                        'stockName': stock_name,
+                        'period': period_str,
+                        'revenue': revenue,
+                        'grossProfit': gross_profit,
+                        'grossProfitRatio': round(gross_profit_ratio, 1),
+                        'operatingExpenses': operating_expenses,
+                        'operatingExpensesRatio': round(operating_expenses_ratio, 1),
+                        'operatingIncome': operating_income,
+                        'operatingIncomeRatio': round(operating_income_ratio, 1),
+                        'netIncome': net_income,
+                        'otherIncome': other_income,
+                    }
+                    logger.info(f"成功處理損益表數據，收入: {revenue}, 淨利: {net_income}")
+                else:
+                    logger.warning(f"損益表數據無效，所有值為 0 或缺失")
+        except Exception as e:
+            logger.error(f"處理損益表時發生錯誤: {str(e)}")
+            import traceback
+            logger.error(f"錯誤堆棧:\n{traceback.format_exc()}")
         
         # 處理資產負債表
         balance_data = None
-        if not balance_sheet.empty and len(balance_sheet.columns) > 0:
-            latest_period = balance_sheet.columns[0]
-            period_str = latest_period.strftime('%Y-%m-%d') if hasattr(latest_period, 'strftime') else str(latest_period)
-            
-            total_assets = to_float(balance_sheet.loc['Total Assets', latest_period]) if 'Total Assets' in balance_sheet.index else 0
-            shareholders_equity = to_float(balance_sheet.loc['Stockholders Equity', latest_period]) if 'Stockholders Equity' in balance_sheet.index else 0
-            if shareholders_equity == 0:
-                shareholders_equity = to_float(balance_sheet.loc['Total Stockholders Equity', latest_period]) if 'Total Stockholders Equity' in balance_sheet.index else 0
-            
-            current_assets = to_float(balance_sheet.loc['Current Assets', latest_period]) if 'Current Assets' in balance_sheet.index else 0
-            current_liabilities = to_float(balance_sheet.loc['Current Liabilities', latest_period]) if 'Current Liabilities' in balance_sheet.index else 0
-            
-            # 計算比率
-            total_assets_ratio = 100.0  # 基準
-            shareholders_equity_ratio = (shareholders_equity / total_assets * 100) if total_assets > 0 else 0
-            current_assets_ratio = (current_assets / total_assets * 100) if total_assets > 0 else 0
-            current_liabilities_ratio = (current_liabilities / total_assets * 100) if total_assets > 0 else 0
-            
-            balance_data = {
-                'stockCode': stock_code,
-                'stockName': stock_name,
-                'period': period_str,
-                'totalAssets': total_assets,
-                'totalAssetsRatio': round(total_assets_ratio, 1),
-                'shareholdersEquity': shareholders_equity,
-                'shareholdersEquityRatio': round(shareholders_equity_ratio, 1),
-                'currentAssets': current_assets,
-                'currentAssetsRatio': round(current_assets_ratio, 1),
-                'currentLiabilities': current_liabilities,
-                'currentLiabilitiesRatio': round(current_liabilities_ratio, 1),
-            }
+        try:
+            if not balance_sheet.empty and len(balance_sheet.columns) > 0:
+                latest_period = balance_sheet.columns[0]
+                period_str = latest_period.strftime('%Y-%m-%d') if hasattr(latest_period, 'strftime') else str(latest_period)
+                
+                logger.info(f"處理資產負債表，期間: {period_str}, 可用欄位: {list(balance_sheet.index)[:10]}")
+                
+                total_assets = safe_get_value(balance_sheet, 'Total Assets', latest_period)
+                shareholders_equity = safe_get_value(balance_sheet, 'Stockholders Equity', latest_period, ['Total Stockholders Equity', 'Total Equity'])
+                current_assets = safe_get_value(balance_sheet, 'Current Assets', latest_period)
+                current_liabilities = safe_get_value(balance_sheet, 'Current Liabilities', latest_period)
+                
+                # 計算比率
+                total_assets_ratio = 100.0  # 基準
+                shareholders_equity_ratio = (shareholders_equity / total_assets * 100) if total_assets > 0 else 0
+                current_assets_ratio = (current_assets / total_assets * 100) if total_assets > 0 else 0
+                current_liabilities_ratio = (current_liabilities / total_assets * 100) if total_assets > 0 else 0
+                
+                # 只有當至少有一些有效數據時才創建 balance_data
+                if total_assets > 0:
+                    balance_data = {
+                        'stockCode': stock_code,
+                        'stockName': stock_name,
+                        'period': period_str,
+                        'totalAssets': total_assets,
+                        'totalAssetsRatio': round(total_assets_ratio, 1),
+                        'shareholdersEquity': shareholders_equity,
+                        'shareholdersEquityRatio': round(shareholders_equity_ratio, 1),
+                        'currentAssets': current_assets,
+                        'currentAssetsRatio': round(current_assets_ratio, 1),
+                        'currentLiabilities': current_liabilities,
+                        'currentLiabilitiesRatio': round(current_liabilities_ratio, 1),
+                    }
+                    logger.info(f"成功處理資產負債表數據，總資產: {total_assets}, 股東權益: {shareholders_equity}")
+                else:
+                    logger.warning(f"資產負債表數據無效，總資產為 0 或缺失")
+        except Exception as e:
+            logger.error(f"處理資產負債表時發生錯誤: {str(e)}")
+            import traceback
+            logger.error(f"錯誤堆棧:\n{traceback.format_exc()}")
         
         # 處理現金流量表
         cashflow_data = None
-        if not cashflow.empty and len(cashflow.columns) > 0:
-            latest_period = cashflow.columns[0]
-            period_str = latest_period.strftime('%Y-%m-%d') if hasattr(latest_period, 'strftime') else str(latest_period)
-            
-            operating_cash_flow = to_float(cashflow.loc['Operating Cash Flow', latest_period]) if 'Operating Cash Flow' in cashflow.index else 0
-            if operating_cash_flow == 0:
-                operating_cash_flow = to_float(cashflow.loc['Total Cash From Operating Activities', latest_period]) if 'Total Cash From Operating Activities' in cashflow.index else 0
-            
-            investing_cash_flow = to_float(cashflow.loc['Investing Cash Flow', latest_period]) if 'Investing Cash Flow' in cashflow.index else 0
-            if investing_cash_flow == 0:
-                investing_cash_flow = to_float(cashflow.loc['Total Cashflows From Investing Activities', latest_period]) if 'Total Cashflows From Investing Activities' in cashflow.index else 0
-            
-            financing_cash_flow = to_float(cashflow.loc['Financing Cash Flow', latest_period]) if 'Financing Cash Flow' in cashflow.index else 0
-            if financing_cash_flow == 0:
-                financing_cash_flow = to_float(cashflow.loc['Total Cash From Financing Activities', latest_period]) if 'Total Cash From Financing Activities' in cashflow.index else 0
-            
-            free_cash_flow = to_float(cashflow.loc['Free Cash Flow', latest_period]) if 'Free Cash Flow' in cashflow.index else 0
-            net_cash_flow = operating_cash_flow + investing_cash_flow + financing_cash_flow
-            
-            # 計算比率（以 operating_cash_flow 為基準）
-            base = abs(operating_cash_flow) if operating_cash_flow != 0 else 1
-            investing_cash_flow_ratio = (investing_cash_flow / base * 100) if base > 0 else 0
-            financing_cash_flow_ratio = (financing_cash_flow / base * 100) if base > 0 else 0
-            free_cash_flow_ratio = (free_cash_flow / base * 100) if base > 0 else 0
-            net_cash_flow_ratio = (net_cash_flow / base * 100) if base > 0 else 0
-            
-            cashflow_data = {
-                'stockCode': stock_code,
-                'stockName': stock_name,
-                'period': period_str,
-                'operatingCashFlow': operating_cash_flow,
-                'investingCashFlow': investing_cash_flow,
-                'investingCashFlowRatio': round(investing_cash_flow_ratio, 1),
-                'financingCashFlow': financing_cash_flow,
-                'financingCashFlowRatio': round(financing_cash_flow_ratio, 1),
-                'freeCashFlow': free_cash_flow,
-                'freeCashFlowRatio': round(free_cash_flow_ratio, 1),
-                'netCashFlow': net_cash_flow,
-                'netCashFlowRatio': round(net_cash_flow_ratio, 1),
-            }
+        try:
+            if not cashflow.empty and len(cashflow.columns) > 0:
+                latest_period = cashflow.columns[0]
+                period_str = latest_period.strftime('%Y-%m-%d') if hasattr(latest_period, 'strftime') else str(latest_period)
+                
+                logger.info(f"處理現金流量表，期間: {period_str}, 可用欄位: {list(cashflow.index)[:10]}")
+                
+                operating_cash_flow = safe_get_value(cashflow, 'Operating Cash Flow', latest_period, ['Total Cash From Operating Activities', 'Cash From Operating Activities'])
+                investing_cash_flow = safe_get_value(cashflow, 'Investing Cash Flow', latest_period, ['Total Cashflows From Investing Activities', 'Cash From Investing Activities'])
+                financing_cash_flow = safe_get_value(cashflow, 'Financing Cash Flow', latest_period, ['Total Cash From Financing Activities', 'Cash From Financing Activities'])
+                free_cash_flow = safe_get_value(cashflow, 'Free Cash Flow', latest_period)
+                net_cash_flow = operating_cash_flow + investing_cash_flow + financing_cash_flow
+                
+                # 計算比率（以 operating_cash_flow 為基準）
+                base = abs(operating_cash_flow) if operating_cash_flow != 0 else 1
+                investing_cash_flow_ratio = (investing_cash_flow / base * 100) if base > 0 else 0
+                financing_cash_flow_ratio = (financing_cash_flow / base * 100) if base > 0 else 0
+                free_cash_flow_ratio = (free_cash_flow / base * 100) if base > 0 else 0
+                net_cash_flow_ratio = (net_cash_flow / base * 100) if base > 0 else 0
+                
+                # 只有當至少有一些有效數據時才創建 cashflow_data
+                if operating_cash_flow != 0 or investing_cash_flow != 0 or financing_cash_flow != 0:
+                    cashflow_data = {
+                        'stockCode': stock_code,
+                        'stockName': stock_name,
+                        'period': period_str,
+                        'operatingCashFlow': operating_cash_flow,
+                        'investingCashFlow': investing_cash_flow,
+                        'investingCashFlowRatio': round(investing_cash_flow_ratio, 1),
+                        'financingCashFlow': financing_cash_flow,
+                        'financingCashFlowRatio': round(financing_cash_flow_ratio, 1),
+                        'freeCashFlow': free_cash_flow,
+                        'freeCashFlowRatio': round(free_cash_flow_ratio, 1),
+                        'netCashFlow': net_cash_flow,
+                        'netCashFlowRatio': round(net_cash_flow_ratio, 1),
+                    }
+                    logger.info(f"成功處理現金流量表數據，營業現金流: {operating_cash_flow}, 淨現金流: {net_cash_flow}")
+                else:
+                    logger.warning(f"現金流量表數據無效，所有值為 0 或缺失")
+        except Exception as e:
+            logger.error(f"處理現金流量表時發生錯誤: {str(e)}")
+            import traceback
+            logger.error(f"錯誤堆棧:\n{traceback.format_exc()}")
         
-        return {
+        result = {
             'incomeStatement': income_data,
             'balanceSheet': balance_data,
             'cashFlow': cashflow_data,
         }
+        
+        # 檢查是否至少有一個報表有數據
+        if not income_data and not balance_data and not cashflow_data:
+            logger.warning(f"股票 {stock_code} 的所有財務報表數據都為空或無效")
+            return None
+        
+        logger.info(f"成功獲取股票 {stock_code} 的財務報表數據")
+        return result
     except Exception as e:
-        logger.error(f"Error fetching financial statements for {stock_code}: {str(e)}")
+        logger.error(f"獲取股票 {stock_code} 的財務報表數據時發生錯誤: {str(e)}")
+        import traceback
+        logger.error(f"錯誤堆棧:\n{traceback.format_exc()}")
         return None
 

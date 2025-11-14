@@ -32,7 +32,18 @@ const TradeDetailTable = memo(function TradeDetailTable({ data, selectedStockCod
         const aValue = a[sortConfig.key]
         const bValue = b[sortConfig.key]
         
+        // 處理 null/undefined 值
+        if (aValue === null || aValue === undefined) {
+          return sortConfig.direction === 'asc' ? 1 : -1
+        }
+        if (bValue === null || bValue === undefined) {
+          return sortConfig.direction === 'asc' ? -1 : 1
+        }
+        
         if (typeof aValue === 'number' && typeof bValue === 'number') {
+          if (isNaN(aValue) && isNaN(bValue)) return 0
+          if (isNaN(aValue)) return sortConfig.direction === 'asc' ? 1 : -1
+          if (isNaN(bValue)) return sortConfig.direction === 'asc' ? -1 : 1
           return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue
         }
         
@@ -51,8 +62,21 @@ const TradeDetailTable = memo(function TradeDetailTable({ data, selectedStockCod
     if (selectedDate) {
       const dateStr = selectedDate
       sortedData = sortedData.filter(item => {
-        const itemDate = new Date(item.date).toISOString().split('T')[0]
-        return itemDate === dateStr
+        // 如果 item.date 已經是 YYYY-MM-DD 格式，直接比較
+        if (item.date && /^\d{4}-\d{2}-\d{2}$/.test(item.date)) {
+          return item.date === dateStr
+        }
+        // 否則轉換為 YYYY-MM-DD 格式進行比較
+        try {
+          const itemDate = new Date(item.date)
+          if (isNaN(itemDate.getTime())) {
+            return false
+          }
+          const formattedDate = itemDate.toISOString().split('T')[0]
+          return formattedDate === dateStr
+        } catch {
+          return false
+        }
       })
     }
     
@@ -79,6 +103,9 @@ const TradeDetailTable = memo(function TradeDetailTable({ data, selectedStockCod
   const noDataReason = getNoDataReason()
 
   const formatNumber = (num: number) => {
+    if (num === null || num === undefined || isNaN(num)) {
+      return 'N/A'
+    }
     if (num >= 100000000) {
       return (num / 100000000).toFixed(1) + '億'
     } else if (num >= 10000) {
@@ -88,17 +115,21 @@ const TradeDetailTable = memo(function TradeDetailTable({ data, selectedStockCod
   }
 
   const formatChange = (change: number, changePercent: number) => {
+    if (change === null || change === undefined || isNaN(change)) {
+      return <span className="text-muted">N/A</span>
+    }
     const sign = change >= 0 ? '+' : ''
+    const percentValue = (changePercent === null || changePercent === undefined || isNaN(changePercent)) ? 0 : changePercent
     return (
       <span className={change >= 0 ? 'positive' : 'negative'}>
-        {sign}{change.toFixed(1)} ({sign}{changePercent.toFixed(1)}%)
+        {sign}{change.toFixed(1)} ({sign}{percentValue.toFixed(1)}%)
       </span>
     )
   }
 
   return (
     <div className="trade-detail-table-container">
-      <h3>Table 1: 股票成交明細</h3>
+      <h3>股票成交明細</h3>
       <div className="table-wrapper">
         <table className="trade-detail-table">
           <thead>
@@ -160,22 +191,23 @@ const TradeDetailTable = memo(function TradeDetailTable({ data, selectedStockCod
                   <td className="stock-code">{item.stockCode}</td>
                   <td className="time-cell">
                     {item.time ? (
-                      item.time.includes(':') && item.time.split(':').length >= 3 
+                      // 檢查時間格式是否完整（包含時:分，可能還有秒）
+                      item.time.includes(':') && item.time.split(':').length >= 2
                         ? item.time 
                         : `${item.date} ${item.time}`
                     ) : (
                       item.date
                     )}
                   </td>
-                  <td className="price">{item.price.toFixed(1)}</td>
-                  <td className="change">{formatChange(item.change, item.changePercent)}</td>
-                  <td className="lots">{item.lots.toFixed(1)}</td>
-                  <td className="period">{item.period}</td>
-                  <td className="price">{item.openPrice.toFixed(1)}</td>
-                  <td className="price high">{item.highPrice.toFixed(1)}</td>
-                  <td className="price low">{item.lowPrice.toFixed(1)}</td>
-                  <td className="volume">{formatNumber(item.totalVolume)}</td>
-                  <td className="volume estimated">{formatNumber(item.estimatedVolume)}</td>
+                  <td className="price">{item.price?.toFixed(1) ?? 'N/A'}</td>
+                  <td className="change">{formatChange(item.change ?? 0, item.changePercent ?? 0)}</td>
+                  <td className="lots">{item.lots?.toFixed(1) ?? 'N/A'}</td>
+                  <td className="period">{item.period ?? 'N/A'}</td>
+                  <td className="price">{item.openPrice?.toFixed(1) ?? 'N/A'}</td>
+                  <td className="price high">{item.highPrice?.toFixed(1) ?? 'N/A'}</td>
+                  <td className="price low">{item.lowPrice?.toFixed(1) ?? 'N/A'}</td>
+                  <td className="volume">{formatNumber(item.totalVolume ?? 0)}</td>
+                  <td className="volume estimated">{formatNumber(item.estimatedVolume ?? 0)}</td>
                 </tr>
               ))
             )}

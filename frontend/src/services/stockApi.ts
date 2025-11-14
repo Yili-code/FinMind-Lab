@@ -74,6 +74,7 @@ export interface DailyTradeResponse {
     quarterHigh: number
   }>
   count: number
+  warning?: string  // 可選的警告信息
 }
 
 // 獲取股票基本資訊
@@ -192,52 +193,123 @@ export async function getMultipleStocks(stockCodes: string[]): Promise<StockInfo
   }
 }
 
-// 測試後端連接
-export async function testBackendConnection(): Promise<boolean> {
+/**
+ * 測試後端連接
+ * 
+ * 功能說明：
+ * 1. 發送 GET 請求到後端的 /api/hello 端點
+ * 2. 設置 10 秒超時，避免長時間等待
+ * 3. 驗證響應格式和內容，確保是正確的後端服務
+ * 4. 返回連接狀態（true/false）
+ * 
+ * 優化點：
+ * - 使用 AbortController 實現超時控制
+ * - 驗證響應格式和消息內容
+ * - 安全的錯誤處理，不會拋出異常
+ * - 支持可配置的超時時間
+ * 
+ * @param timeoutMs - 超時時間（毫秒），預設 5000ms
+ * @returns Promise<boolean> - 連接成功返回 true，否則返回 false
+ */
+export async function testBackendConnection(timeoutMs: number = 10000): Promise<boolean> {
   const url = `${API_BASE_URL}/api/hello`
   
-  // 先嘗試通過配置的 URL 連接
+  // 預期的後端響應消息列表
+  const validMessages = [
+    'Hello from FastAPI',
+    'Successfully connected to the backend!!!'
+  ] as const
+  
+  let timeoutId: ReturnType<typeof setTimeout> | null = null
+  
   try {
+    // 創建 AbortController 用於取消請求
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 5000)
     
+    // 設置超時，確保在指定時間後取消請求
+    timeoutId = setTimeout(() => {
+      controller.abort()
+    }, timeoutMs)
+    
+    // 發送請求
     const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
       },
-      signal: controller.signal
+      signal: controller.signal,
+      // 添加 cache 控制，確保每次都是新請求
+      cache: 'no-store'
     })
     
-    clearTimeout(timeoutId)
+    // 清除超時計時器（請求已完成）
+    if (timeoutId) {
+      clearTimeout(timeoutId)
+      timeoutId = null
+    }
     
-    // 檢查是否返回正確的 JSON 響應
-    if (response.ok) {
-      try {
-        const data = await response.json()
-        
-        // 檢查是否是 FinMind Lab 的後端（返回特定格式）
-        const validMessages = [
-          'Hello from FastAPI',
-          'Successfully connected to the backend!!!'
-        ]
-        const isValid = data && 
-          data.message && 
-          typeof data.message === 'string' &&
-          validMessages.includes(data.message)
-        
-        if (isValid) {
-          return true
-        }
-      } catch (parseError) {
-        // 靜默處理解析錯誤
+    // 檢查 HTTP 狀態碼
+    if (!response.ok) {
+      // HTTP 錯誤（4xx, 5xx），但至少能連接到服務器
+      return false
+    }
+    
+    // 檢查 Content-Type 是否為 JSON
+    const contentType = response.headers.get('content-type')
+    if (!contentType || !contentType.includes('application/json')) {
+      return false
+    }
+    
+    // 解析 JSON 響應
+    let data: unknown
+    try {
+      data = await response.json()
+    } catch (parseError) {
+      // JSON 解析失敗
+      return false
+    }
+    
+    // 類型守衛：驗證響應格式
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      return false
+    }
+    
+    // 驗證消息字段
+    const responseData = data as { message?: unknown }
+    if (!responseData.message || typeof responseData.message !== 'string') {
+      return false
+    }
+    
+    // 檢查消息是否匹配預期的後端響應
+    const isValidMessage = validMessages.includes(
+      responseData.message as typeof validMessages[number]
+    )
+    
+    return isValidMessage
+    
+  } catch (error) {
+    // 清除超時計時器（如果還未清除）
+    if (timeoutId) {
+      clearTimeout(timeoutId)
+    }
+    
+    // 處理各種錯誤情況
+    if (error instanceof Error) {
+      // AbortError 表示請求被取消（超時）
+      if (error.name === 'AbortError') {
+        // 超時錯誤，後端可能無響應或響應太慢
+        return false
+      }
+      
+      // 網絡錯誤（無法連接到服務器）
+      if (error.message.includes('fetch') || error.message.includes('network')) {
+        return false
       }
     }
-  } catch (error) {
-    // 靜默處理連接錯誤
+    
+    // 其他未知錯誤
+    return false
   }
-  
-  return false
 }
 
 // 獲取大盤指數數據

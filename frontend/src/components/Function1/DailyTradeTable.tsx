@@ -178,7 +178,7 @@ const DailyTradeTable = memo(function DailyTradeTable({ data, selectedStockCode,
 
   return (
     <div className="daily-trade-table-container">
-      <h3>Table 2: 股票日交易檔</h3>
+      <h3>股票日交易檔</h3>
       <div className="table-wrapper">
         <table className="daily-trade-table">
           <thead>

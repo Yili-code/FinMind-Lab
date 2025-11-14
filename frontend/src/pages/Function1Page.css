@@ -120,11 +120,6 @@
   gap: var(--spacing-sm);
 }
 
-.loading-indicator::before {
-  content: '⏳';
-  font-size: 1.2rem;
-}
-
 .error-message {
   padding: var(--spacing-md);
   background: var(--error-light);

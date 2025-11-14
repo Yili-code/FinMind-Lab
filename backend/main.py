@@ -60,6 +60,9 @@ logging.getLogger('urllib3').setLevel(logging.ERROR)
 logging.getLogger('uvicorn').setLevel(logging.WARNING)
 logging.getLogger('uvicorn.access').setLevel(logging.WARNING)
 logging.getLogger('fastapi').setLevel(logging.WARNING)
+# 設置我們自己的服務日誌級別為 INFO，便於調試
+logging.getLogger('services.yfinance_service').setLevel(logging.INFO)
+logging.getLogger('__main__').setLevel(logging.INFO)
 
 # 建立 FastAPI 實例
 app = FastAPI(title="FinMind Lab API")
@@ -283,13 +286,60 @@ async def get_stock_daily(
 	days: int = Query(5, description="獲取最近幾天的數據", ge=1, le=2000)
 ):
 	try:
+		import logging
+		logger = logging.getLogger(__name__)
+		logger.info(f"API 請求: 獲取股票 {stock_code} 的日交易數據，天數: {days}")
+		
 		data = get_daily_trade_data(stock_code, days=days)
+		logger.info(f"後端返回數據量: {len(data)}")
+		
+		# 如果數據為空，返回警告信息但不拋出錯誤
+		if len(data) == 0:
+			logger.warning(f"股票 {stock_code} 的數據為空，開始診斷...")
+			# 嘗試獲取股票信息來驗證股票代號是否有效
+			from services.yfinance_service import get_stock_info
+			try:
+				stock_info = get_stock_info(stock_code)
+				if stock_info is None:
+					# 股票代號無效
+					logger.warning(f"股票 {stock_code} 的信息無法獲取，可能代號不正確")
+					return {
+						"stockCode": stock_code,
+						"data": [],
+						"count": 0,
+						"warning": f"無法獲取股票 {stock_code} 的數據。可能原因：\n1. 股票代號不正確（請確認是台灣股票代號，例如：2330）\n2. 股票已下市或暫停交易\n3. yfinance 無法訪問該股票數據（可能需要檢查網絡連接）\n\n建議：\n• 確認股票代號格式正確（台灣股票：4位數字，例如 2330）\n• 嘗試其他股票代號（例如：2317, 2454, 2308）\n• 檢查後端日誌查看詳細錯誤信息"
+					}
+				else:
+					# 股票信息存在但歷史數據為空（可能是非交易時間）
+					stock_name = stock_info.get('stockName', stock_code)
+					logger.warning(f"股票 {stock_code} ({stock_name}) 的信息存在，但歷史數據為空")
+					return {
+						"stockCode": stock_code,
+						"data": [],
+						"count": 0,
+						"warning": f"股票 {stock_code} ({stock_name}) 的歷史數據為空。可能原因：\n1. 非交易時間（週末或假日）\n2. 數據源暫時不可用（yfinance API 限制或網絡問題）\n3. 指定的時間範圍內沒有交易數據\n4. 股票可能暫停交易\n\n建議：\n• 確認當前是否為台灣股市交易時間（週一至週五 9:00-13:30）\n• 嘗試增加查詢天數（例如：days=30）\n• 檢查網絡連接和 yfinance API 狀態\n• 查看後端日誌獲取詳細錯誤信息"
+					}
+			except Exception as info_err:
+				logger.error(f"獲取股票信息時發生錯誤: {str(info_err)}")
+				return {
+					"stockCode": stock_code,
+					"data": [],
+					"count": 0,
+					"warning": f"無法驗證股票 {stock_code} 的有效性。錯誤: {str(info_err)}"
+				}
+		
+		logger.info(f"成功返回股票 {stock_code} 的數據，共 {len(data)} 筆")
 		return {
 			"stockCode": stock_code,
 			"data": data,
 			"count": len(data)
 		}
 	except Exception as e:
+		import logging
+		logger = logging.getLogger(__name__)
+		logger.error(f"獲取日交易數據時發生異常: {str(e)}")
+		import traceback
+		logger.error(f"錯誤堆棧:\n{traceback.format_exc()}")
 		raise HTTPException(status_code=500, detail=f"獲取日交易數據時發生錯誤: {str(e)}")
 
 # 批量獲取多個股票的基本資訊
@@ -331,14 +381,28 @@ async def get_market_index(
 @app.get("/api/stock/financial/{stock_code}")
 async def get_stock_financial(stock_code: str):
 	try:
+		import logging
+		logger = logging.getLogger(__name__)
+		logger.info(f"[API] 收到獲取股票 {stock_code} 財務報表數據的請求")
+		
 		data = get_financial_statements(stock_code)
 		if data is None:
-			raise HTTPException(status_code=404, detail=f"無法獲取股票 {stock_code} 的財務報表數據")
+			error_msg = f"無法獲取股票 {stock_code} 的財務報表數據。可能原因：1) yfinance 對台股財務報表支持有限 2) 該股票沒有可用的財務數據 3) 數據格式不匹配。請查看後端日誌獲取詳細信息。"
+			logger.warning(f"[API] {error_msg}")
+			raise HTTPException(status_code=404, detail=error_msg)
+		
+		logger.info(f"[API] 成功返回股票 {stock_code} 的財務報表數據")
 		return data
 	except HTTPException:
 		raise
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=f"獲取財務報表數據時發生錯誤: {str(e)}")
+		import logging
+		logger = logging.getLogger(__name__)
+		error_msg = f"獲取財務報表數據時發生錯誤: {str(e)}"
+		logger.error(f"[API] {error_msg}")
+		import traceback
+		logger.error(f"[API] 錯誤堆棧:\n{traceback.format_exc()}")
+		raise HTTPException(status_code=500, detail=error_msg)
 
 # 生成 K 線圖
 @app.post("/api/stock/chart/{stock_code}")
@@ -389,7 +453,7 @@ async def generate_stock_chart(
 					'high': item.get('highPrice', 0),
 					'low': item.get('lowPrice', 0),
 					'close': item.get('closePrice', 0),
-					'volume': item.get('totalVolume', 0)
+					'volume': item.get('totalVolume', item.get('estimatedVolume', 0))
 				})
 		
 		if not chart_data:
