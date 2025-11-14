@@ -108,10 +108,13 @@ function FinancialReportsPage() {
     setError(null)
 
     try {
+      console.log(`[FinancialReportsPage] 開始獲取股票 ${stockCode} 的財務報表數據`)
       const financialData = await getFinancialStatements(stockCode)
+      console.log(`[FinancialReportsPage] 獲取到的財務數據:`, financialData)
       
       if (!financialData.incomeStatement && !financialData.balanceSheet && !financialData.cashFlow) {
-        setError(`無法獲取股票 ${stockCode} 的財務報表數據`)
+        const errorMsg = `無法獲取股票 ${stockCode} 的財務報表數據。\n\n可能的原因：\n1. 該股票代號不存在\n2. yfinance 無法獲取該股票的財務數據\n3. 該股票可能已下市或暫停交易\n\n請嘗試其他股票代號，例如：2330 (台積電)、2317 (鴻海)`
+        setError(errorMsg)
         setLoading(false)
         return
       }
@@ -136,8 +139,20 @@ function FinancialReportsPage() {
       const updatedGroups = [...stockGroups, newGroup]
       saveGroups(updatedGroups)
       setInputStockCode('')
+      console.log(`[FinancialReportsPage] 成功添加股票 ${stockCode} 到群組`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : `獲取股票 ${stockCode} 的財務報表數據失敗`)
+      console.error(`[FinancialReportsPage] 獲取財務報表數據失敗:`, err)
+      const errorMessage = err instanceof Error ? err.message : `獲取股票 ${stockCode} 的財務報表數據失敗`
+      
+      // 提供更詳細的錯誤訊息
+      let detailedError = errorMessage
+      if (errorMessage.includes('無法連接到後端服務器')) {
+        detailedError = `無法連接到後端服務器。\n\n請確認：\n1. 後端服務是否正在運行 (http://localhost:8000)\n2. 端口 8000 是否被其他程序占用\n\n啟動後端的方法：\n• Windows: 在 backend 目錄執行 start_server.bat\n• Linux/Mac: 在 backend 目錄執行 ./start_server.sh\n• 手動啟動: cd backend && python -m uvicorn main:app --reload --port 8000`
+      } else if (errorMessage.includes('404') || errorMessage.includes('無法獲取')) {
+        detailedError = `${errorMessage}\n\n可能的原因：\n1. 股票代號不存在或格式錯誤\n2. yfinance 無法獲取該股票的財務數據\n3. 該股票可能已下市或暫停交易\n\n請嘗試其他股票代號，例如：2330 (台積電)、2317 (鴻海)`
+      }
+      
+      setError(detailedError)
     } finally {
       setLoading(false)
     }
@@ -267,7 +282,13 @@ function FinancialReportsPage() {
               {loading ? '載入中...' : '+ 加入群組'}
             </button>
           </div>
-          {error && <div className="error-message">{error}</div>}
+          {error && (
+            <div className="error-message">
+              {error.split('\n').map((line, index) => (
+                <div key={index}>{line}</div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* 股票群組列表 */}

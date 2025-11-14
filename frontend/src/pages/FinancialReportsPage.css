@@ -105,6 +105,9 @@
   border-radius: var(--radius-md);
   color: #FF3366;
   font-size: 0.9rem;
+  white-space: pre-line; /* 保留換行符 */
+  line-height: 1.6;
+  margin-top: var(--spacing-sm);
 }
 
 .stock-groups-section {

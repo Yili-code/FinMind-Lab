@@ -1,10 +1,10 @@
 # FinMind Lab - 前端專案架構說明
 
-## 📋 專案概述
+##  專案概述
 
 FinMind Lab 是一個專為金融數據分析與研究打造的前端應用程式，提供豐富的股票數據查詢、視覺化分析與財務報表功能。
 
-## 🛠️ 技術棧
+##  技術棧
 
 ### 核心框架與語言
 - **React 19.1.1** - 前端 UI 框架
@@ -22,7 +22,7 @@ FinMind Lab 是一個專為金融數據分析與研究打造的前端應用程�
 - **TypeScript ESLint 8.45.0** - TypeScript 專用的 ESLint 規則
 - **@vitejs/plugin-react 5.0.4** - Vite 的 React 支援外掛
 
-## 📁 專案目錄結構
+##  專案目錄結構
 
 ```
 frontend/
@@ -111,7 +111,7 @@ frontend/
 
 ```
 
-## 🔗 檔案相依關係
+## 檔案相依關係
 
 ### 應用程式入口流程
 
@@ -213,7 +213,7 @@ FinancialReportsPage.tsx
       └── CashFlowTable (現金流量表)
 ```
 
-## 🏗️ 架構設計模式
+##  架構設計模式
 
 ### 1. 組件化架構
 - **頁面組件 (Pages)**: 負責頁面層級的邏輯與佈局
@@ -234,7 +234,7 @@ FinancialReportsPage.tsx
 - **TypeScript**: 完整的型別定義確保型別安全
 - **介面定義**: 統一的資料結構定義
 
-## 🔌 後端整合
+##  後端整合
 
 ### API 代理設定
 在 `vite.config.ts` 中配置了開發環境的 API 代理：
