@@ -359,9 +359,10 @@ export async function getMarketIndexData(
   }
 }
 
-// 財務報表數據接口
+// 財務報表數據接口（後端已包含 id 字段）
 export interface FinancialStatementsResponse {
   incomeStatement: {
+    id: string
     stockCode: string
     stockName: string
     period: string
@@ -376,6 +377,7 @@ export interface FinancialStatementsResponse {
     otherIncome: number
   } | null
   balanceSheet: {
+    id: string
     stockCode: string
     stockName: string
     period: string
@@ -389,6 +391,7 @@ export interface FinancialStatementsResponse {
     currentLiabilitiesRatio: number
   } | null
   cashFlow: {
+    id: string
     stockCode: string
     stockName: string
     period: string

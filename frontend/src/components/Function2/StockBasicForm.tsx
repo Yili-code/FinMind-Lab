@@ -9,6 +9,7 @@ interface StockBasicFormProps {
   onCancel?: () => void
 }
 
+// 股票基本資料表單
 function StockBasicForm({ onSubmit, initialData, onCancel }: StockBasicFormProps) {
   const [formData, setFormData] = useState({
     stockCode: initialData?.stockCode || '',
@@ -36,6 +37,7 @@ function StockBasicForm({ onSubmit, initialData, onCancel }: StockBasicFormProps
     industryYield: initialData?.industryYield || 0
   })
 
+  // 處理表單變更
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({
@@ -48,6 +50,7 @@ function StockBasicForm({ onSubmit, initialData, onCancel }: StockBasicFormProps
     }))
   }
 
+  // 處理表單提交
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     onSubmit(formData)
@@ -81,6 +84,7 @@ function StockBasicForm({ onSubmit, initialData, onCancel }: StockBasicFormProps
     }
   }
 
+  // 渲染表單
   return (
     <div className="stock-basic-form-container">
       <h3>{initialData ? '編輯股票基本檔' : '新增股票基本檔'}</h3>

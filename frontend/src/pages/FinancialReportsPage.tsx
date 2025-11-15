@@ -6,6 +6,7 @@ import { getFinancialStatements, type FinancialStatementsResponse } from '../ser
 import type { IncomeStatementItem, BalanceSheetItem, CashFlowItem } from '../types/financial'
 import './FinancialReportsPage.css'
 
+// 股票群組
 interface StockGroup {
   stockCode: string
   stockName: string
@@ -14,12 +15,14 @@ interface StockGroup {
   cashFlow: CashFlowItem | null
 }
 
+// 財務報表頁面
 function FinancialReportsPage() {
+  // 狀態管理
   const [stockGroups, setStockGroups] = useState<StockGroup[]>([])
   const [inputStockCode, setInputStockCode] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [selectedStockCode, setSelectedStockCode] = useState<string | undefined>(undefined)
+  const [loading, setLoading] = useState(false)  // 加載狀態
+  const [error, setError] = useState<string | null>(null)  // 錯誤訊息
+  const [selectedStockCode, setSelectedStockCode] = useState<string | undefined>(undefined)  // 選中的股票代號
 
   // 從 localStorage 載入已保存的群組
   useEffect(() => {
@@ -68,17 +71,18 @@ function FinancialReportsPage() {
     }
   }
 
-  // 將 API 數據轉換為表格格式
+  // 簡化的轉換函數：後端已返回包含 id 的完整數據，只需類型轉換和驗證
   const convertToIncomeStatement = (data: NonNullable<FinancialStatementsResponse['incomeStatement']>, stockCode: string): IncomeStatementItem | null => {
     try {
       // 驗證必需的字段
-      if (!data.period || !data.revenue) {
+      if (!data.id || !data.period) {
         console.warn('[轉換失敗] 損益表數據缺少必需字段', data)
         return null
       }
 
+      // 後端已返回完整數據，直接使用（確保類型正確）
       const result: IncomeStatementItem = {
-        id: `${stockCode}-${data.period}`,
+        id: data.id,
         stockCode: data.stockCode || stockCode,
         period: data.period,
         revenue: Number(data.revenue) || 0,
@@ -92,7 +96,6 @@ function FinancialReportsPage() {
         otherIncome: Number(data.otherIncome) || 0,
       }
 
-      console.log('[轉換成功] 損益表數據:', result)
       return result
     } catch (err) {
       console.error('[轉換錯誤] 損益表數據轉換失敗:', err, data)
@@ -100,16 +103,18 @@ function FinancialReportsPage() {
     }
   }
 
+  // 簡化的轉換函數：後端已返回包含 id 的完整數據
   const convertToBalanceSheet = (data: NonNullable<FinancialStatementsResponse['balanceSheet']>, stockCode: string): BalanceSheetItem | null => {
     try {
       // 驗證必需的字段
-      if (!data.period || data.totalAssets === undefined) {
+      if (!data.id || !data.period || data.totalAssets === undefined) {
         console.warn('[轉換失敗] 資產負債表數據缺少必需字段', data)
         return null
       }
 
+      // 後端已返回完整數據，直接使用
       const result: BalanceSheetItem = {
-        id: `${stockCode}-${data.period}`,
+        id: data.id,
         stockCode: data.stockCode || stockCode,
         period: data.period,
         totalAssets: Number(data.totalAssets) || 0,
@@ -129,7 +134,6 @@ function FinancialReportsPage() {
         return null
       }
 
-      console.log('[轉換成功] 資產負債表數據:', result)
       return result
     } catch (err) {
       console.error('[轉換錯誤] 資產負債表數據轉換失敗:', err, data)
@@ -137,16 +141,18 @@ function FinancialReportsPage() {
     }
   }
 
+  // 簡化的轉換函數：後端已返回包含 id 的完整數據
   const convertToCashFlow = (data: NonNullable<FinancialStatementsResponse['cashFlow']>, stockCode: string): CashFlowItem | null => {
     try {
       // 驗證必需的字段
-      if (!data.period || data.operatingCashFlow === undefined) {
+      if (!data.id || !data.period) {
         console.warn('[轉換失敗] 現金流量表數據缺少必需字段', data)
         return null
       }
 
+      // 後端已返回完整數據，直接使用
       const result: CashFlowItem = {
-        id: `${stockCode}-${data.period}`,
+        id: data.id,
         stockCode: data.stockCode || stockCode,
         period: data.period,
         operatingCashFlow: Number(data.operatingCashFlow) || 0,
@@ -160,7 +166,6 @@ function FinancialReportsPage() {
         netCashFlowRatio: Number(data.netCashFlowRatio) || 0,
       }
 
-      console.log('[轉換成功] 現金流量表數據:', result)
       return result
     } catch (err) {
       console.error('[轉換錯誤] 現金流量表數據轉換失敗:', err, data)

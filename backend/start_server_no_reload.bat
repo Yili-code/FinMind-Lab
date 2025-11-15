@@ -1,12 +1,12 @@
 @echo off
 chcp 65001 >nul 2>&1
-REM 啟動後端和前端服務器（Windows）
+REM 啟動後端服務器（不使用自動重載，避免 Windows multiprocessing 問題）
 
 REM 切換到項目根目錄（從 backend 目錄往上）
 cd /d %~dp0\..
 
 echo ========================================
-echo 正在啟動後端服務器...
+echo 正在啟動後端服務器（無自動重載模式）...
 echo ========================================
 echo.
 
@@ -61,21 +61,20 @@ if not exist ".venv\Scripts\uvicorn.exe" (
 
 echo.
 echo 後端服務器將在 http://localhost:8000 啟動
+echo 注意：此模式不使用自動重載，修改代碼後需要手動重啟服務器
 echo 按 Ctrl+C 可停止服務器
 echo.
 echo ========================================
 echo.
 
-REM 設置環境變數以避免 Windows multiprocessing 問題
+REM 設置環境變數
 set PYTHONUNBUFFERED=1
 
 REM 在新的終端窗口中啟動前端
 start "FinMind Lab - Frontend" cmd /k "cd /d %~dp0\..\frontend && npm run dev"
 
-REM 啟動後端服務器
-REM 在 Windows 上，使用 --reload-dir 限制監視目錄可以避免 multiprocessing 問題
-REM 如果仍然遇到問題，請使用 start_server_no_reload.bat（不使用自動重載）
-python -m uvicorn main:app --reload --reload-dir . --reload-include "*.py" --port 8000 --log-level warning
+REM 啟動後端服務器（不使用 --reload）
+python -m uvicorn main:app --port 8000 --log-level warning
 
 REM 如果服務器異常退出，顯示錯誤訊息
 if errorlevel 1 (

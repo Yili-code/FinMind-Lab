@@ -62,7 +62,7 @@ function BalanceSheetTable({ data, selectedStockCode, onRowClick, onEdit, onDele
 
   return (
     <div className="financial-table-container">
-      <h3>Table 5: 股票財務分析 - 資產負債表</h3>
+      <h3>股票財務分析 - 資產負債表</h3>
       <div className="table-wrapper">
         <table className="financial-table">
           <thead>

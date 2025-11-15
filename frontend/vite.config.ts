@@ -41,14 +41,15 @@ export default defineConfig({
           
           // 監聽代理請求（用於調試）- 總是記錄以幫助調試
           proxy.on('proxyReq', (proxyReq, req, _res) => {
-            console.log(`[Vite Proxy] 轉發請求: ${req.method} ${req.url} -> http://localhost:8000${req.url}`)
+            console.log(`[Vite Proxy] ${req.method} ${req.url} → http://localhost:8000${req.url}`)
           })
           
           // 監聽代理響應（用於調試）- 總是記錄以幫助調試
           proxy.on('proxyRes', (proxyRes, req, _res) => {
             const status = proxyRes.statusCode
             const statusColor = status >= 500 ? '\x1b[31m' : status >= 400 ? '\x1b[33m' : '\x1b[32m'
-            console.log(`${statusColor}[Vite Proxy] ${req.url} -> ${status}\x1b[0m`)
+            const statusText = status >= 500 ? 'ERROR' : status >= 400 ? 'WARN' : 'OK'
+            console.log(`${statusColor}[Vite Proxy] ${req.method} ${req.url} → ${status} (${statusText})\x1b[0m`)
           })
         },
       },

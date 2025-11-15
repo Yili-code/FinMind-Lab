@@ -67,7 +67,7 @@ function CashFlowTable({ data, selectedStockCode, onRowClick, onEdit, onDelete }
 
   return (
     <div className="financial-table-container">
-      <h3>Table 6: 股票財務分析 - 現金流量表</h3>
+      <h3>股票財務分析 - 現金流量表</h3>
       <div className="table-wrapper">
         <table className="financial-table">
           <thead>
