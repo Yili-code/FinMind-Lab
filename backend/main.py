@@ -11,10 +11,10 @@ import warnings
 import logging
 from typing import Optional, List
 import sys
-from pathlib import Path
+from pathlib import Path as PathlibPath
 
 # 添加項目根目錄到 Python 路徑（如果從項目根目錄運行）
-backend_dir = Path(__file__).parent
+backend_dir = PathlibPath(__file__).parent
 project_root = backend_dir.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
@@ -784,9 +784,16 @@ async def get_stock_financial(
 		data = get_financial_statements(stock_code)
 		
 		if data is None:
-			error_msg = f"無法獲取股票 {stock_code} 的財務報表數據。可能原因：1) yfinance 對台股財務報表支持有限 2) 該股票沒有可用的財務數據 3) 數據格式不匹配。請查看後端日誌獲取詳細信息。"
-			logger.warning(f"[API 響應] ❌ 錯誤: {error_msg}")
-			raise HTTPException(status_code=404, detail=error_msg)
+			# 檢查股票是否存在
+			stock_info = get_stock_info(stock_code)
+			if stock_info is None:
+				error_msg = f"無法找到股票 {stock_code}。請確認股票代號正確（台股為4位數字，例如：2330；美股為字母代號，例如：AAPL）。"
+				logger.warning(f"[API 響應] ❌ 股票不存在: {error_msg}")
+				raise HTTPException(status_code=404, detail=error_msg)
+			else:
+				error_msg = f"無法獲取股票 {stock_code} ({stock_info.get('stockName', stock_code)}) 的財務報表數據。可能原因：1) yfinance 對台股財務報表支持有限 2) 該股票沒有可用的財務數據 3) 數據格式不匹配。請查看後端日誌獲取詳細信息。"
+				logger.warning(f"[API 響應] ❌ 財務報表數據為空: {error_msg}")
+				raise HTTPException(status_code=404, detail=error_msg)
 		
 		logger.info(f"[API 響應] 成功獲取股票 {stock_code} 的財務報表數據")
 		logger.info(f"[API 響應] 數據結構: incomeStatement={'有數據' if data.get('incomeStatement') else 'null'}, "
@@ -799,10 +806,13 @@ async def get_stock_financial(
 		import logging
 		logger = logging.getLogger(__name__)
 		error_msg = f"獲取財務報表數據時發生錯誤: {str(e)}"
-		logger.error(f"[API] {error_msg}")
+		logger.error(f"[API 錯誤] {error_msg}")
 		import traceback
-		logger.error(f"[API] 錯誤堆棧:\n{traceback.format_exc()}")
-		raise HTTPException(status_code=500, detail=error_msg)
+		logger.error(f"[API 錯誤] 錯誤堆棧:\n{traceback.format_exc()}")
+		raise HTTPException(
+			status_code=500, 
+			detail=f"獲取財務報表數據時發生錯誤: {str(e)}。請檢查後端日誌獲取詳細信息。"
+		)
 
 # 生成 K 線圖
 @app.post(

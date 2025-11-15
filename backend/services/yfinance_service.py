@@ -17,8 +17,31 @@ logger.setLevel(logging.INFO)  # 顯示 INFO 級別以上的日誌，便於調�
 
 # 台股代號映射（yfinance 使用 .TW 後綴）
 def get_yfinance_ticker(stock_code: str) -> str:
-    """將台股代號轉換為 yfinance 格式"""
-    return f"{stock_code}.TW"
+    """
+    將股票代號轉換為 yfinance 格式
+    
+    規則:
+    - 如果股票代號是純數字（4位數），視為台股，加上 .TW 後綴
+    - 如果股票代號包含字母，視為美股或其他市場，不加後綴
+    - 如果已經包含 .TW 或 .TWO 後綴，直接返回
+    - 如果以 ^ 開頭，視為指數，直接返回
+    
+    範例:
+    - 2330 -> 2330.TW (台股)
+    - AAPL -> AAPL (美股)
+    - ^TWII -> ^TWII (指數)
+    - 2330.TW -> 2330.TW (已經是正確格式)
+    """
+    # 如果已經包含後綴或是指數，直接返回
+    if '.' in stock_code or stock_code.startswith('^'):
+        return stock_code
+    
+    # 檢查是否為純數字（台股代號通常是4位數字）
+    if stock_code.isdigit():
+        return f"{stock_code}.TW"
+    
+    # 其他情況（美股等），直接返回
+    return stock_code
 
 def get_stock_info(stock_code: str) -> Optional[Dict]:
     """獲取股票基本資訊"""
