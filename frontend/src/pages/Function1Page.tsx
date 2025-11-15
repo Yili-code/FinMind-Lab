@@ -65,7 +65,7 @@ function Function1Page() {
     const isConnected = await testBackendConnection()
     console.log('後端連接狀態:', isConnected)
     if (!isConnected) {
-      setError('無法連接到 FinMind Lab 後端服務器。\n\n請確認：\n1. 端口 8000 是否被其他專案占用\n2. 後端服務是否正在運行\n\n啟動後端的方法：\n• Windows: 在 backend 目錄執行 start_server.bat\n• Linux/Mac: 在 backend 目錄執行 ./start_server.sh\n• 手動啟動: cd backend && python -m uvicorn main:app --reload --port 8000\n\n如果端口 8000 被占用，請先關閉占用該端口的程序。')
+      setError('無法連接到 FinMind Lab 後端服務器。\n\n請確認：\n1. 端口 8000 是否被其他專案占用\n2. 後端服務是否正在運行 (http://127.0.0.1:8000)\n\n啟動後端的方法：\n• Windows: 在 backend 目錄執行 start_server.bat\n• Linux/Mac: 在 backend 目錄執行 ./start_server.sh\n• 手動啟動: cd backend && python -m uvicorn main:app --reload --port 8000\n\n如果端口 8000 被占用，請先關閉占用該端口的程序。')
       isLoadingRef.current = false
       setLoading(false)
       setTradeDetails([])
@@ -290,10 +290,10 @@ function Function1Page() {
           errorMessage += `  - API 端點無法訪問\n\n`
           errorMessage += `請檢查：\n`
           errorMessage += `1. 後端服務是否正在運行？\n`
-          errorMessage += `   在瀏覽器訪問: http://localhost:8000/api/hello\n`
+          errorMessage += `   在瀏覽器訪問: http://127.0.0.1:8000/api/hello\n`
           errorMessage += `   應該看到: {"message": "Successfully connected to the backend!!!"}\n\n`
           errorMessage += `2. 測試股票 API：\n`
-          errorMessage += `   訪問: http://localhost:8000/api/stock/daily/2330?days=5\n`
+          errorMessage += `   訪問: http://127.0.0.1:8000/api/stock/daily/2330?days=5\n`
           errorMessage += `   應該返回 JSON 格式的股票數據\n\n`
           errorMessage += `3. 查看瀏覽器控制台（F12）的 Network 標籤頁\n`
           errorMessage += `   檢查 API 請求是否發送成功\n`

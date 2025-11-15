@@ -54,7 +54,7 @@ if [ ! -f ".venv/bin/uvicorn" ]; then
 fi
 
 echo ""
-echo "後端服務器將在 http://localhost:8000 啟動"
+echo "後端服務器將在 http://127.0.0.1:8000 啟動"
 echo "按 Ctrl+C 可停止服務器"
 echo ""
 echo "========================================"

@@ -21,16 +21,16 @@ cd backend
 python -m uvicorn main:app --reload --port 8000 --log-level warning
 ```
 
-服務啟動後，訪問 http://localhost:8000/docs 查看完整的 API 文檔。
+服務啟動後，訪問 http://127.0.0.1:8000/docs 查看完整的 API 文檔。
 
 ### 2. 測試連接
 
 ```bash
 # 測試基本連接
-curl http://localhost:8000/api/hello
+curl http://127.0.0.1:8000/api/hello
 
 # 測試獲取股票資訊（台積電）
-curl http://localhost:8000/api/stock/info/2330
+curl http://127.0.0.1:8000/api/stock/info/2330
 ```
 
 ---
@@ -44,7 +44,7 @@ curl http://localhost:8000/api/stock/info/2330
 **範例：**
 ```bash
 # 獲取台積電資訊
-curl http://localhost:8000/api/stock/info/2330
+curl http://127.0.0.1:8000/api/stock/info/2330
 ```
 
 **返回數據：**
@@ -84,10 +84,10 @@ curl http://localhost:8000/api/stock/info/2330
 **範例：**
 ```bash
 # 獲取台積電最近 1 天的 5 分鐘數據
-curl "http://localhost:8000/api/stock/intraday/2330?period=1d&interval=5m"
+curl "http://127.0.0.1:8000/api/stock/intraday/2330?period=1d&interval=5m"
 
 # 獲取台積電最近 5 天的 1 小時數據
-curl "http://localhost:8000/api/stock/intraday/2330?period=5d&interval=1h"
+curl "http://127.0.0.1:8000/api/stock/intraday/2330?period=5d&interval=1h"
 ```
 
 **返回數據：**
@@ -127,10 +127,10 @@ curl "http://localhost:8000/api/stock/intraday/2330?period=5d&interval=1h"
 **範例：**
 ```bash
 # 獲取台積電最近 5 天的日交易數據
-curl "http://localhost:8000/api/stock/daily/2330?days=5"
+curl "http://127.0.0.1:8000/api/stock/daily/2330?days=5"
 
 # 獲取台積電最近 10 天的日交易數據
-curl "http://localhost:8000/api/stock/daily/2330?days=10"
+curl "http://127.0.0.1:8000/api/stock/daily/2330?days=10"
 ```
 
 **返回數據：**
@@ -181,7 +181,7 @@ curl "http://localhost:8000/api/stock/daily/2330?days=10"
 **範例：**
 ```bash
 # 批量獲取台積電和鴻海的資訊
-curl "http://localhost:8000/api/stock/batch?stock_codes=2330,2317"
+curl "http://127.0.0.1:8000/api/stock/batch?stock_codes=2330,2317"
 ```
 
 **返回數據：**
@@ -222,10 +222,10 @@ curl "http://localhost:8000/api/stock/batch?stock_codes=2330,2317"
 **範例：**
 ```bash
 # 獲取加權指數最近 5 天的數據
-curl "http://localhost:8000/api/stock/market-index?index_code=^TWII&days=5"
+curl "http://127.0.0.1:8000/api/stock/market-index?index_code=^TWII&days=5"
 
 # 獲取加權指數最近 10 天的數據
-curl "http://localhost:8000/api/stock/market-index?index_code=^TWII&days=10"
+curl "http://127.0.0.1:8000/api/stock/market-index?index_code=^TWII&days=10"
 ```
 
 **返回數據：**

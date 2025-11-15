@@ -1,8 +1,8 @@
 // stockApi.ts - 股票數據 API 服務
 
 // 在開發環境使用相對路徑（通過 Vite proxy），生產環境使用環境變數
-// 如果設置了 VITE_API_BASE_URL，優先使用；否則在開發環境使用空字符串（通過代理），生產環境使用 localhost:8000
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? '' : 'http://localhost:8000')
+// 如果設置了 VITE_API_BASE_URL，優先使用；否則在開發環境使用空字符串（通過代理），生產環境使用 http://127.0.0.1:8000
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? '' : 'http://127.0.0.1:8000')
 
 // API_BASE_URL 已配置
 
@@ -94,7 +94,7 @@ export async function getStockInfo(stockCode: string): Promise<StockInfo> {
     return data
   } catch (error) {
     if (error instanceof TypeError && error.message.includes('fetch')) {
-      throw new Error('無法連接到後端服務器，請確認後端是否正在運行 (http://localhost:8000)')
+      throw new Error('無法連接到後端服務器，請確認後端是否正在運行 (http://127.0.0.1:8000)')
     }
     if (error instanceof SyntaxError) {
       throw new Error(`解析後端返回的 JSON 數據時發生錯誤: ${error.message}`)
@@ -126,7 +126,7 @@ export async function getIntradayData(
     return data
   } catch (error) {
     if (error instanceof TypeError && error.message.includes('fetch')) {
-      throw new Error('無法連接到後端服務器，請確認後端是否正在運行 (http://localhost:8000)')
+      throw new Error('無法連接到後端服務器，請確認後端是否正在運行 (http://127.0.0.1:8000)')
     }
     if (error instanceof SyntaxError) {
       throw new Error(`解析後端返回的 JSON 數據時發生錯誤: ${error.message}`)
@@ -157,7 +157,7 @@ export async function getDailyTradeData(
     return data
   } catch (error) {
     if (error instanceof TypeError && error.message.includes('fetch')) {
-      throw new Error('無法連接到後端服務器，請確認後端是否正在運行 (http://localhost:8000)')
+      throw new Error('無法連接到後端服務器，請確認後端是否正在運行 (http://127.0.0.1:8000)')
     }
     if (error instanceof SyntaxError) {
       throw new Error(`解析後端返回的 JSON 數據時發生錯誤: ${error.message}`)
@@ -184,7 +184,7 @@ export async function getMultipleStocks(stockCodes: string[]): Promise<StockInfo
     return result.stocks || []
   } catch (error) {
     if (error instanceof TypeError && error.message.includes('fetch')) {
-      throw new Error('無法連接到後端服務器，請確認後端是否正在運行 (http://localhost:8000)')
+      throw new Error('無法連接到後端服務器，請確認後端是否正在運行 (http://127.0.0.1:8000)')
     }
     if (error instanceof SyntaxError) {
       throw new Error(`解析後端返回的 JSON 數據時發生錯誤: ${error.message}`)
@@ -350,7 +350,7 @@ export async function getMarketIndexData(
     return data
   } catch (error) {
     if (error instanceof TypeError && error.message.includes('fetch')) {
-      throw new Error('無法連接到後端服務器，請確認後端是否正在運行 (http://localhost:8000)')
+      throw new Error('無法連接到後端服務器，請確認後端是否正在運行 (http://127.0.0.1:8000)')
     }
     if (error instanceof SyntaxError) {
       throw new Error(`解析後端返回的 JSON 數據時發生錯誤: ${error.message}`)
@@ -409,55 +409,76 @@ export interface FinancialStatementsResponse {
 
 // 獲取財務報表數據
 export async function getFinancialStatements(stockCode: string): Promise<FinancialStatementsResponse> {
+  // ========== 階段 2: 前端 API 調用 ==========
   const url = `${API_BASE_URL}/api/stock/financial/${stockCode}`
+  console.log(`[階段 2] 準備發送 HTTP GET 請求`)
+  console.log(`[階段 2] URL: ${url}`)
+  console.log(`[階段 2] API_BASE_URL: ${API_BASE_URL}`)
   
   try {
+    console.log(`[階段 2] 發送 fetch 請求...`)
     const response = await fetch(url)
+    console.log(`[階段 2] 收到 HTTP 響應，狀態碼: ${response.status} ${response.statusText}`)
     
     if (!response.ok) {
       let errorText = ''
       try {
         errorText = await response.text()
+        console.error(`[階段 2] ❌ HTTP 錯誤響應內容: ${errorText.substring(0, 200)}`)
       } catch (e) {
         errorText = `HTTP ${response.status}: ${response.statusText}`
       }
       throw new Error(`無法獲取股票 ${stockCode} 的財務報表數據 (${response.status}): ${errorText}`)
     }
     
+    // ========== 階段 6: 前端接收 JSON 響應 ==========
+    console.log('========== [階段 6: 前端接收 JSON 響應] ==========')
     // 檢查響應內容類型
     const contentType = response.headers.get('content-type')
+    console.log(`[階段 6] Content-Type: ${contentType}`)
     
     // 先讀取響應文本（只能讀取一次）
     const text = await response.text()
+    console.log(`[階段 6] 響應文本長度: ${text.length} 字符`)
+    console.log(`[階段 6] 響應文本預覽: ${text.substring(0, 200)}...`)
     
     if (!contentType || !contentType.includes('application/json')) {
+      console.error(`[階段 6] ❌ 錯誤: Content-Type 不是 application/json`)
       throw new Error(`後端返回了非 JSON 格式的數據: ${text.substring(0, 100)}`)
     }
     
     let data: unknown
     try {
+      console.log(`[階段 6] 開始解析 JSON...`)
       data = JSON.parse(text)
+      console.log(`[階段 6] ✅ JSON 解析成功`)
     } catch (parseError) {
+      console.error(`[階段 6] ❌ JSON 解析失敗:`, parseError)
       throw new Error(`解析後端返回的 JSON 數據時發生錯誤: ${parseError instanceof Error ? parseError.message : String(parseError)}`)
     }
     
     // 驗證數據結構
     if (!data || (typeof data !== 'object') || Array.isArray(data)) {
+      console.error(`[階段 6] ❌ 錯誤: 數據格式不正確，類型: ${typeof data}, 是數組: ${Array.isArray(data)}`)
       throw new Error('後端返回的數據格式不正確')
     }
     
     // 類型守衛：驗證是否為 FinancialStatementsResponse
     const typedData = data as FinancialStatementsResponse
+    console.log(`[階段 6] ✅ 數據結構驗證通過`)
+    console.log(`[階段 6] 返回的數據:`, typedData)
     
     // 確保至少有一個報表數據存在
     if (!typedData.incomeStatement && !typedData.balanceSheet && !typedData.cashFlow) {
+      console.error(`[階段 6] ❌ 錯誤: 所有財務報表數據都為空`)
       throw new Error(`股票 ${stockCode} 的財務報表數據為空，可能是該股票沒有可用的財務數據`)
     }
     
+    console.log(`[階段 6] ✅ 成功接收並驗證 JSON 數據`)
     return typedData
   } catch (error) {
     if (error instanceof TypeError && error.message.includes('fetch')) {
-      throw new Error('無法連接到後端服務器，請確認後端是否正在運行 (http://localhost:8000)')
+      throw new Error('無法連接到後端服務器，請確認後端是否正在運行 (http://127.0.0.1:8000)')
     }
     if (error instanceof SyntaxError) {
       throw new Error(`解析後端返回的 JSON 數據時發生錯誤: ${error.message}`)
@@ -505,7 +526,7 @@ export async function generateStockChart(
     return data
   } catch (error) {
     if (error instanceof TypeError && error.message.includes('fetch')) {
-      throw new Error('無法連接到後端服務器，請確認後端是否正在運行 (http://localhost:8000)')
+      throw new Error('無法連接到後端服務器，請確認後端是否正在運行 (http://127.0.0.1:8000)')
     }
     if (error instanceof SyntaxError) {
       throw new Error(`解析後端返回的 JSON 數據時發生錯誤: ${error.message}`)

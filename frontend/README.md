@@ -148,7 +148,7 @@ StockContext.tsx
 #### 2. 服務層 (Services)
 ```
 stockApi.ts
-  ├── 依賴: 後端 API (http://localhost:8000/api)
+  ├── 依賴: 後端 API (http://127.0.0.1:8000/api)
   └── 提供:
       ├── getStockInfo()
       ├── getIntradayData()
@@ -243,7 +243,7 @@ FinancialReportsPage.tsx
 server: {
   proxy: {
     '/api': {
-      target: 'http://localhost:8000',
+      target: 'http://127.0.0.1:8000',
       changeOrigin: true,
       secure: false,
     },
@@ -380,12 +380,12 @@ stockApi 請求後端 API
 可在專案根目錄建立 `.env` 檔案設定環境變數：
 
 ```env
-VITE_API_BASE_URL=http://localhost:8000
+VITE_API_BASE_URL=http://127.0.0.1:8000
 ```
 
 ## 📝 注意事項
 
-1. **後端服務**: 前端需要後端服務運行在 `http://localhost:8000` 才能正常運作
+1. **後端服務**: 前端需要後端服務運行在 `http://127.0.0.1:8000/` 才能正常運作
 2. **資料儲存**: Function2 和 FinancialReports 使用 `localStorage` 儲存資料，清除瀏覽器資料會導致資料遺失
 3. **型別安全**: 所有 API 回應都應該符合定義的 TypeScript 介面
 4. **錯誤處理**: API 呼叫都包含錯誤處理邏輯，會顯示友善的錯誤訊息

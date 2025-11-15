@@ -60,7 +60,7 @@ if not exist ".venv\Scripts\uvicorn.exe" (
 )
 
 echo.
-echo 後端服務器將在 http://localhost:8000 啟動
+echo 後端服務器將在 http://127.0.0.1:8000 啟動
 echo 注意：此模式不使用自動重載，修改代碼後需要手動重啟服務器
 echo 按 Ctrl+C 可停止服務器
 echo.

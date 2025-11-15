@@ -25,7 +25,7 @@ pip install -r backend\requirements.txt
 uvicorn backend.main:app --reload --port 8000
 ```
 
-後端啟動於 `http://localhost:8000`，API 範例：`GET /api/hello`
+後端啟動於 `http://127.0.0.1:8000/`，API 範例：`GET /api/hello`
 
 ### 2) 啟動前端
 另開一個終端機：
@@ -34,9 +34,9 @@ cd D:\code\projects\FinMind Lab\frontend
 npm run dev
 ```
 
-前端啟動於 `http://localhost:5173`。
+前端啟動於 `http://localhost:5173/`。
 
-> 在開發模式下，`frontend/vite.config.ts` 已設定代理 `/api` → `http://localhost:8000`。
+> 在開發模式下，`frontend/vite.config.ts` 已設定代理 `/api` → `http://127.0.0.1:8000`。
 
 ## 部署建議
 - 後端：以 `uvicorn`/`gunicorn`（Linux）或容器化部署，設定 CORS 允許實際前端域名。

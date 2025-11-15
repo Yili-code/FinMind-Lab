@@ -15,7 +15,7 @@ export default defineConfig({
     // 代理配置 - 將所有 /api 請求轉發到後端
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'http://127.0.0.1:8000',
         changeOrigin: true, // 改變請求的 origin 為目標 URL，解決 CORS 問題
         secure: false, // 如果是 https，設置為 false 以允許自簽名證書
         ws: true, // 啟用 WebSocket 代理（如果需要）
@@ -36,12 +36,12 @@ export default defineConfig({
           // 監聽代理錯誤
           proxy.on('error', (err, _req, _res) => {
             console.error('[Vite Proxy] 代理錯誤:', err.message)
-            console.error('[Vite Proxy] 請確認後端服務器是否正在運行 (http://localhost:8000)')
+            console.error('[Vite Proxy] 請確認後端服務器是否正在運行 (http://127.0.0.1:8000)')
           })
           
           // 監聽代理請求（用於調試）- 總是記錄以幫助調試
           proxy.on('proxyReq', (proxyReq, req, _res) => {
-            console.log(`[Vite Proxy] ${req.method} ${req.url} → http://localhost:8000${req.url}`)
+            console.log(`[Vite Proxy] ${req.method} ${req.url} → http://127.0.0.1:8000${req.url}`)
           })
           
           // 監聽代理響應（用於調試）- 總是記錄以幫助調試

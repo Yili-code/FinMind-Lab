@@ -276,27 +276,35 @@ def get_financial_statements(stock_code: str) -> Optional[Dict]:
         - 如果季度報表為空，則嘗試使用年度報表作為備選
     """
     try:
+        # ========== 階段 4: 數據抓取準備 ==========
+        logger.info("=" * 50)
+        logger.info("[階段 4: 數據抓取準備]")
         ticker = get_yfinance_ticker(stock_code)
-        logger.info(f"開始獲取股票 {stock_code} (yfinance ticker: {ticker}) 的財務報表數據")
+        logger.info(f"[階段 4] 股票代號轉換: {stock_code} -> yfinance ticker: {ticker}")
+        logger.info(f"[階段 4] 準備使用 yfinance 獲取財務報表數據")
         
         stock = yf.Ticker(ticker)
+        logger.info(f"[階段 4] 創建 yfinance Ticker 對象成功")
+        
         stock_name = stock_code
         info = None
         
         # 獲取股票名稱
         try:
+            logger.info(f"[階段 4] 嘗試獲取股票基本資訊...")
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 info = stock.info
                 if info:
                     stock_name = info.get('longName', info.get('shortName', stock_code))
+                    logger.info(f"[階段 4] ✅ 獲取股票名稱成功: {stock_name}")
         except Exception as info_error:
-            logger.warning(f"無法獲取股票資訊，使用股票代號作為名稱: {str(info_error)}")
+            logger.warning(f"[階段 4] ⚠️ 無法獲取股票資訊，使用股票代號作為名稱: {str(info_error)}")
         
-        # 使用 yfinance 直接獲取財務報表
+        # ========== 階段 4: 從 yfinance 抓取數據 ==========
+        logger.info(f"[階段 4] 開始從 yfinance 抓取財務報表數據（優先使用季度報表）...")
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            logger.info(f"正在從 yfinance 獲取財務報表數據（優先使用季度報表）...")
             
             # 優先獲取季度財務報表（添加異常處理）
             financials = pd.DataFrame()
@@ -342,13 +350,16 @@ def get_financial_statements(stock_code: str) -> Optional[Dict]:
                 cashflow = safe_get_dataframe(lambda: stock.cashflow, "年度現金流量表")
         
         # 檢查是否至少獲取到一些財務報表數據
+        logger.info(f"[階段 4] 數據抓取結果:")
+        logger.info(f"  - 損益表: {'空' if financials.empty else f'{len(financials)} 行'}")
+        logger.info(f"  - 資產負債表: {'空' if balance_sheet.empty else f'{len(balance_sheet)} 行'}")
+        logger.info(f"  - 現金流量表: {'空' if cashflow.empty else f'{len(cashflow)} 行'}")
+        
         if financials.empty and balance_sheet.empty and cashflow.empty:
-            logger.error(f"無法從 yfinance 獲取任何財務報表數據")
+            logger.error(f"[階段 4] ❌ 錯誤: 無法從 yfinance 獲取任何財務報表數據")
             return None
         
-        logger.info(f"財務報表數據狀態 - financials: {'空' if financials.empty else f'{len(financials)} 行'}, "
-                   f"balance_sheet: {'空' if balance_sheet.empty else f'{len(balance_sheet)} 行'}, "
-                   f"cashflow: {'空' if cashflow.empty else f'{len(cashflow)} 行'}")
+        logger.info(f"[階段 4] ✅ 數據抓取完成，至少有一個報表有數據")
         
         # 詳細記錄 DataFrame 的內容（用於調試）
         if not financials.empty:
@@ -406,9 +417,15 @@ def get_financial_statements(stock_code: str) -> Optional[Dict]:
                         logger.debug(f"無法從 DataFrame 獲取 {alt}: {e}")
             return 0.0
         
+        # ========== 階段 5: 數據轉換為 JSON 格式 ==========
+        logger.info("=" * 50)
+        logger.info("[階段 5: 數據轉換為 JSON 格式]")
+        logger.info(f"[階段 5] 開始將 DataFrame 轉換為 JSON 格式")
+        
         # 處理損益表（取最新一期的數據）
         income_data = None
         try:
+            logger.info(f"[階段 5] 處理損益表...")
             if not financials.empty and len(financials.columns) > 0:
                 # 從 DataFrame 的 columns（期間）中獲取最新一期
                 latest_period = financials.columns[0]  # yfinance 返回的 DataFrame columns 是期間（如 2024-12-31）
@@ -447,17 +464,18 @@ def get_financial_statements(stock_code: str) -> Optional[Dict]:
                         'netIncome': net_income,
                         'otherIncome': other_income,
                     }
-                    logger.info(f"成功處理損益表數據，收入: {revenue}, 淨利: {net_income}")
+                    logger.info(f"[階段 5] ✅ 損益表轉換成功，收入: {revenue}, 淨利: {net_income}")
                 else:
-                    logger.warning(f"損益表數據無效，所有值為 0 或缺失")
+                    logger.warning(f"[階段 5] ⚠️ 損益表數據無效，所有值為 0 或缺失")
         except Exception as e:
-            logger.error(f"處理損益表時發生錯誤: {str(e)}")
+            logger.error(f"[階段 5] ❌ 處理損益表時發生錯誤: {str(e)}")
             import traceback
-            logger.error(f"錯誤堆棧:\n{traceback.format_exc()}")
+            logger.error(f"[階段 5] 錯誤堆棧:\n{traceback.format_exc()}")
         
         # 處理資產負債表（取最新一期的數據）
         balance_data = None
         try:
+            logger.info(f"[階段 5] 處理資產負債表...")
             if not balance_sheet.empty and len(balance_sheet.columns) > 0:
                 # 從 DataFrame 的 columns（期間）中獲取最新一期
                 latest_period = balance_sheet.columns[0]
@@ -493,17 +511,18 @@ def get_financial_statements(stock_code: str) -> Optional[Dict]:
                         'currentLiabilities': current_liabilities,
                         'currentLiabilitiesRatio': round(current_liabilities_ratio, 1),
                     }
-                    logger.info(f"成功處理資產負債表數據，總資產: {total_assets}, 股東權益: {shareholders_equity}")
+                    logger.info(f"[階段 5] ✅ 資產負債表轉換成功，總資產: {total_assets}, 股東權益: {shareholders_equity}")
                 else:
-                    logger.warning(f"資產負債表數據無效，總資產為 0 或缺失")
+                    logger.warning(f"[階段 5] ⚠️ 資產負債表數據無效，總資產為 0 或缺失")
         except Exception as e:
-            logger.error(f"處理資產負債表時發生錯誤: {str(e)}")
+            logger.error(f"[階段 5] ❌ 處理資產負債表時發生錯誤: {str(e)}")
             import traceback
-            logger.error(f"錯誤堆棧:\n{traceback.format_exc()}")
+            logger.error(f"[階段 5] 錯誤堆棧:\n{traceback.format_exc()}")
         
         # 處理現金流量表（取最新一期的數據）
         cashflow_data = None
         try:
+            logger.info(f"[階段 5] 處理現金流量表...")
             if not cashflow.empty and len(cashflow.columns) > 0:
                 # 從 DataFrame 的 columns（期間）中獲取最新一期
                 latest_period = cashflow.columns[0]
@@ -542,14 +561,16 @@ def get_financial_statements(stock_code: str) -> Optional[Dict]:
                         'netCashFlow': net_cash_flow,
                         'netCashFlowRatio': round(net_cash_flow_ratio, 1),
                     }
-                    logger.info(f"成功處理現金流量表數據，營業現金流: {operating_cash_flow}, 淨現金流: {net_cash_flow}")
+                    logger.info(f"[階段 5] ✅ 現金流量表轉換成功，營業現金流: {operating_cash_flow}, 淨現金流: {net_cash_flow}")
                 else:
-                    logger.warning(f"現金流量表數據無效，所有值為 0 或缺失")
+                    logger.warning(f"[階段 5] ⚠️ 現金流量表數據無效，所有值為 0 或缺失")
         except Exception as e:
-            logger.error(f"處理現金流量表時發生錯誤: {str(e)}")
+            logger.error(f"[階段 5] ❌ 處理現金流量表時發生錯誤: {str(e)}")
             import traceback
-            logger.error(f"錯誤堆棧:\n{traceback.format_exc()}")
+            logger.error(f"[階段 5] 錯誤堆棧:\n{traceback.format_exc()}")
         
+        # 組裝最終的 JSON 響應
+        logger.info(f"[階段 5] 組裝最終 JSON 響應...")
         result = {
             'incomeStatement': income_data,
             'balanceSheet': balance_data,
@@ -558,10 +579,13 @@ def get_financial_statements(stock_code: str) -> Optional[Dict]:
         
         # 檢查是否至少有一個報表有數據
         if not income_data and not balance_data and not cashflow_data:
-            logger.warning(f"股票 {stock_code} 的所有財務報表數據都為空或無效")
+            logger.warning(f"[階段 5] ❌ 錯誤: 股票 {stock_code} 的所有財務報表數據都為空或無效")
             return None
         
-        logger.info(f"成功獲取股票 {stock_code} 的財務報表數據")
+        logger.info(f"[階段 5] ✅ 數據轉換完成，準備返回 JSON")
+        logger.info(f"[階段 5] 最終結果: incomeStatement={'有數據' if income_data else 'null'}, "
+                   f"balanceSheet={'有數據' if balance_data else 'null'}, "
+                   f"cashFlow={'有數據' if cashflow_data else 'null'}")
         return result
     except Exception as e:
         logger.error(f"獲取股票 {stock_code} 的財務報表數據時發生錯誤: {str(e)}")

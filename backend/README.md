@@ -59,7 +59,7 @@ FinMind Lab Backend 是一個基於 FastAPI 的股票數據服務後端，主要
                        │ (RESTful API)
 ┌──────────────────────▼──────────────────────────────────┐
 │                    FastAPI Server                       │
-│              (http://localhost:8000)                    │
+│              (http://127.0.0.1:8000/)                    │
 │  ┌──────────────────────────────────────────────────┐   │
 │  │  main.py                                         │   │
 │  │  - API 路由定義                                   │   │
@@ -264,8 +264,8 @@ main.py
 ### API 文檔
 
 FastAPI 自動生成互動式 API 文檔：
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
+- Swagger UI: `http://127.0.0.1:8000/docs`
+- ReDoc: `http://127.0.0.1:8000/redoc`
 
 ---
 
@@ -403,9 +403,9 @@ python -m uvicorn main:app --reload --port 8000
 
 ### 訪問 API
 
-- **API 基礎 URL**: `http://localhost:8000`
-- **Swagger 文檔**: `http://localhost:8000/docs`
-- **ReDoc 文檔**: `http://localhost:8000/redoc`
+- **API 基礎 URL**: `http://127.0.0.1:8000/`
+- **Swagger 文檔**: `http://127.0.0.1:8000/docs`
+- **ReDoc 文檔**: `http://127.0.0.1:8000/redoc`
 
 ---
 
