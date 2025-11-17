@@ -1,8 +1,8 @@
 import type { IncomeStatementItem, BalanceSheetItem, CashFlowItem } from '../types/financial'
 
-const INCOME_STORAGE_KEY = 'finmind_income_statements'
-const BALANCE_STORAGE_KEY = 'finmind_balance_sheets'
-const CASHFLOW_STORAGE_KEY = 'finmind_cash_flows'
+const INCOME_STORAGE_KEY = 'infohub_income_statements'
+const BALANCE_STORAGE_KEY = 'infohub_balance_sheets'
+const CASHFLOW_STORAGE_KEY = 'infohub_cash_flows'
 
 // 模擬 SQLite 資料儲存介面（使用 localStorage） - 財務報表
 export const financialStorageService = {

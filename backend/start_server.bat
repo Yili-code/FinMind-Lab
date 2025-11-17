@@ -70,12 +70,17 @@ REM 設置環境變數以避免 Windows multiprocessing 問題
 set PYTHONUNBUFFERED=1
 
 REM 在新的終端窗口中啟動前端
-start "FinMind Lab - Frontend" cmd /k "cd /d %~dp0\..\frontend && npm run dev"
+start "InfoHub - Frontend" cmd /k "cd /d %~dp0\..\frontend && npm run dev"
 
 REM 啟動後端服務器
 REM 在 Windows 上，使用 --reload-dir 限制監視目錄可以避免 multiprocessing 問題
 REM 如果仍然遇到問題，請使用 start_server_no_reload.bat（不使用自動重載）
-python -m uvicorn main:app --reload --reload-dir . --reload-include "*.py" --port 8000 --log-level warning
+REM 注意：某些 Windows 系統對於批次檔內的非 ASCII 字符或破折號可能解析異常。
+REM 為避免此類問題，預設使用不帶 --reload 的安全啟動命令；如需開發熱重載，請手動執行以下命令（確保使用 ASCII hyphen "-"）：
+REM 推薦（開發，手動）：
+REM   py -3 -m uvicorn main:app --reload --port 8000
+REM 推薦（穩定啟動，自動批次）：
+python -m uvicorn main:app --port 8000 --log-level warning
 
 REM 如果服務器異常退出，顯示錯誤訊息
 if errorlevel 1 (

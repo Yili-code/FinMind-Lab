@@ -71,7 +71,7 @@ REM 設置環境變數
 set PYTHONUNBUFFERED=1
 
 REM 在新的終端窗口中啟動前端
-start "FinMind Lab - Frontend" cmd /k "cd /d %~dp0\..\frontend && npm run dev"
+start "InfoHub - Frontend" cmd /k "cd /d %~dp0\..\frontend && npm run dev"
 
 REM 啟動後端服務器（不使用 --reload）
 python -m uvicorn main:app --port 8000 --log-level warning

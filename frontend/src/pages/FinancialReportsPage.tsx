@@ -180,6 +180,14 @@ function FinancialReportsPage() {
     const stockCode = inputStockCode.trim().toUpperCase()
     console.log(`[階段 1] 輸入的股票代號: "${inputStockCode}" -> 處理後: "${stockCode}"`)
     
+    // 如果是第一次使用或遇到錯誤，可以運行診斷
+    // 取消下面的註釋來啟用自動診斷
+    // if (stockGroups.length === 0) {
+    //   const { diagnoseApiConnection, printDiagnosisResults } = await import('../utils/diagnoseApi')
+    //   const results = await diagnoseApiConnection()
+    //   printDiagnosisResults(results)
+    // }
+    
     if (!stockCode) {
       console.error('[階段 1] 錯誤: 股票代號為空')
       setError('請輸入股票編號')

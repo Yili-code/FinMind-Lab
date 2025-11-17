@@ -6,7 +6,7 @@ function Navbar() {
     <nav className="navbar">
       <div className="navbar-container">
         <Link to="/" className="navbar-logo">
-          FinMind Lab
+          InfoHub
         </Link>
         <ul className="navbar-menu">
           <li className="navbar-item">

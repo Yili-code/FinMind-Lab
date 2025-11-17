@@ -13,7 +13,7 @@ function Footer() {
           <Link to="/terms" className="footer-link">使用條款</Link>
         </div>
         <div className="footer-copyright">
-          <p>&copy; 2024 FinMind Lab. All rights reserved.</p>
+          <p>&copy; 2024 InfoHub. All rights reserved.</p>
         </div>
       </div>
     </footer>

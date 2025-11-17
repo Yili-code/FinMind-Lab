@@ -65,7 +65,7 @@ function Function1Page() {
     const isConnected = await testBackendConnection()
     console.log('後端連接狀態:', isConnected)
     if (!isConnected) {
-      setError('無法連接到 FinMind Lab 後端服務器。\n\n請確認：\n1. 端口 8000 是否被其他專案占用\n2. 後端服務是否正在運行 (http://127.0.0.1:8000)\n\n啟動後端的方法：\n• Windows: 在 backend 目錄執行 start_server.bat\n• Linux/Mac: 在 backend 目錄執行 ./start_server.sh\n• 手動啟動: cd backend && python -m uvicorn main:app --reload --port 8000\n\n如果端口 8000 被占用，請先關閉占用該端口的程序。')
+      setError('無法連接到 InfoHub 後端服務器。\n\n請確認：\n1. 端口 8000 是否被其他專案占用\n2. 後端服務是否正在運行 (http://127.0.0.1:8000)\n\n啟動後端的方法：\n• Windows: 在 backend 目錄執行 start_server.bat\n• Linux/Mac: 在 backend 目錄執行 ./start_server.sh\n• 手動啟動: cd backend && python -m uvicorn main:app --reload --port 8000\n\n如果端口 8000 被占用，請先關閉占用該端口的程序。')
       isLoadingRef.current = false
       setLoading(false)
       setTradeDetails([])

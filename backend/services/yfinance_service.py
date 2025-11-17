@@ -47,6 +47,7 @@ def get_stock_info(stock_code: str) -> Optional[Dict]:
     """獲取股票基本資訊"""
     try:
         ticker = get_yfinance_ticker(stock_code)
+        logger.debug(f"獲取股票 {stock_code} (ticker: {ticker}) 的基本資訊...")
         stock = yf.Ticker(ticker)
         
         # 使用 timeout 和更安全的獲取方式
@@ -56,18 +57,31 @@ def get_stock_info(stock_code: str) -> Optional[Dict]:
         
         # 檢查是否為有效數據（yfinance 在找不到股票時可能返回空字典或包含錯誤的字典）
         if not info or len(info) == 0:
-            logger.warning(f"No info available for {stock_code}")
+            logger.warning(f"[get_stock_info] {stock_code} (ticker: {ticker}): No info available")
             return None
         
         # 檢查是否有錯誤訊息
         if 'error' in str(info).lower() or 'not found' in str(info).lower():
-            logger.warning(f"Error in info for {stock_code}: {info}")
+            logger.warning(f"[get_stock_info] {stock_code} (ticker: {ticker}): Error in info: {info}")
             return None
         
+        # 對於台股，yfinance 可能沒有某些欄位，我們放寬檢查條件
+        # 只要有任何有效數據（如股票名稱），就認為股票存在
+        stock_name = info.get('longName') or info.get('shortName') or info.get('symbol')
+        
         # 檢查關鍵欄位是否存在（如果連基本價格都沒有，可能是無效股票）
-        if not info.get('currentPrice') and not info.get('regularMarketPrice') and not info.get('previousClose'):
-            logger.warning(f"No price data available for {stock_code}")
+        # 但對於台股，我們放寬條件：只要有股票名稱就認為有效
+        has_price = info.get('currentPrice') or info.get('regularMarketPrice') or info.get('previousClose')
+        has_name = bool(stock_name)
+        
+        if not has_price and not has_name:
+            logger.warning(f"[get_stock_info] {stock_code} (ticker: {ticker}): No price or name data available")
+            logger.debug(f"[get_stock_info] Info keys: {list(info.keys())[:20] if info else 'None'}")
             return None
+        
+        # 如果有名稱但沒有價格，仍然返回數據（可能是非交易時間或數據暫時不可用）
+        if has_name and not has_price:
+            logger.info(f"[get_stock_info] {stock_code} (ticker: {ticker}): 有股票名稱但無價格數據，仍視為有效股票")
         
         # 獲取股票名稱（中文）
         stock_name = info.get('longName', info.get('shortName', stock_code))

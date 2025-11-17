@@ -1,4 +1,4 @@
-# FinMind Lab Backend Documentation
+# InfoHub Backend Documentation
 
 ##  目錄
 
@@ -15,7 +15,7 @@
 
 ## 專案概述
 
-FinMind Lab Backend 是一個基於 FastAPI 的股票數據服務後端，主要功能是從 Yahoo Finance 獲取台灣股票數據，並提供 RESTful API 給前端應用程式使用。後端支援獲取股票基本資訊、盤中數據、日交易數據、大盤指數以及財務報表等資訊。
+InfoHub Backend 是一個基於 FastAPI 的股票數據服務後端，主要功能是從 Yahoo Finance 獲取台灣股票數據，並提供 RESTful API 給前端應用程式使用。後端支援獲取股票基本資訊、盤中數據、日交易數據、大盤指數以及財務報表等資訊。
 
 ---
 
@@ -93,7 +93,7 @@ FinMind Lab Backend 是一個基於 FastAPI 的股票數據服務後端，主要
                        ▼
               ┌─────────────────┐
               │    SQLite DB    │
-              │  finmind_lab.db │
+              │  infohub.db │
               └─────────────────┘
                        │
                        ▼
@@ -271,7 +271,7 @@ FastAPI 自動生成互動式 API 文檔：
 
 ## 資料庫結構
 
-### SQLite 資料庫: `finmind_lab.db`
+### SQLite 資料庫: `infohub.db`
 
 #### Table 3: `stock_basics` - 股票基本檔
 儲存股票的基本資訊，包括代號、名稱、產業、財務指標等。
@@ -481,4 +481,4 @@ python -m uvicorn main:app --reload --port 8000
 
 ## 授權
 
-本專案為 FinMind Lab 的一部分。
+本專案為 InfoHub 的一部分。

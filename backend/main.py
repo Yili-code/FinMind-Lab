@@ -69,8 +69,20 @@ logging.getLogger('__main__').setLevel(logging.INFO)
 
 # 建立 FastAPI 實例
 app = FastAPI(
-	title="FinMind Lab API",
-	description="提供台灣股票數據的 RESTful API 服務，包括股票基本資訊、盤中數據、日交易數據、大盤指數和財務報表等。",
+	title="InfoHub API",
+	description="""
+	提供台灣股票數據的 RESTful API 服務，包括股票基本資訊、盤中數據、日交易數據、大盤指數和財務報表等。
+	
+	## 數據來源
+	- 本 API 使用 **yfinance** Python 庫從 **Yahoo Finance** 獲取股票數據
+	- 數據來源網址：https://finance.yahoo.com/
+	- 對於台股代號（如 2330），系統會自動轉換為 yfinance 格式（2330.TW）
+	
+	## API 架構說明
+	- **前端/客戶端** → **本後端 API** → **yfinance 庫** → **Yahoo Finance**-
+	- Swagger UI 中顯示的是本後端 API 端點（例如：`/api/stock/financial/2330`）
+	- 後端內部會調用 yfinance 來訪問 Yahoo Finance 的數據
+	""",
 	version="1.0.0",
 	docs_url="/docs",
 	redoc_url="/redoc"
@@ -145,7 +157,7 @@ def read_root():
 	<head>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title>FinMind Lab API</title>
+		<title>InfoHub API</title>
 		<link rel="icon" type="image/png" href="/favicon.ico?v=2">
 		<style>
 			* {
@@ -217,7 +229,7 @@ def read_root():
 	</head>
 	<body>
 		<div class="container">
-			<h1>FinMind Lab API</h1>
+			<h1>InfoHub API</h1>
 			<span class="status">OPERATING</span>
 			<div class="links">
 				<a href="/docs" target="_blank">Swagger API 文檔</a>
@@ -732,10 +744,18 @@ async def get_stock_financial(
 	- **資產負債表（Balance Sheet）**: 總資產、總負債、股東權益等
 	- **現金流量表（Cash Flow）**: 營業現金流、投資現金流、融資現金流等
 	
-	**路徑參數:**
-	- `stock_code`: 股票代號（例如：2330）
+	**數據來源:**
+	- 本 API 使用 yfinance 庫從 Yahoo Finance 獲取數據
+	- 對於台股（如 2330），系統會自動轉換為 yfinance 格式（2330.TW）
+	- 實際數據來源：https://finance.yahoo.com/quote/2330.TW/financials
 	
-	**響應示例:**
+	**路徑參數:**
+	- `stock_code`: 股票代號（例如：2330 或 AAPL）
+		- 台股：4位數字（如 2330），系統會轉換為 2330.TW
+		- 美股：字母代號（如 AAPL），直接使用
+	
+[]	**響應示例:**
+
 	```json
 	{
 		"stockCode": "2330",
@@ -784,14 +804,22 @@ async def get_stock_financial(
 		data = get_financial_statements(stock_code)
 		
 		if data is None:
-			# 檢查股票是否存在
-			stock_info = get_stock_info(stock_code)
+			# 嘗試獲取股票基本資訊來判斷是股票不存在還是財務報表數據不可用
+			stock_info = None
+			try:
+				stock_info = get_stock_info(stock_code)
+			except Exception as e:
+				logger.debug(f"[API] 獲取股票基本資訊時發生錯誤（不影響判斷）: {str(e)}")
+			
 			if stock_info is None:
-				error_msg = f"無法找到股票 {stock_code}。請確認股票代號正確（台股為4位數字，例如：2330；美股為字母代號，例如：AAPL）。"
-				logger.warning(f"[API 響應] ❌ 股票不存在: {error_msg}")
+				# 股票基本資訊也無法獲取，可能是股票不存在或網絡問題
+				error_msg = f"無法找到股票 {stock_code}。請確認股票代號正確（台股為4位數字，例如：2330；美股為字母代號，例如：AAPL）。\n\n提示：如果確認股票代號正確，可能是 yfinance 暫時無法訪問該股票數據，請稍後再試。"
+				logger.warning(f"[API 響應] ❌ 股票不存在或無法訪問: {error_msg}")
 				raise HTTPException(status_code=404, detail=error_msg)
 			else:
-				error_msg = f"無法獲取股票 {stock_code} ({stock_info.get('stockName', stock_code)}) 的財務報表數據。可能原因：1) yfinance 對台股財務報表支持有限 2) 該股票沒有可用的財務數據 3) 數據格式不匹配。請查看後端日誌獲取詳細信息。"
+				# 股票存在但財務報表數據不可用
+				stock_name = stock_info.get('stockName', stock_code)
+				error_msg = f"無法獲取股票 {stock_code} ({stock_name}) 的財務報表數據。\n\n可能原因：\n1. yfinance 對台股財務報表支持有限\n2. 該股票沒有可用的財務數據\n3. 數據格式不匹配\n\n建議：\n- 嘗試使用美股代號測試（例如：AAPL, MSFT, TSLA）\n- 查看後端日誌獲取詳細信息"
 				logger.warning(f"[API 響應] ❌ 財務報表數據為空: {error_msg}")
 				raise HTTPException(status_code=404, detail=error_msg)
 		
