@@ -98,6 +98,18 @@
   transform: none;
 }
 
+.loading-section {
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-xl);
+  background: rgba(10, 15, 36, 0.4);
+  border: 1px solid var(--primary-border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.3s ease-in;
+}
+
 .error-message {
   padding: var(--spacing-md);
   background: rgba(255, 51, 102, 0.1);

@@ -24,7 +24,7 @@ export default defineConfig({
         // rewrite: (path) => path.replace(/^\/api/, ''),
         
         // 配置超時（毫秒）
-        timeout: 30000, // 30 秒超時
+        timeout: 300000, // 5 分鐘超時
         
         // 配置請求頭
         headers: {

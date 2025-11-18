@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import IncomeStatementTable from '../components/Financial/IncomeStatementTable'
 import BalanceSheetTable from '../components/Financial/BalanceSheetTable'
 import CashFlowTable from '../components/Financial/CashFlowTable'
+import LoadingSpinner from '../components/Common/LoadingSpinner'
 import { getFinancialStatements, type FinancialStatementsResponse } from '../services/stockApi'
 import type { IncomeStatementItem, BalanceSheetItem, CashFlowItem } from '../types/financial'
 import './FinancialReportsPage.css'
@@ -426,6 +427,11 @@ function FinancialReportsPage() {
               {loading ? '載入中...' : '+ 加入群組'}
             </button>
           </div>
+          {loading && (
+            <div className="loading-section">
+              <LoadingSpinner message="正在獲取財務報表數據，請稍候..." size="medium" />
+            </div>
+          )}
           {error && (
             <div className="error-message">
               {error.split('\n').map((line, index) => (

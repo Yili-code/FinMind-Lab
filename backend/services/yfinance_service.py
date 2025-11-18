@@ -433,25 +433,49 @@ def get_financial_statements(stock_code: str) -> Optional[Dict]:
             """安全地從 DataFrame 獲取值"""
             if alternatives is None:
                 alternatives = []
-            # 嘗試主要欄位名
-            if row_name in df.index:
-                try:
-                    value = df.loc[row_name, period]
-                    result = to_float(value)
-                    if result != 0:
-                        return result
-                except (KeyError, IndexError) as e:
-                    logger.debug(f"無法從 DataFrame 獲取 {row_name}: {e}")
-            # 嘗試替代欄位名
-            for alt in alternatives:
-                if alt in df.index:
+            # 確保 period 是正確的類型（可能是 Timestamp 或其他類型）
+            try:
+                # 嘗試主要欄位名
+                if row_name in df.index:
                     try:
-                        value = df.loc[alt, period]
+                        # 直接使用 period 作為列索引
+                        value = df.loc[row_name, period]
                         result = to_float(value)
                         if result != 0:
                             return result
-                    except (KeyError, IndexError) as e:
-                        logger.debug(f"無法從 DataFrame 獲取 {alt}: {e}")
+                    except (KeyError, IndexError, TypeError) as e:
+                        logger.debug(f"無法從 DataFrame 獲取 {row_name} (period: {period}): {e}")
+                        # 如果直接訪問失敗，嘗試使用列的位置索引
+                        try:
+                            if len(df.columns) > 0:
+                                value = df.loc[row_name, df.columns[0]]
+                                result = to_float(value)
+                                if result != 0:
+                                    return result
+                        except Exception as e2:
+                            logger.debug(f"使用列位置索引也失敗: {e2}")
+                
+                # 嘗試替代欄位名
+                for alt in alternatives:
+                    if alt in df.index:
+                        try:
+                            value = df.loc[alt, period]
+                            result = to_float(value)
+                            if result != 0:
+                                return result
+                        except (KeyError, IndexError, TypeError) as e:
+                            logger.debug(f"無法從 DataFrame 獲取 {alt} (period: {period}): {e}")
+                            # 如果直接訪問失敗，嘗試使用列的位置索引
+                            try:
+                                if len(df.columns) > 0:
+                                    value = df.loc[alt, df.columns[0]]
+                                    result = to_float(value)
+                                    if result != 0:
+                                        return result
+                            except Exception as e2:
+                                logger.debug(f"使用列位置索引也失敗: {e2}")
+            except Exception as e:
+                logger.debug(f"safe_get_value 發生未預期的錯誤: {e}")
             return 0.0
         
         # ========== 階段 5: 數據轉換為 JSON 格式 ==========

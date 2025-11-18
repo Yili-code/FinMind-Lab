@@ -44,7 +44,6 @@ except ImportError:
 		from backend.services.chart_service import generate_candlestick_chart
 	except ImportError:
 		# 如果兩種方式都失敗，嘗試直接導入（假設在 backend 目錄）
-		import os
 		os.chdir(backend_dir)
 		from services.yfinance_service import (
 			get_stock_info,
@@ -754,7 +753,7 @@ async def get_stock_financial(
 		- 台股：4位數字（如 2330），系統會轉換為 2330.TW
 		- 美股：字母代號（如 AAPL），直接使用
 	
-[]	**響應示例:**
+	**響應示例:**
 
 	```json
 	{

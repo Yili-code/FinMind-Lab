@@ -440,7 +440,7 @@ export async function getFinancialStatements(stockCode: string): Promise<Financi
     
     // 使用 AbortController 設置超時
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 30000) // 30秒超時
+    const timeoutId = setTimeout(() => controller.abort(), 300000) // 5分鐘超時
     
     let response: Response
     try {
@@ -457,8 +457,8 @@ export async function getFinancialStatements(stockCode: string): Promise<Financi
       clearTimeout(timeoutId)
       
       if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-        console.error(`[階段 2] ❌ 錯誤: 請求超時（超過30秒）`)
-        throw new Error(`請求超時：無法在30秒內連接到後端服務器。\n\n請確認：\n1. 後端服務是否正在運行 (http://127.0.0.1:8000)\n2. 網絡連接是否正常\n3. 後端服務是否響應緩慢`)
+        console.error(`[階段 2] ❌ 錯誤: 請求超時（超過5分鐘）`)
+        throw new Error(`請求超時：無法在5分鐘內連接到後端服務器。\n\n請確認：\n1. 後端服務是否正在運行 (http://127.0.0.1:8000)\n2. 網絡連接是否正常\n3. 後端服務是否響應緩慢`)
       }
       
       // 網絡錯誤
