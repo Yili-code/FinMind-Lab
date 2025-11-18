@@ -13,6 +13,30 @@ from typing import Optional, List
 import sys
 from pathlib import Path as PathlibPath
 
+# 導入資料庫相關模組
+try:
+	from database import init_database, get_db_connection
+	from crud import (
+		save_stock_basic,
+		save_income_statement,
+		save_balance_sheet,
+		save_cash_flow,
+		save_daily_trades
+	)
+	DB_AVAILABLE = True
+except ImportError:
+	DB_AVAILABLE = False
+	logging.warning("資料庫模組未找到，將跳過自動保存功能")
+
+# 初始化資料庫（應用啟動時）
+if DB_AVAILABLE:
+	try:
+		init_database()
+		logging.info("資料庫初始化成功")
+	except Exception as e:
+		logging.warning(f"資料庫初始化失敗: {str(e)}，將跳過自動保存功能")
+		DB_AVAILABLE = False
+
 # 添加項目根目錄到 Python 路徑（如果從項目根目錄運行）
 backend_dir = PathlibPath(__file__).parent
 project_root = backend_dir.parent
@@ -396,6 +420,14 @@ async def get_stock_information(
 			logger.warning(f"[API 響應] 無法獲取股票 {stock_code} 的資訊")
 			raise HTTPException(status_code=404, detail=f"無法獲取股票 {stock_code} 的資訊")
 		
+		# 自動保存到資料庫
+		if DB_AVAILABLE:
+			try:
+				save_stock_basic(info)
+				logger.info(f"[資料庫] 已自動保存股票基本資訊: {stock_code}")
+			except Exception as e:
+				logger.warning(f"[資料庫] 保存股票基本資訊失敗: {str(e)}")
+		
 		logger.info(f"[API 響應] 成功獲取股票 {stock_code} 的資訊")
 		return info
 	except HTTPException:
@@ -576,6 +608,15 @@ async def get_stock_daily(
 				}
 		
 		logger.info(f"成功返回股票 {stock_code} 的數據，共 {len(data)} 筆")
+		
+		# 自動保存到資料庫
+		if DB_AVAILABLE and len(data) > 0:
+			try:
+				saved_count = save_daily_trades(stock_code, data)
+				logger.info(f"[資料庫] 已自動保存 {saved_count}/{len(data)} 筆日交易數據: {stock_code}")
+			except Exception as e:
+				logger.warning(f"[資料庫] 保存日交易數據失敗: {str(e)}")
+		
 		return {
 			"stockCode": stock_code,
 			"data": data,
@@ -652,6 +693,13 @@ async def get_multiple_stocks(
 			info = get_stock_info(code)
 			if info:
 				results.append(info)
+				# 自動保存到資料庫
+				if DB_AVAILABLE:
+					try:
+						save_stock_basic(info)
+						logger.debug(f"[資料庫] 已自動保存股票基本資訊: {code}")
+					except Exception as e:
+						logger.warning(f"[資料庫] 保存股票基本資訊失敗 ({code}): {str(e)}")
 		
 		logger.info(f"[API 響應] 成功獲取 {len(results)}/{len(codes)} 個股票的資訊")
 		return {
@@ -810,15 +858,17 @@ async def get_stock_financial(
 			except Exception as e:
 				logger.debug(f"[API] 獲取股票基本資訊時發生錯誤（不影響判斷）: {str(e)}")
 			
+			# 即使 get_stock_info 失敗，也給出更友好的錯誤訊息
+			# 因為可能是 yfinance API 限制（429 Too Many Requests）或其他網絡問題
 			if stock_info is None:
-				# 股票基本資訊也無法獲取，可能是股票不存在或網絡問題
-				error_msg = f"無法找到股票 {stock_code}。請確認股票代號正確（台股為4位數字，例如：2330；美股為字母代號，例如：AAPL）。\n\n提示：如果確認股票代號正確，可能是 yfinance 暫時無法訪問該股票數據，請稍後再試。"
-				logger.warning(f"[API 響應] ❌ 股票不存在或無法訪問: {error_msg}")
+				# 股票基本資訊也無法獲取，可能是股票不存在、網絡問題或 API 限制
+				error_msg = f"無法獲取股票 {stock_code} 的財務報表數據。\n\n可能原因：\n1. yfinance API 請求過於頻繁（429 錯誤）- 請稍後再試\n2. 股票代號不正確（台股為4位數字，例如：2330；美股為字母代號，例如：AAPL）\n3. yfinance 暫時無法訪問該股票數據\n4. yfinance 對台股財務報表支持有限\n\n建議：\n• 等待幾秒後再試（避免 API 限制）\n• 嘗試使用美股代號測試（例如：AAPL, MSFT, TSLA）\n• 查看後端日誌獲取詳細錯誤信息"
+				logger.warning(f"[API 響應] ❌ 無法獲取財務報表數據: {error_msg}")
 				raise HTTPException(status_code=404, detail=error_msg)
 			else:
 				# 股票存在但財務報表數據不可用
 				stock_name = stock_info.get('stockName', stock_code)
-				error_msg = f"無法獲取股票 {stock_code} ({stock_name}) 的財務報表數據。\n\n可能原因：\n1. yfinance 對台股財務報表支持有限\n2. 該股票沒有可用的財務數據\n3. 數據格式不匹配\n\n建議：\n- 嘗試使用美股代號測試（例如：AAPL, MSFT, TSLA）\n- 查看後端日誌獲取詳細信息"
+				error_msg = f"無法獲取股票 {stock_code} ({stock_name}) 的財務報表數據。\n\n可能原因：\n1. yfinance 對台股財務報表支持有限\n2. 該股票沒有可用的財務數據\n3. 數據格式不匹配\n4. yfinance API 請求限制（429 錯誤）\n\n建議：\n- 等待幾秒後再試（避免 API 限制）\n- 嘗試使用美股代號測試（例如：AAPL, MSFT, TSLA）\n- 查看後端日誌獲取詳細信息"
 				logger.warning(f"[API 響應] ❌ 財務報表數據為空: {error_msg}")
 				raise HTTPException(status_code=404, detail=error_msg)
 		
@@ -826,6 +876,22 @@ async def get_stock_financial(
 		logger.info(f"[API 響應] 數據結構: incomeStatement={'有數據' if data.get('incomeStatement') else 'null'}, "
 		           f"balanceSheet={'有數據' if data.get('balanceSheet') else 'null'}, "
 		           f"cashFlow={'有數據' if data.get('cashFlow') else 'null'}")
+		
+		# 自動保存到資料庫
+		if DB_AVAILABLE:
+			try:
+				if data.get('incomeStatement'):
+					save_income_statement(data['incomeStatement'])
+					logger.info(f"[資料庫] 已自動保存損益表: {stock_code}")
+				if data.get('balanceSheet'):
+					save_balance_sheet(data['balanceSheet'])
+					logger.info(f"[資料庫] 已自動保存資產負債表: {stock_code}")
+				if data.get('cashFlow'):
+					save_cash_flow(data['cashFlow'])
+					logger.info(f"[資料庫] 已自動保存現金流量表: {stock_code}")
+			except Exception as e:
+				logger.warning(f"[資料庫] 保存財務報表數據失敗: {str(e)}")
+		
 		return data
 	except HTTPException:
 		raise

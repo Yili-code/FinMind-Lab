@@ -114,7 +114,12 @@ def get_stock_info(stock_code: str) -> Optional[Dict]:
             'changePercent': to_float(info.get('regularMarketChangePercent', 0)) * 100 if info.get('regularMarketChangePercent') else 0.0,
         }
     except Exception as e:
-        logger.error(f"Error fetching stock info for {stock_code}: {str(e)}")
+        error_msg = str(e)
+        # 檢查是否為 429 Too Many Requests 錯誤
+        if '429' in error_msg or 'Too Many Requests' in error_msg:
+            logger.warning(f"[get_stock_info] {stock_code}: yfinance API 請求過於頻繁（429 錯誤），請稍後再試")
+        else:
+            logger.error(f"Error fetching stock info for {stock_code}: {error_msg}")
         return None
 
 def get_intraday_data(stock_code: str, period: str = "1d", interval: str = "1m") -> List[Dict]:
@@ -649,8 +654,13 @@ def get_financial_statements(stock_code: str) -> Optional[Dict]:
                    f"cashFlow={'有數據' if cashflow_data else 'null'}")
         return result
     except Exception as e:
-        logger.error(f"獲取股票 {stock_code} 的財務報表數據時發生錯誤: {str(e)}")
-        import traceback
-        logger.error(f"錯誤堆棧:\n{traceback.format_exc()}")
+        error_msg = str(e)
+        # 檢查是否為 429 Too Many Requests 錯誤
+        if '429' in error_msg or 'Too Many Requests' in error_msg:
+            logger.warning(f"[get_financial_statements] {stock_code}: yfinance API 請求過於頻繁（429 錯誤），請稍後再試")
+        else:
+            logger.error(f"獲取股票 {stock_code} 的財務報表數據時發生錯誤: {error_msg}")
+            import traceback
+            logger.error(f"錯誤堆棧:\n{traceback.format_exc()}")
         return None
 
