@@ -50,10 +50,10 @@ function FinancialDebug() {
 
         // 3. 驗證數據字段
         const issues: string[] = []
-        if (!converted.stockCode) issues.push('❌ stockCode 為空')
-        if (!converted.period) issues.push('❌ period 為空')
-        if (converted.totalAssets === 0) issues.push('⚠️ totalAssets 為 0')
-        if (converted.totalAssets === undefined) issues.push('❌ totalAssets 未定義')
+        if (!converted.stockCode) issues.push('[錯誤] stockCode 為空')
+        if (!converted.period) issues.push('[錯誤] period 為空')
+        if (converted.totalAssets === 0) issues.push('[警告] totalAssets 為 0')
+        if (converted.totalAssets === undefined) issues.push('[錯誤] totalAssets 未定義')
         
         if (issues.length > 0) {
           console.warn('[診斷] 發現問題:', issues)
@@ -75,7 +75,7 @@ function FinancialDebug() {
 
   return (
     <div style={{ padding: '20px', border: '1px solid #ccc', borderRadius: '8px', backgroundColor: '#f5f5f5' }}>
-      <h2>🔧 財務數據集成診斷工具</h2>
+      <h2>財務數據集成診斷工具</h2>
       
       <div style={{ marginBottom: '15px' }}>
         <input
@@ -136,7 +136,7 @@ function FinancialDebug() {
 
       {convertedData && (
         <div style={{ marginBottom: '15px' }}>
-          <h3>✅ 轉換後的 BalanceSheetItem</h3>
+          <h3>轉換後的 BalanceSheetItem</h3>
           <pre style={{
             backgroundColor: '#fff',
             padding: '10px',

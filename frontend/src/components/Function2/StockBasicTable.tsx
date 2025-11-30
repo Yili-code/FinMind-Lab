@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { StockBasic } from '../../types/stock'
+import type { StockGroup, StockGroupMapping } from '../../services/stockGroupApi'
 import './StockBasicTable.css'
 
 interface StockBasicTableProps {
@@ -8,10 +9,25 @@ interface StockBasicTableProps {
   onRowClick?: (stockCode: string) => void
   onEdit?: (stock: StockBasic) => void
   onDelete?: (stockCode: string) => void
+  stockGroups?: StockGroupMapping[]
+  allGroups?: StockGroup[]
+  onAddToGroup?: (stockCode: string, groupId: string) => void
+  onRemoveFromGroup?: (stockCode: string, groupId: string) => void
 }
 
-function StockBasicTable({ data, selectedStockCode, onRowClick, onEdit, onDelete }: StockBasicTableProps) {
+function StockBasicTable({
+  data,
+  selectedStockCode,
+  onRowClick,
+  onEdit,
+  onDelete,
+  stockGroups = [],
+  allGroups = [],
+  onAddToGroup,
+  onRemoveFromGroup
+}: StockBasicTableProps) {
   const [sortConfig, setSortConfig] = useState<{ key: keyof StockBasic; direction: 'asc' | 'desc' } | null>(null)
+  const [showGroupMenu, setShowGroupMenu] = useState<string | null>(null)
 
   const handleSort = (key: keyof StockBasic) => {
     let direction: 'asc' | 'desc' = 'asc'
@@ -50,9 +66,24 @@ function StockBasicTable({ data, selectedStockCode, onRowClick, onEdit, onDelete
     return num.toFixed(1) + '%'
   }
 
+  const getStockGroups = (stockCode: string): string[] => {
+    const mapping = stockGroups.find(m => m.stockCode === stockCode)
+    return mapping?.groupNames || []
+  }
+
+  const handleAddToGroup = (stockCode: string, groupId: string) => {
+    onAddToGroup?.(stockCode, groupId)
+    setShowGroupMenu(null)
+  }
+
+  const handleRemoveFromGroup = (stockCode: string, groupId: string) => {
+    onRemoveFromGroup?.(stockCode, groupId)
+    setShowGroupMenu(null)
+  }
+
   return (
     <div className="stock-basic-table-container">
-      <h3>Table 3: 股票基本檔</h3>
+      <h3>股票基本檔</h3>
       <div className="table-wrapper">
         <table className="stock-basic-table">
           <thead>
@@ -91,7 +122,7 @@ function StockBasicTable({ data, selectedStockCode, onRowClick, onEdit, onDelete
                 市櫃 {sortConfig?.key === 'market' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
               </th>
               <th onClick={() => handleSort('group')}>
-                集團 {sortConfig?.key === 'group' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                群組 {sortConfig?.key === 'group' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
               </th>
               <th onClick={() => handleSort('employees')}>
                 人數 {sortConfig?.key === 'employees' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
@@ -154,7 +185,34 @@ function StockBasicTable({ data, selectedStockCode, onRowClick, onEdit, onDelete
                   <td className="volume">{formatNumber(item.marketValue || 0)}</td>
                   <td>{item.directors || '-'}</td>
                   <td>{item.market || '-'}</td>
-                  <td>{item.group || '-'}</td>
+                  <td className="group-cell">
+                    <div className="group-tags">
+                      {getStockGroups(item.stockCode).length > 0 ? (
+                        getStockGroups(item.stockCode).map((groupName, idx) => {
+                          const group = allGroups.find(g => g.groupName === groupName)
+                          return (
+                            <span key={idx} className="group-tag">
+                              {groupName}
+                              {onRemoveFromGroup && group && (
+                                <button
+                                  className="remove-group-btn"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleRemoveFromGroup(item.stockCode, group.id)
+                                  }}
+                                  title="移除群組"
+                                >
+                                  ×
+                                </button>
+                              )}
+                            </span>
+                          )
+                        })
+                      ) : (
+                        <span className="no-group">-</span>
+                      )}
+                    </div>
+                  </td>
                   <td className="volume">{item.employees ? formatNumber(item.employees) : '-'}</td>
                   <td className="price">{item.dividend ? item.dividend.toFixed(1) : '-'}</td>
                   <td className="yield">{item.yield ? formatPercent(item.yield) : '-'}</td>
@@ -169,28 +227,73 @@ function StockBasicTable({ data, selectedStockCode, onRowClick, onEdit, onDelete
                   <td className="eps">{item.industryEPS ? item.industryEPS.toFixed(1) : '-'}</td>
                   <td className="yield">{item.industryYield ? formatPercent(item.industryYield) : '-'}</td>
                   <td className="actions" onClick={(e) => e.stopPropagation()}>
-                    {onEdit && (
-                      <button 
-                        className="edit-btn" 
-                        onClick={() => onEdit(item)}
-                        title="編輯"
-                      >
-                        編輯
-                      </button>
-                    )}
-                    {onDelete && (
-                      <button 
-                        className="delete-btn" 
-                        onClick={() => {
-                          if (window.confirm(`確定要刪除 ${item.stockName} (${item.stockCode}) 嗎？`)) {
-                            onDelete(item.stockCode)
-                          }
-                        }}
-                        title="刪除"
-                      >
-                        刪除
-                      </button>
-                    )}
+                    <div className="action-buttons">
+                      {onEdit && (
+                        <button 
+                          className="edit-btn" 
+                          onClick={() => onEdit(item)}
+                          title="編輯"
+                        >
+                          編輯
+                        </button>
+                      )}
+                      {onAddToGroup && allGroups.length > 0 && (
+                        <div className="group-menu-container">
+                          <button
+                            className="group-btn"
+                            onClick={() => setShowGroupMenu(showGroupMenu === item.stockCode ? null : item.stockCode)}
+                            title="管理群組"
+                          >
+                            群組
+                          </button>
+                          {showGroupMenu === item.stockCode && (
+                            <div className="group-menu">
+                              <div className="group-menu-header">選擇群組</div>
+                              {allGroups.map(group => {
+                                const isInGroup = getStockGroups(item.stockCode).includes(group.groupName)
+                                return (
+                                  <div key={group.id} className="group-menu-item">
+                                    <label>
+                                      <input
+                                        type="checkbox"
+                                        checked={isInGroup}
+                                        onChange={() => {
+                                          if (isInGroup) {
+                                            handleRemoveFromGroup(item.stockCode, group.id)
+                                          } else {
+                                            handleAddToGroup(item.stockCode, group.id)
+                                          }
+                                        }}
+                                      />
+                                      <span>{group.groupName}</span>
+                                      {group.description && (
+                                        <span className="group-menu-desc">{group.description}</span>
+                                      )}
+                                    </label>
+                                  </div>
+                                )
+                              })}
+                              {allGroups.length === 0 && (
+                                <div className="group-menu-empty">尚無群組，請先創建群組</div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {onDelete && (
+                        <button 
+                          className="delete-btn" 
+                          onClick={() => {
+                            if (window.confirm(`確定要刪除 ${item.stockName} (${item.stockCode}) 嗎？`)) {
+                              onDelete(item.stockCode)
+                            }
+                          }}
+                          title="刪除"
+                        >
+                          刪除
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))

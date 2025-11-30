@@ -122,7 +122,7 @@ export async function diagnoseApiConnection(): Promise<DiagnosisResult[]> {
 export function printDiagnosisResults(results: DiagnosisResult[]) {
   console.log('========== API 連接診斷結果 ==========')
   results.forEach((result, index) => {
-    const icon = result.success ? '✅' : '❌'
+    const icon = result.success ? '[成功]' : '[失敗]'
     console.log(`${icon} [${index + 1}] ${result.message}`)
     if (result.details) {
       console.log('   詳情:', result.details)

@@ -16,17 +16,56 @@ from pathlib import Path as PathlibPath
 # 導入資料庫相關模組
 try:
 	from database import init_database, get_db_connection
+	from db_utils import prepare_sql
 	from crud import (
 		save_stock_basic,
 		save_income_statement,
 		save_balance_sheet,
 		save_cash_flow,
-		save_daily_trades
+		save_daily_trades,
+		get_stock_basic_from_db,
+		get_daily_trades_from_db,
+		get_income_statement_from_db,
+		get_balance_sheet_from_db,
+		get_cash_flow_from_db,
+		create_stock_group,
+		get_all_stock_groups,
+		get_stock_group_by_id,
+		update_stock_group,
+		delete_stock_group,
+		add_stock_to_group,
+		remove_stock_from_group,
+		get_stocks_by_group,
+		get_groups_by_stock,
+		get_stocks_with_groups,
+		add_bom_item,
+		get_bom_by_parent,
+		get_parents_by_child,
+		update_bom_item,
+		delete_bom_item,
+		get_bom_tree
 	)
 	DB_AVAILABLE = True
-except ImportError:
+	logging.info("資料庫模組載入成功")
+except ImportError as e:
 	DB_AVAILABLE = False
-	logging.warning("資料庫模組未找到，將跳過自動保存功能")
+	logging.warning(f"資料庫模組未找到: {str(e)}，將跳過自動保存功能")
+
+# 導入快取和限額追蹤服務
+try:
+	from services.cache_service import (
+		get_from_memory_cache,
+		set_to_memory_cache,
+		get_cache_key,
+		get_cache_stats,
+		CACHE_TTL
+	)
+	from services.api_quota_tracker import quota_tracker
+	CACHE_AVAILABLE = True
+	logging.info("快取服務載入成功")
+except ImportError as e:
+	CACHE_AVAILABLE = False
+	logging.warning(f"快取服務未找到: {str(e)}，將跳過快取功能")
 
 # 初始化資料庫（應用啟動時）
 if DB_AVAILABLE:
@@ -53,7 +92,8 @@ try:
 		get_financial_statements,
 		get_yfinance_ticker
 	)
-	from services.chart_service import generate_candlestick_chart
+	# 圖表生成功能已禁用以避免錯誤
+	# from services.chart_service import generate_candlestick_chart
 except ImportError:
 	try:
 		# 從項目根目錄運行時
@@ -65,7 +105,8 @@ except ImportError:
 			get_financial_statements,
 			get_yfinance_ticker
 		)
-		from backend.services.chart_service import generate_candlestick_chart
+		# 圖表生成功能已禁用以避免錯誤
+		# from backend.services.chart_service import generate_candlestick_chart
 	except ImportError:
 		# 如果兩種方式都失敗，嘗試直接導入（假設在 backend 目錄）
 		os.chdir(backend_dir)
@@ -77,7 +118,8 @@ except ImportError:
 			get_financial_statements,
 			get_yfinance_ticker
 		)
-		from services.chart_service import generate_candlestick_chart
+		# 圖表生成功能已禁用以避免錯誤
+		# from services.chart_service import generate_candlestick_chart
 
 # 抑制不必要的警告和日誌
 warnings.filterwarnings('ignore')
@@ -92,7 +134,7 @@ logging.getLogger('__main__').setLevel(logging.INFO)
 
 # 建立 FastAPI 實例
 app = FastAPI(
-	title="InfoHub API",
+	title="Finfo API",
 	description="""
 	提供台灣股票數據的 RESTful API 服務，包括股票基本資訊、盤中數據、日交易數據、大盤指數和財務報表等。
 	
@@ -180,7 +222,7 @@ def read_root():
 	<head>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title>InfoHub API</title>
+		<title>Finfo API</title>
 		<link rel="icon" type="image/png" href="/favicon.ico?v=2">
 		<style>
 			* {
@@ -252,7 +294,7 @@ def read_root():
 	</head>
 	<body>
 		<div class="container">
-			<h1>InfoHub API</h1>
+			<h1>Finfo API</h1>
 			<span class="status">OPERATING</span>
 			<div class="links">
 				<a href="/docs" target="_blank">Swagger API 文檔</a>
@@ -349,13 +391,12 @@ async def submit_contact(form: ContactForm):
 			os.makedirs(contacts_dir)
 		
 		filename = f"{contacts_dir}/contact_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-		with open(filename, 'w', encoding='utf-8') as f:
-			json.dump(contact_record, f, ensure_ascii=False, indent=2)
-		
-		# 這裡可以加入發送郵件的功能
-		# 例如使用 smtplib 或第三方郵件服務
-		
-		logger.info(f"[API 響應] 成功處理聯絡表單，已儲存到: {filename}")
+		try:
+			with open(filename, 'w', encoding='utf-8') as f:
+				json.dump(contact_record, f, ensure_ascii=False, indent=2)
+			logger.info(f"[API 響應] 成功處理聯絡表單，已儲存到: {filename}")
+		except Exception as e:
+			logger.warning(f"[API 警告] 無法儲存聯絡表單到檔案: {str(e)}，但請求已處理")
 		return {
 			"success": True,
 			"message": "您的訊息已成功送出，我們會盡快回覆您！"
@@ -409,18 +450,58 @@ async def get_stock_information(
 	try:
 		# 記錄 API 請求信息
 		logger = logging.getLogger(__name__)
-		yfinance_ticker = get_yfinance_ticker(stock_code)
+		import time
+		start_time = time.time()
+		
 		logger.info("=" * 80)
 		logger.info(f"[API 請求] GET /api/stock/info/{stock_code}")
-		logger.info(f"[參數] stock_code: {stock_code} -> yfinance ticker: {yfinance_ticker}")
 		logger.info("=" * 80)
 		
+		# 1. 嘗試從內存快取獲取
+		cache_key = get_cache_key('stock_info', stock_code)
+		if CACHE_AVAILABLE:
+			cached_data = get_from_memory_cache(cache_key)
+			if cached_data is not None:
+				logger.info(f"[快取] 從內存快取獲取股票基本資訊: {stock_code}")
+				return cached_data
+		
+		# 2. 嘗試從資料庫獲取
+		if DB_AVAILABLE:
+			db_data = get_stock_basic_from_db(stock_code)
+			if db_data is not None:
+				logger.info(f"[資料庫] 從資料庫獲取股票基本資訊: {stock_code}")
+				# 放入快取
+				if CACHE_AVAILABLE:
+					set_to_memory_cache(cache_key, db_data, CACHE_TTL['stock_info'])
+				return db_data
+		
+		# 3. 檢查 API 限額
+		if CACHE_AVAILABLE:
+			rate_limits = quota_tracker.check_rate_limit()
+			if not rate_limits['minute_ok']:
+				logger.warning("[API 限額] 每分鐘請求數已達上限，請稍後再試")
+			if not rate_limits['hour_ok']:
+				logger.warning("[API 限額] 每小時請求數已達上限，請稍後再試")
+		
+		# 4. 從 yfinance API 獲取
+		yfinance_ticker = get_yfinance_ticker(stock_code)
+		logger.info(f"[API] 從 yfinance 獲取股票基本資訊: {stock_code} -> {yfinance_ticker}")
+		
 		info = get_stock_info(stock_code)
+		response_time = time.time() - start_time
+		
+		# 記錄 API 請求
+		if CACHE_AVAILABLE:
+			quota_tracker.record_request('stock_info', stock_code, info is not None, response_time)
+		
 		if info is None:
 			logger.warning(f"[API 響應] 無法獲取股票 {stock_code} 的資訊")
 			raise HTTPException(status_code=404, detail=f"無法獲取股票 {stock_code} 的資訊")
 		
-		# 自動保存到資料庫
+		# 5. 保存到快取和資料庫
+		if CACHE_AVAILABLE:
+			set_to_memory_cache(cache_key, info, CACHE_TTL['stock_info'])
+		
 		if DB_AVAILABLE:
 			try:
 				save_stock_basic(info)
@@ -428,7 +509,7 @@ async def get_stock_information(
 			except Exception as e:
 				logger.warning(f"[資料庫] 保存股票基本資訊失敗: {str(e)}")
 		
-		logger.info(f"[API 響應] 成功獲取股票 {stock_code} 的資訊")
+		logger.info(f"[API 響應] 成功獲取股票 {stock_code} 的資訊（耗時: {response_time:.2f}秒）")
 		return info
 	except HTTPException:
 		raise
@@ -561,16 +642,63 @@ async def get_stock_daily(
 	"""
 	try:
 		import logging
+		import time
 		logger = logging.getLogger(__name__)
-		yfinance_ticker = get_yfinance_ticker(stock_code)
+		start_time = time.time()
+		
 		logger.info("=" * 80)
 		logger.info(f"[API 請求] GET /api/stock/daily/{stock_code}")
-		logger.info(f"[參數] stock_code: {stock_code} -> yfinance ticker: {yfinance_ticker}")
-		logger.info(f"[參數] days: {days}")
+		logger.info(f"[參數] stock_code: {stock_code}, days: {days}")
 		logger.info("=" * 80)
 		
+		# 1. 嘗試從內存快取獲取
+		cache_key = get_cache_key('daily_trade', stock_code, days)
+		if CACHE_AVAILABLE:
+			cached_data = get_from_memory_cache(cache_key)
+			if cached_data is not None:
+				logger.info(f"[快取] 從內存快取獲取日交易數據: {stock_code}")
+				return {
+					"stockCode": stock_code,
+					"data": cached_data,
+					"count": len(cached_data),
+					"source": "cache"
+				}
+		
+		# 2. 嘗試從資料庫獲取
+		if DB_AVAILABLE:
+			db_data = get_daily_trades_from_db(stock_code, days)
+			if db_data and len(db_data) > 0:
+				logger.info(f"[資料庫] 從資料庫獲取日交易數據: {stock_code}, 共 {len(db_data)} 筆")
+				# 放入快取
+				if CACHE_AVAILABLE:
+					set_to_memory_cache(cache_key, db_data, CACHE_TTL['daily_trade'])
+				return {
+					"stockCode": stock_code,
+					"data": db_data,
+					"count": len(db_data),
+					"source": "database"
+				}
+		
+		# 3. 檢查 API 限額
+		if CACHE_AVAILABLE:
+			rate_limits = quota_tracker.check_rate_limit()
+			if not rate_limits['minute_ok']:
+				logger.warning("[API 限額] 每分鐘請求數已達上限，請稍後再試")
+			if not rate_limits['hour_ok']:
+				logger.warning("[API 限額] 每小時請求數已達上限，請稍後再試")
+		
+		# 4. 從 yfinance API 獲取
+		yfinance_ticker = get_yfinance_ticker(stock_code)
+		logger.info(f"[API] 從 yfinance 獲取日交易數據: {stock_code} -> {yfinance_ticker}")
+		
 		data = get_daily_trade_data(stock_code, days=days)
-		logger.info(f"後端返回數據量: {len(data)}")
+		response_time = time.time() - start_time
+		
+		# 記錄 API 請求
+		if CACHE_AVAILABLE:
+			quota_tracker.record_request('daily_trade', stock_code, len(data) > 0, response_time)
+		
+		logger.info(f"後端返回數據量: {len(data)}（耗時: {response_time:.2f}秒）")
 		
 		# 如果數據為空，返回警告信息但不拋出錯誤
 		if len(data) == 0:
@@ -609,18 +737,23 @@ async def get_stock_daily(
 		
 		logger.info(f"成功返回股票 {stock_code} 的數據，共 {len(data)} 筆")
 		
-		# 自動保存到資料庫
-		if DB_AVAILABLE and len(data) > 0:
-			try:
-				saved_count = save_daily_trades(stock_code, data)
-				logger.info(f"[資料庫] 已自動保存 {saved_count}/{len(data)} 筆日交易數據: {stock_code}")
-			except Exception as e:
-				logger.warning(f"[資料庫] 保存日交易數據失敗: {str(e)}")
+		# 5. 保存到快取和資料庫
+		if len(data) > 0:
+			if CACHE_AVAILABLE:
+				set_to_memory_cache(cache_key, data, CACHE_TTL['daily_trade'])
+			
+			if DB_AVAILABLE:
+				try:
+					saved_count = save_daily_trades(stock_code, data)
+					logger.info(f"[資料庫] 已自動保存 {saved_count}/{len(data)} 筆日交易數據: {stock_code}")
+				except Exception as e:
+					logger.warning(f"[資料庫] 保存日交易數據失敗: {str(e)}")
 		
 		return {
 			"stockCode": stock_code,
 			"data": data,
-			"count": len(data)
+			"count": len(data),
+			"source": "api"
 		}
 	except Exception as e:
 		import logging
@@ -786,10 +919,15 @@ async def get_stock_financial(
 	"""
 	獲取股票財務報表數據
 	
-	獲取指定股票的完整財務報表數據，包括：
+	獲取指定股票的最新一期財務報表數據，包括：
 	- **損益表（Income Statement）**: 營業收入、營業成本、稅後淨利等
 	- **資產負債表（Balance Sheet）**: 總資產、總負債、股東權益等
 	- **現金流量表（Cash Flow）**: 營業現金流、投資現金流、融資現金流等
+	
+	**重要說明:**
+	- 本 API **只返回最新一期的財務報表數據**（例如：2025Q2）
+	- 期間格式為季度格式（YYYYQN），例如：2025Q2 表示 2025 年第 2 季
+	- 系統會自動選擇最新的可用報表期間
 	
 	**數據來源:**
 	- 本 API 使用 yfinance 庫從 Yahoo Finance 獲取數據
@@ -805,28 +943,30 @@ async def get_stock_financial(
 
 	```json
 	{
-		"stockCode": "2330",
-		"incomeStatement": [
-			{
-				"period": "2023-Q4",
-				"revenue": 625530000000,
-				"netIncome": 238710000000
-			}
-		],
-		"balanceSheet": [
-			{
-				"period": "2023-Q4",
-				"totalAssets": 5000000000000,
-				"shareholdersEquity": 3000000000000
-			}
-		],
-		"cashFlow": [
-			{
-				"period": "2023-Q4",
-				"operatingCashFlow": 300000000000,
-				"freeCashFlow": 250000000000
-			}
-		]
+		"incomeStatement": {
+			"id": "2330-2025Q2",
+			"stockCode": "2330",
+			"stockName": "台積電",
+			"period": "2025Q2",
+			"revenue": 625530000000,
+			"netIncome": 238710000000
+		},
+		"balanceSheet": {
+			"id": "2330-2025Q2",
+			"stockCode": "2330",
+			"stockName": "台積電",
+			"period": "2025Q2",
+			"totalAssets": 5000000000000,
+			"shareholdersEquity": 3000000000000
+		},
+		"cashFlow": {
+			"id": "2330-2025Q2",
+			"stockCode": "2330",
+			"stockName": "台積電",
+			"period": "2025Q2",
+			"operatingCashFlow": 300000000000,
+			"freeCashFlow": 250000000000
+		}
 	}
 	```
 	
@@ -834,6 +974,7 @@ async def get_stock_financial(
 	- yfinance 對台股財務報表的支持可能有限
 	- 某些股票可能沒有可用的財務數據
 	- 數據格式可能因股票而異
+	- 只返回最新一期的數據，不包含歷史報表
 	
 	**錯誤響應:**
 	- `404`: 無法獲取財務報表數據（股票代號不存在或無財務數據）
@@ -841,14 +982,59 @@ async def get_stock_financial(
 	"""
 	try:
 		import logging
+		import time
 		logger = logging.getLogger(__name__)
-		yfinance_ticker = get_yfinance_ticker(stock_code)
+		start_time = time.time()
+		
 		logger.info("=" * 80)
 		logger.info(f"[API 請求] GET /api/stock/financial/{stock_code}")
-		logger.info(f"[參數] stock_code: {stock_code} -> yfinance ticker: {yfinance_ticker}")
+		logger.info(f"[參數] stock_code: {stock_code}")
 		logger.info("=" * 80)
 		
+		# 1. 嘗試從內存快取獲取
+		cache_key = get_cache_key('financial', stock_code)
+		if CACHE_AVAILABLE:
+			cached_data = get_from_memory_cache(cache_key)
+			if cached_data is not None:
+				logger.info(f"[快取] 從內存快取獲取財務報表: {stock_code}")
+				return cached_data
+		
+		# 2. 嘗試從資料庫獲取
+		if DB_AVAILABLE:
+			income = get_income_statement_from_db(stock_code)
+			balance = get_balance_sheet_from_db(stock_code)
+			cashflow = get_cash_flow_from_db(stock_code)
+			
+			if income or balance or cashflow:
+				db_data = {
+					'incomeStatement': income,
+					'balanceSheet': balance,
+					'cashFlow': cashflow,
+				}
+				logger.info(f"[資料庫] 從資料庫獲取財務報表: {stock_code}")
+				# 放入快取
+				if CACHE_AVAILABLE:
+					set_to_memory_cache(cache_key, db_data, CACHE_TTL['financial'])
+				return db_data
+		
+		# 3. 檢查 API 限額
+		if CACHE_AVAILABLE:
+			rate_limits = quota_tracker.check_rate_limit()
+			if not rate_limits['minute_ok']:
+				logger.warning("[API 限額] 每分鐘請求數已達上限，請稍後再試")
+			if not rate_limits['hour_ok']:
+				logger.warning("[API 限額] 每小時請求數已達上限，請稍後再試")
+		
+		# 4. 從 yfinance API 獲取
+		yfinance_ticker = get_yfinance_ticker(stock_code)
+		logger.info(f"[API] 從 yfinance 獲取財務報表: {stock_code} -> {yfinance_ticker}")
+		
 		data = get_financial_statements(stock_code)
+		response_time = time.time() - start_time
+		
+		# 記錄 API 請求
+		if CACHE_AVAILABLE:
+			quota_tracker.record_request('financial', stock_code, data is not None, response_time)
 		
 		if data is None:
 			# 嘗試獲取股票基本資訊來判斷是股票不存在還是財務報表數據不可用
@@ -863,34 +1049,38 @@ async def get_stock_financial(
 			if stock_info is None:
 				# 股票基本資訊也無法獲取，可能是股票不存在、網絡問題或 API 限制
 				error_msg = f"無法獲取股票 {stock_code} 的財務報表數據。\n\n可能原因：\n1. yfinance API 請求過於頻繁（429 錯誤）- 請稍後再試\n2. 股票代號不正確（台股為4位數字，例如：2330；美股為字母代號，例如：AAPL）\n3. yfinance 暫時無法訪問該股票數據\n4. yfinance 對台股財務報表支持有限\n\n建議：\n• 等待幾秒後再試（避免 API 限制）\n• 嘗試使用美股代號測試（例如：AAPL, MSFT, TSLA）\n• 查看後端日誌獲取詳細錯誤信息"
-				logger.warning(f"[API 響應] ❌ 無法獲取財務報表數據: {error_msg}")
+				logger.warning(f"[API 響應] 無法獲取財務報表數據: {error_msg}")
 				raise HTTPException(status_code=404, detail=error_msg)
 			else:
 				# 股票存在但財務報表數據不可用
 				stock_name = stock_info.get('stockName', stock_code)
 				error_msg = f"無法獲取股票 {stock_code} ({stock_name}) 的財務報表數據。\n\n可能原因：\n1. yfinance 對台股財務報表支持有限\n2. 該股票沒有可用的財務數據\n3. 數據格式不匹配\n4. yfinance API 請求限制（429 錯誤）\n\n建議：\n- 等待幾秒後再試（避免 API 限制）\n- 嘗試使用美股代號測試（例如：AAPL, MSFT, TSLA）\n- 查看後端日誌獲取詳細信息"
-				logger.warning(f"[API 響應] ❌ 財務報表數據為空: {error_msg}")
+				logger.warning(f"[API 響應] 財務報表數據為空: {error_msg}")
 				raise HTTPException(status_code=404, detail=error_msg)
 		
-		logger.info(f"[API 響應] 成功獲取股票 {stock_code} 的財務報表數據")
+		logger.info(f"[API 響應] 成功獲取股票 {stock_code} 的財務報表數據（耗時: {response_time:.2f}秒）")
 		logger.info(f"[API 響應] 數據結構: incomeStatement={'有數據' if data.get('incomeStatement') else 'null'}, "
 		           f"balanceSheet={'有數據' if data.get('balanceSheet') else 'null'}, "
 		           f"cashFlow={'有數據' if data.get('cashFlow') else 'null'}")
 		
-		# 自動保存到資料庫
-		if DB_AVAILABLE:
-			try:
-				if data.get('incomeStatement'):
-					save_income_statement(data['incomeStatement'])
-					logger.info(f"[資料庫] 已自動保存損益表: {stock_code}")
-				if data.get('balanceSheet'):
-					save_balance_sheet(data['balanceSheet'])
-					logger.info(f"[資料庫] 已自動保存資產負債表: {stock_code}")
-				if data.get('cashFlow'):
-					save_cash_flow(data['cashFlow'])
-					logger.info(f"[資料庫] 已自動保存現金流量表: {stock_code}")
-			except Exception as e:
-				logger.warning(f"[資料庫] 保存財務報表數據失敗: {str(e)}")
+		# 5. 保存到快取和資料庫
+		if data:
+			if CACHE_AVAILABLE:
+				set_to_memory_cache(cache_key, data, CACHE_TTL['financial'])
+			
+			if DB_AVAILABLE:
+				try:
+					if data.get('incomeStatement'):
+						save_income_statement(data['incomeStatement'])
+						logger.info(f"[資料庫] 已自動保存損益表: {stock_code}")
+					if data.get('balanceSheet'):
+						save_balance_sheet(data['balanceSheet'])
+						logger.info(f"[資料庫] 已自動保存資產負債表: {stock_code}")
+					if data.get('cashFlow'):
+						save_cash_flow(data['cashFlow'])
+						logger.info(f"[資料庫] 已自動保存現金流量表: {stock_code}")
+				except Exception as e:
+					logger.warning(f"[資料庫] 保存財務報表數據失敗: {str(e)}")
 		
 		return data
 	except HTTPException:
@@ -907,10 +1097,10 @@ async def get_stock_financial(
 			detail=f"獲取財務報表數據時發生錯誤: {str(e)}。請檢查後端日誌獲取詳細信息。"
 		)
 
-# 生成 K 線圖
+# 圖表生成功能已移除以避免錯誤
 @app.post(
 	"/api/stock/chart/{stock_code}",
-	summary="生成股票 K 線圖",
+	summary="生成股票 K 線圖（已禁用）",
 	description="根據股票數據生成 K 線圖（Candlestick Chart），返回 Base64 編碼的圖片。",
 	tags=["股票數據"]
 )
@@ -920,122 +1110,843 @@ async def generate_stock_chart(
 	interval: str = Query("1d", description="時間間隔，可選值: 1m, 5m, 15m, 1h, 1d 等。注意：5m, 15m, 30m, 1h, 1mo 使用盤中數據，其他使用日交易數據", example="1d"),
 	days: int = Query(100, description="獲取最近幾天的數據（用於日交易數據，範圍: 1-2000）", ge=1, le=2000, example=100)
 ):
+	"""圖表生成功能已禁用以避免錯誤"""
+	raise HTTPException(status_code=503, detail="圖表生成功能已禁用以避免錯誤")
+
+# ========== 股票群組管理 API ==========
+
+# 群組資料模型
+class StockGroupCreate(BaseModel):
+	"""創建群組的資料模型"""
+	groupName: str = Field(..., description="群組名稱", example="台積電集團")
+	description: Optional[str] = Field(None, description="群組描述", example="台積電相關股票")
+
+class StockGroupUpdate(BaseModel):
+	"""更新群組的資料模型"""
+	groupName: Optional[str] = Field(None, description="群組名稱", example="台積電集團")
+	description: Optional[str] = Field(None, description="群組描述", example="台積電相關股票")
+
+class AddStockToGroupRequest(BaseModel):
+	"""將股票加入群組的請求模型"""
+	stockCode: str = Field(..., description="股票代號", example="2330")
+
+# 創建股票群組
+@app.post(
+	"/api/stock-groups",
+	summary="創建股票群組",
+	description="創建一個新的股票群組。",
+	tags=["股票群組管理"]
+)
+async def create_group(group_data: StockGroupCreate):
 	"""
-	生成股票 K 線圖
+	創建股票群組
 	
-	根據指定的股票代號、時間週期和間隔生成 K 線圖（Candlestick Chart），並返回 Base64 編碼的 PNG 圖片。
+	創建一個新的股票群組，用於分類管理股票。
 	
-	**數據源選擇:**
-	- 當 `interval` 為 `5m`, `15m`, `30m`, `1h`, `1mo` 時，使用盤中數據
-	- 其他情況使用日交易數據
-	
-	**路徑參數:**
-	- `stock_code`: 股票代號（例如：2330）
-	
-	**查詢參數:**
-	- `period`: 時間週期（預設: 1d）
-		- `1d`: 1天
-		- `5d`: 5天
-		- `1mo`: 1個月
-		- `3mo`: 3個月
-		- `6mo`: 6個月
-		- `1y`: 1年
-	- `interval`: 時間間隔（預設: 1d）
-		- `1m`, `5m`, `15m`, `30m`, `1h`: 使用盤中數據
-		- `1d`: 使用日交易數據
-	- `days`: 獲取最近幾天的數據（僅用於日交易數據，範圍: 1-2000，預設: 100）
+	**請求體參數:**
+	- `groupName`: 群組名稱（必填，唯一）
+	- `description`: 群組描述（選填）
 	
 	**響應示例:**
 	```json
 	{
-		"stockCode": "2330",
-		"stockName": "台積電",
-		"image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...",
-		"dataCount": 100
+		"id": "uuid",
+		"groupName": "台積電集團",
+		"description": "台積電相關股票",
+		"stockCount": 0
 	}
 	```
+	"""
+	"""
+	獲取所有股票群組
 	
-	**注意事項:**
-	- 圖表數據點限制為最多 100 個
-	- 圖片為 Base64 編碼的 PNG 格式，可直接用於 `<img>` 標籤的 `src` 屬性
-	- 響應中的 `image` 欄位已包含 `data:image/png;base64,` 前綴
+	返回所有股票群組的列表，包括每個群組的股票數量。
 	
-	**錯誤響應:**
-	- `404`: 無法獲取股票數據
-	- `500`: 生成圖表時發生錯誤
+	**響應示例:**
+	```json
+	[
+		{
+			"id": "uuid",
+			"groupName": "台積電集團",
+			"description": "台積電相關股票",
+			"stockCount": 5,
+			"createdAt": "2024-01-01T00:00:00",
+			"updatedAt": "2024-01-01T00:00:00"
+		}
+	]
+	```
 	"""
 	try:
-		# 記錄 API 請求信息
+		if not DB_AVAILABLE:
+			raise HTTPException(status_code=503, detail="資料庫服務未啟用")
+		
 		logger = logging.getLogger(__name__)
-		yfinance_ticker = get_yfinance_ticker(stock_code)
-		logger.info("=" * 80)
-		logger.info(f"[API 請求] POST /api/stock/chart/{stock_code}")
-		logger.info(f"[參數] stock_code: {stock_code} -> yfinance ticker: {yfinance_ticker}")
-		logger.info(f"[參數] period: {period}, interval: {interval}, days: {days}")
-		logger.info("=" * 80)
+		logger.info(f"[API 請求] POST /api/stock-groups")
+		logger.info(f"[參數] groupName: {group_data.groupName}, description: {group_data.description}")
 		
-		# 判斷使用哪種數據源
-		use_intraday = interval in ['5m', '15m', '30m', '1h', '1mo']
-		logger.info(f"[數據源] 使用{'盤中數據' if use_intraday else '日交易數據'}")
+		result = create_stock_group(group_data.groupName, group_data.description)
+		if result is None:
+			raise HTTPException(status_code=400, detail=f"群組名稱 '{group_data.groupName}' 已存在")
 		
-		if use_intraday:
-			# 使用盤中數據
-			data_list = get_intraday_data(stock_code, period=period, interval=interval)
-			stock_info = get_stock_info(stock_code)
-			stock_name = stock_info.get('stockName', stock_code) if stock_info else stock_code
-			
-			# 轉換數據格式
-			chart_data = []
-			for item in data_list[:100]:  # 限制為 100 個數據點
-				chart_data.append({
-					'date': item.get('date', ''),
-					'open': item.get('openPrice', 0),
-					'high': item.get('highPrice', 0),
-					'low': item.get('lowPrice', 0),
-					'close': item.get('price', 0),
-					'volume': item.get('totalVolume', item.get('estimatedVolume', 0))
-				})
-		else:
-			# 使用日交易數據
-			data_list = get_daily_trade_data(stock_code, days=days)
-			stock_info = get_stock_info(stock_code)
-			stock_name = stock_info.get('stockName', stock_code) if stock_info else stock_code
-			
-			# 轉換數據格式
-			chart_data = []
-			for item in data_list[:100]:  # 限制為 100 個數據點
-				chart_data.append({
-					'date': item.get('date', ''),
-					'open': item.get('openPrice', 0),
-					'high': item.get('highPrice', 0),
-					'low': item.get('lowPrice', 0),
-					'close': item.get('closePrice', 0),
-					'volume': item.get('totalVolume', item.get('estimatedVolume', 0))
-				})
-		
-		if not chart_data:
-			raise HTTPException(status_code=404, detail=f"無法獲取股票 {stock_code} 的數據")
-		
-		# 生成圖表
-		img_base64 = generate_candlestick_chart(
-			data=chart_data,
-			stock_code=stock_code,
-			stock_name=stock_name,
-			title=f"{stock_code} - {stock_name} ({interval})"
-		)
-		
-		logger.info(f"[API 響應] 成功生成股票 {stock_code} 的 K 線圖，數據點數: {len(chart_data)}")
-		return JSONResponse(content={
-			"stockCode": stock_code,
-			"stockName": stock_name,
-			"image": f"data:image/png;base64,{img_base64}",
-			"dataCount": len(chart_data)
-		})
+		logger.info(f"[API 響應] 成功創建群組: {result['groupName']}")
+		return result
 	except HTTPException:
 		raise
 	except Exception as e:
-		logger.error(f"[API 錯誤] 生成圖表時發生錯誤: {str(e)}")
-		raise HTTPException(status_code=500, detail=f"生成圖表時發生錯誤: {str(e)}")
+		logger = logging.getLogger(__name__)
+		logger.error(f"創建股票群組時發生錯誤: {str(e)}")
+		raise HTTPException(status_code=500, detail=f"創建股票群組時發生錯誤: {str(e)}")
+
+# 獲取所有股票群組
+@app.get(
+	"/api/stock-groups",
+	summary="獲取所有股票群組",
+	description="獲取所有股票群組及其股票數量。",
+	tags=["股票群組管理"]
+)
+async def get_all_groups():
+	"""
+	獲取所有股票群組
+	
+	返回所有股票群組的列表，包括每個群組的股票數量。
+	
+	**響應示例:**
+	```json
+	[
+		{
+			"id": "uuid",
+			"groupName": "台積電集團",
+			"description": "台積電相關股票",
+			"stockCount": 5,
+			"createdAt": "2024-01-01T00:00:00",
+			"updatedAt": "2024-01-01T00:00:00"
+		}
+	]
+	```
+	"""
+	"""
+	獲取所有股票群組
+	
+	返回所有股票群組的列表，包括每個群組的股票數量。
+	
+	**響應示例:**
+	```json
+	[
+		{
+			"id": "uuid",
+			"groupName": "台積電集團",
+			"description": "台積電相關股票",
+			"stockCount": 5,
+			"createdAt": "2024-01-01T00:00:00",
+			"updatedAt": "2024-01-01T00:00:00"
+		}
+	]
+	```
+	"""
+	try:
+		if not DB_AVAILABLE:
+			raise HTTPException(status_code=503, detail="資料庫服務未啟用")
+		
+		groups = get_all_stock_groups()
+		return groups
+	except Exception as e:
+		logger = logging.getLogger(__name__)
+		logger.error(f"獲取股票群組列表時發生錯誤: {str(e)}")
+		raise HTTPException(status_code=500, detail=f"獲取股票群組列表時發生錯誤: {str(e)}")
+
+# 獲取單個股票群組
+@app.get(
+	"/api/stock-groups/{group_id}",
+	summary="獲取股票群組詳情",
+	description="根據群組 ID 獲取股票群組的詳細資訊。",
+	tags=["股票群組管理"]
+)
+async def get_group(group_id: str = Path(..., description="群組 ID")):
+	"""
+	獲取股票群組詳情
+	
+	根據群組 ID 獲取群組的詳細資訊。
+	
+	**路徑參數:**
+	- `group_id`: 群組 ID
+	"""
+	try:
+		if not DB_AVAILABLE:
+			raise HTTPException(status_code=503, detail="資料庫服務未啟用")
+		
+		group = get_stock_group_by_id(group_id)
+		if group is None:
+			raise HTTPException(status_code=404, detail=f"找不到群組 ID: {group_id}")
+		
+		return group
+	except HTTPException:
+		raise
+	except Exception as e:
+		logger = logging.getLogger(__name__)
+		logger.error(f"獲取股票群組詳情時發生錯誤: {str(e)}")
+		raise HTTPException(status_code=500, detail=f"獲取股票群組詳情時發生錯誤: {str(e)}")
+
+# 更新股票群組
+@app.put(
+	"/api/stock-groups/{group_id}",
+	summary="更新股票群組",
+	description="更新股票群組的名稱或描述。",
+	tags=["股票群組管理"]
+)
+async def update_group(group_id: str = Path(..., description="群組 ID"), group_data: StockGroupUpdate = ...):
+	"""
+	更新股票群組
+	
+	更新群組的名稱或描述。
+	
+	**路徑參數:**
+	- `group_id`: 群組 ID
+	
+	**請求體參數:**
+	- `groupName`: 群組名稱（選填）
+	- `description`: 群組描述（選填）
+	"""
+	try:
+		if not DB_AVAILABLE:
+			raise HTTPException(status_code=503, detail="資料庫服務未啟用")
+		
+		success = update_stock_group(
+			group_id,
+			group_data.groupName if hasattr(group_data, 'groupName') and group_data.groupName else None,
+			group_data.description if hasattr(group_data, 'description') and group_data.description else None
+		)
+		
+		if not success:
+			raise HTTPException(status_code=400, detail="更新失敗，可能是群組不存在或群組名稱已存在")
+		
+		# 返回更新後的群組資訊
+		updated_group = get_stock_group_by_id(group_id)
+		if updated_group is None:
+			raise HTTPException(status_code=404, detail="找不到更新後的群組")
+		
+		return updated_group
+	except HTTPException:
+		raise
+	except Exception as e:
+		logger = logging.getLogger(__name__)
+		logger.error(f"更新股票群組時發生錯誤: {str(e)}")
+		raise HTTPException(status_code=500, detail=f"更新股票群組時發生錯誤: {str(e)}")
+
+# 刪除股票群組
+@app.delete(
+	"/api/stock-groups/{group_id}",
+	summary="刪除股票群組",
+	description="刪除股票群組（會自動移除群組中的所有股票）。",
+	tags=["股票群組管理"]
+)
+async def delete_group(group_id: str = Path(..., description="群組 ID")):
+	"""
+	刪除股票群組
+	
+	刪除指定的股票群組，會自動移除群組中的所有股票關聯。
+	
+	**路徑參數:**
+	- `group_id`: 群組 ID
+	"""
+	try:
+		if not DB_AVAILABLE:
+			raise HTTPException(status_code=503, detail="資料庫服務未啟用")
+		
+		success = delete_stock_group(group_id)
+		if not success:
+			raise HTTPException(status_code=404, detail=f"找不到群組 ID: {group_id}")
+		
+		return {"message": "群組已成功刪除", "groupId": group_id}
+	except HTTPException:
+		raise
+	except Exception as e:
+		logger = logging.getLogger(__name__)
+		logger.error(f"刪除股票群組時發生錯誤: {str(e)}")
+		raise HTTPException(status_code=500, detail=f"刪除股票群組時發生錯誤: {str(e)}")
+
+# 將股票加入群組
+@app.post(
+	"/api/stock-groups/{group_id}/stocks",
+	summary="將股票加入群組",
+	description="將指定的股票加入群組。",
+	tags=["股票群組管理"]
+)
+async def add_stock_to_group_endpoint(
+	group_id: str = Path(..., description="群組 ID"),
+	request: AddStockToGroupRequest = ...
+):
+	"""
+	將股票加入群組
+	
+	將指定的股票加入群組。
+	
+	**路徑參數:**
+	- `group_id`: 群組 ID
+	
+	**請求體參數:**
+	- `stockCode`: 股票代號（必填）
+	"""
+	try:
+		if not DB_AVAILABLE:
+			raise HTTPException(status_code=503, detail="資料庫服務未啟用")
+		
+		success = add_stock_to_group(group_id, request.stockCode)
+		if not success:
+			raise HTTPException(status_code=400, detail="無法將股票加入群組，可能是群組不存在或股票已在群組中")
+		
+		return {"message": "股票已成功加入群組", "groupId": group_id, "stockCode": request.stockCode}
+	except HTTPException:
+		raise
+	except Exception as e:
+		logger = logging.getLogger(__name__)
+		logger.error(f"將股票加入群組時發生錯誤: {str(e)}")
+		raise HTTPException(status_code=500, detail=f"將股票加入群組時發生錯誤: {str(e)}")
+
+# 將股票從群組中移除
+@app.delete(
+	"/api/stock-groups/{group_id}/stocks/{stock_code}",
+	summary="將股票從群組中移除",
+	description="將指定的股票從群組中移除。",
+	tags=["股票群組管理"]
+)
+async def remove_stock_from_group_endpoint(
+	group_id: str = Path(..., description="群組 ID"),
+	stock_code: str = Path(..., description="股票代號")
+):
+	"""
+	將股票從群組中移除
+	
+	將指定的股票從群組中移除。
+	
+	**路徑參數:**
+	- `group_id`: 群組 ID
+	- `stock_code`: 股票代號
+	"""
+	try:
+		if not DB_AVAILABLE:
+			raise HTTPException(status_code=503, detail="資料庫服務未啟用")
+		
+		success = remove_stock_from_group(group_id, stock_code)
+		if not success:
+			raise HTTPException(status_code=404, detail="找不到指定的群組或股票關聯")
+		
+		return {"message": "股票已成功從群組中移除", "groupId": group_id, "stockCode": stock_code}
+	except HTTPException:
+		raise
+	except Exception as e:
+		logger = logging.getLogger(__name__)
+		logger.error(f"將股票從群組中移除時發生錯誤: {str(e)}")
+		raise HTTPException(status_code=500, detail=f"將股票從群組中移除時發生錯誤: {str(e)}")
+
+# 獲取群組中的所有股票
+@app.get(
+	"/api/stock-groups/{group_id}/stocks",
+	summary="獲取群組中的所有股票",
+	description="獲取指定群組中的所有股票代號列表。",
+	tags=["股票群組管理"]
+)
+async def get_group_stocks(group_id: str = Path(..., description="群組 ID")):
+	"""
+	獲取群組中的所有股票
+	
+	返回指定群組中的所有股票代號列表。
+	
+	**路徑參數:**
+	- `group_id`: 群組 ID
+	
+	**響應示例:**
+	```json
+	{
+		"groupId": "uuid",
+		"stocks": ["2330", "2317", "2454"]
+	}
+	```
+	"""
+	try:
+		if not DB_AVAILABLE:
+			raise HTTPException(status_code=503, detail="資料庫服務未啟用")
+		
+		stocks = get_stocks_by_group(group_id)
+		return {"groupId": group_id, "stocks": stocks}
+	except Exception as e:
+		logger = logging.getLogger(__name__)
+		logger.error(f"獲取群組股票列表時發生錯誤: {str(e)}")
+		raise HTTPException(status_code=500, detail=f"獲取群組股票列表時發生錯誤: {str(e)}")
+
+# 獲取股票所屬的所有群組
+@app.get(
+	"/api/stocks/{stock_code}/groups",
+	summary="獲取股票所屬的群組",
+	description="獲取指定股票所屬的所有群組。",
+	tags=["股票群組管理"]
+)
+async def get_stock_groups(stock_code: str = Path(..., description="股票代號")):
+	"""
+	獲取股票所屬的群組
+	
+	返回指定股票所屬的所有群組列表。
+	
+	**路徑參數:**
+	- `stock_code`: 股票代號
+	
+	**響應示例:**
+	```json
+	[
+		{
+			"id": "uuid",
+			"groupName": "台積電集團",
+			"description": "台積電相關股票"
+		}
+	]
+	```
+	"""
+	try:
+		if not DB_AVAILABLE:
+			raise HTTPException(status_code=503, detail="資料庫服務未啟用")
+		
+		groups = get_groups_by_stock(stock_code)
+		return groups
+	except Exception as e:
+		logger = logging.getLogger(__name__)
+		logger.error(f"獲取股票所屬群組時發生錯誤: {str(e)}")
+		raise HTTPException(status_code=500, detail=f"獲取股票所屬群組時發生錯誤: {str(e)}")
+
+# 獲取所有股票及其群組對應關係
+@app.get(
+	"/api/stocks/groups",
+	summary="獲取所有股票的群組對應關係",
+	description="獲取所有股票及其所屬群組的對應關係。",
+	tags=["股票群組管理"]
+)
+async def get_all_stocks_with_groups():
+	"""
+	獲取所有股票的群組對應關係
+	
+	返回所有股票及其所屬群組的對應關係。
+	
+	**響應示例:**
+	```json
+	[
+		{
+			"stockCode": "2330",
+			"groupNames": ["台積電集團", "半導體產業"]
+		}
+	]
+	```
+	"""
+	try:
+		if not DB_AVAILABLE:
+			raise HTTPException(status_code=503, detail="資料庫服務未啟用")
+		
+		result = get_stocks_with_groups()
+		return result
+	except Exception as e:
+		logger = logging.getLogger(__name__)
+		logger.error(f"獲取股票群組對應關係時發生錯誤: {str(e)}")
+		raise HTTPException(status_code=500, detail=f"獲取股票群組對應關係時發生錯誤: {str(e)}")
+
+# ========== 股票 BOM（物料清單）管理 API ==========
+
+# BOM 資料模型
+class BOMItemCreate(BaseModel):
+	"""創建 BOM 項目的資料模型"""
+	childStockCode: str = Field(..., description="子股票代號", example="2330")
+	quantity: float = Field(1.0, description="數量", example=1.0)
+	weight: Optional[float] = Field(None, description="權重（選填）", example=0.5)
+	unit: Optional[str] = Field(None, description="單位（選填）", example="股")
+	notes: Optional[str] = Field(None, description="備註（選填）", example="主要持股")
+
+class BOMItemUpdate(BaseModel):
+	"""更新 BOM 項目的資料模型"""
+	quantity: Optional[float] = Field(None, description="數量", example=1.0)
+	weight: Optional[float] = Field(None, description="權重", example=0.5)
+	unit: Optional[str] = Field(None, description="單位", example="股")
+	notes: Optional[str] = Field(None, description="備註", example="主要持股")
+
+# 添加 BOM 項目
+@app.post(
+	"/api/stocks/{parent_stock_code}/bom",
+	summary="添加 BOM 項目",
+	description="將子股票添加到父股票的物料清單中。",
+	tags=["股票 BOM 管理"]
+)
+async def add_bom_item_endpoint(
+	parent_stock_code: str = Path(..., description="父股票代號"),
+	bom_data: BOMItemCreate = ...
+):
+	"""
+	添加 BOM 項目
+	
+	將子股票添加到父股票的物料清單中，例如：ETF 由哪些股票組成。
+	
+	**路徑參數:**
+	- `parent_stock_code`: 父股票代號（例如：0050）
+	
+	**請求體參數:**
+	- `childStockCode`: 子股票代號（必填）
+	- `quantity`: 數量（選填，預設 1.0）
+	- `weight`: 權重（選填）
+	- `unit`: 單位（選填，例如：股、張）
+	- `notes`: 備註（選填）
+	
+	**響應示例:**
+	```json
+	{
+		"success": true,
+		"message": "BOM 項目已成功添加"
+	}
+	```
+	"""
+	try:
+		if not DB_AVAILABLE:
+			raise HTTPException(status_code=503, detail="資料庫服務未啟用")
+		
+		success = add_bom_item(
+			parent_stock_code,
+			bom_data.childStockCode,
+			bom_data.quantity if hasattr(bom_data, 'quantity') and bom_data.quantity is not None else 1.0,
+			bom_data.weight if hasattr(bom_data, 'weight') else None,
+			bom_data.unit if hasattr(bom_data, 'unit') else None,
+			bom_data.notes if hasattr(bom_data, 'notes') else None
+		)
+		
+		if not success:
+			raise HTTPException(status_code=400, detail="無法添加 BOM 項目")
+		
+		return {"success": True, "message": "BOM 項目已成功添加"}
+	except HTTPException:
+		raise
+	except Exception as e:
+		logger = logging.getLogger(__name__)
+		logger.error(f"添加 BOM 項目時發生錯誤: {str(e)}")
+		raise HTTPException(status_code=500, detail=f"添加 BOM 項目時發生錯誤: {str(e)}")
+
+# 獲取股票的 BOM（子股票列表）
+@app.get(
+	"/api/stocks/{stock_code}/bom",
+	summary="獲取股票的 BOM",
+	description="獲取指定股票的所有子股票（物料清單）。",
+	tags=["股票 BOM 管理"]
+)
+async def get_stock_bom(stock_code: str = Path(..., description="股票代號")):
+	"""
+	獲取股票的 BOM
+	
+	返回指定股票的所有子股票列表，包括數量、權重等資訊。
+	
+	**路徑參數:**
+	- `stock_code`: 股票代號
+	
+	**響應示例:**
+	```json
+	[
+		{
+			"id": "uuid",
+			"parentStockCode": "0050",
+			"childStockCode": "2330",
+			"childStockName": "台積電",
+			"quantity": 100.0,
+			"weight": 0.25,
+			"unit": "股",
+			"notes": "主要持股"
+		}
+	]
+	```
+	"""
+	try:
+		if not DB_AVAILABLE:
+			raise HTTPException(status_code=503, detail="資料庫服務未啟用")
+		
+		bom_items = get_bom_by_parent(stock_code)
+		return bom_items
+	except Exception as e:
+		logger = logging.getLogger(__name__)
+		logger.error(f"獲取 BOM 列表時發生錯誤: {str(e)}")
+		raise HTTPException(status_code=500, detail=f"獲取 BOM 列表時發生錯誤: {str(e)}")
+
+# 獲取包含指定股票的所有父股票
+@app.get(
+	"/api/stocks/{stock_code}/bom/parents",
+	summary="獲取包含該股票的父股票列表",
+	description="獲取所有將指定股票作為子項目的父股票列表。",
+	tags=["股票 BOM 管理"]
+)
+async def get_stock_bom_parents(stock_code: str = Path(..., description="股票代號")):
+	"""
+	獲取包含該股票的父股票列表
+	
+	返回所有將指定股票作為子項目的父股票列表。
+	
+	**路徑參數:**
+	- `stock_code`: 股票代號
+	
+	**響應示例:**
+	```json
+	[
+		{
+			"id": "uuid",
+			"parentStockCode": "0050",
+			"parentStockName": "元大台灣50",
+			"childStockCode": "2330",
+			"quantity": 100.0,
+			"weight": 0.25
+		}
+	]
+	```
+	"""
+	try:
+		if not DB_AVAILABLE:
+			raise HTTPException(status_code=503, detail="資料庫服務未啟用")
+		
+		parents = get_parents_by_child(stock_code)
+		return parents
+	except Exception as e:
+		logger = logging.getLogger(__name__)
+		logger.error(f"獲取父股票列表時發生錯誤: {str(e)}")
+		raise HTTPException(status_code=500, detail=f"獲取父股票列表時發生錯誤: {str(e)}")
+
+# 更新 BOM 項目
+@app.put(
+	"/api/stocks/{parent_stock_code}/bom/{child_stock_code}",
+	summary="更新 BOM 項目",
+	description="更新指定 BOM 項目的數量、權重等資訊。",
+	tags=["股票 BOM 管理"]
+)
+async def update_bom_item_endpoint(
+	parent_stock_code: str = Path(..., description="父股票代號"),
+	child_stock_code: str = Path(..., description="子股票代號"),
+	bom_data: BOMItemUpdate = ...
+):
+	"""
+	更新 BOM 項目
+	
+	更新指定 BOM 項目的數量、權重、單位或備註。
+	
+	**路徑參數:**
+	- `parent_stock_code`: 父股票代號
+	- `child_stock_code`: 子股票代號
+	
+	**請求體參數:**
+	- `quantity`: 數量（選填）
+	- `weight`: 權重（選填）
+	- `unit`: 單位（選填）
+	- `notes`: 備註（選填）
+	"""
+	try:
+		if not DB_AVAILABLE:
+			raise HTTPException(status_code=503, detail="資料庫服務未啟用")
+		
+		# 先獲取 BOM 項目的 ID
+		conn = get_db_connection()
+		cursor = conn.cursor()
+		cursor.execute(prepare_sql("""
+			SELECT id FROM stock_bom 
+			WHERE parent_stock_code = ? AND child_stock_code = ?
+		"""), (parent_stock_code, child_stock_code))
+		bom_item = cursor.fetchone()
+		conn.close()
+		
+		if not bom_item:
+			raise HTTPException(status_code=404, detail="找不到指定的 BOM 項目")
+		
+		success = update_bom_item(
+			bom_item['id'],
+			bom_data.quantity if hasattr(bom_data, 'quantity') else None,
+			bom_data.weight if hasattr(bom_data, 'weight') else None,
+			bom_data.unit if hasattr(bom_data, 'unit') else None,
+			bom_data.notes if hasattr(bom_data, 'notes') else None
+		)
+		
+		if not success:
+			raise HTTPException(status_code=400, detail="無法更新 BOM 項目")
+		
+		return {"success": True, "message": "BOM 項目已成功更新"}
+	except HTTPException:
+		raise
+	except Exception as e:
+		logger = logging.getLogger(__name__)
+		logger.error(f"更新 BOM 項目時發生錯誤: {str(e)}")
+		raise HTTPException(status_code=500, detail=f"更新 BOM 項目時發生錯誤: {str(e)}")
+
+# 刪除 BOM 項目
+@app.delete(
+	"/api/stocks/{parent_stock_code}/bom/{child_stock_code}",
+	summary="刪除 BOM 項目",
+	description="從父股票的物料清單中移除子股票。",
+	tags=["股票 BOM 管理"]
+)
+async def delete_bom_item_endpoint(
+	parent_stock_code: str = Path(..., description="父股票代號"),
+	child_stock_code: str = Path(..., description="子股票代號")
+):
+	"""
+	刪除 BOM 項目
+	
+	從父股票的物料清單中移除指定的子股票。
+	
+	**路徑參數:**
+	- `parent_stock_code`: 父股票代號
+	- `child_stock_code`: 子股票代號
+	"""
+	try:
+		if not DB_AVAILABLE:
+			raise HTTPException(status_code=503, detail="資料庫服務未啟用")
+		
+		success = delete_bom_item(parent_stock_code, child_stock_code)
+		if not success:
+			raise HTTPException(status_code=404, detail="找不到指定的 BOM 項目")
+		
+		return {"success": True, "message": "BOM 項目已成功刪除"}
+	except HTTPException:
+		raise
+	except Exception as e:
+		logger = logging.getLogger(__name__)
+		logger.error(f"刪除 BOM 項目時發生錯誤: {str(e)}")
+		raise HTTPException(status_code=500, detail=f"刪除 BOM 項目時發生錯誤: {str(e)}")
+
+# 獲取 BOM 樹狀結構
+@app.get(
+	"/api/stocks/{stock_code}/bom/tree",
+	summary="獲取 BOM 樹狀結構",
+	description="獲取指定股票的完整 BOM 樹狀結構（遞迴）。",
+	tags=["股票 BOM 管理"]
+)
+async def get_stock_bom_tree(
+	stock_code: str = Path(..., description="股票代號"),
+	max_depth: int = Query(3, description="最大深度", ge=1, le=10)
+):
+	"""
+	獲取 BOM 樹狀結構
+	
+	返回指定股票的完整 BOM 樹狀結構，包括所有層級的子股票。
+	
+	**路徑參數:**
+	- `stock_code`: 股票代號
+	
+	**查詢參數:**
+	- `max_depth`: 最大深度（範圍：1-10，預設：3）
+	
+	**響應示例:**
+	```json
+	{
+		"stockCode": "0050",
+		"stockName": "元大台灣50",
+		"depth": 0,
+		"children": [
+			{
+				"id": "uuid",
+				"parentStockCode": "0050",
+				"childStockCode": "2330",
+				"childStockName": "台積電",
+				"quantity": 100.0,
+				"weight": 0.25,
+				"children": []
+			}
+		]
+	}
+	```
+	"""
+	try:
+		if not DB_AVAILABLE:
+			raise HTTPException(status_code=503, detail="資料庫服務未啟用")
+		
+		tree = get_bom_tree(stock_code, max_depth)
+		if tree is None:
+			raise HTTPException(status_code=404, detail=f"找不到股票 {stock_code} 的 BOM 樹狀結構")
+		
+		return tree
+	except HTTPException:
+		raise
+	except Exception as e:
+		logger = logging.getLogger(__name__)
+		logger.error(f"獲取 BOM 樹狀結構時發生錯誤: {str(e)}")
+		raise HTTPException(status_code=500, detail=f"獲取 BOM 樹狀結構時發生錯誤: {str(e)}")
+
+# ========== API 限額和快取統計端點 ==========
+
+@app.get(
+	"/api/stats/quota",
+	summary="獲取 yfinance API 限額統計",
+	description="獲取 yfinance API 的使用情況和限額信息，包括請求次數、成功率、剩餘限額等。",
+	tags=["統計"]
+)
+async def get_api_quota_stats():
+	"""
+	獲取 yfinance API 限額統計
+	
+	返回 API 使用情況的詳細統計信息，包括：
+	- 總請求數、成功數、失敗數
+	- 成功率、平均響應時間
+	- 每分鐘/每小時/每天的請求數
+	- 限額使用百分比
+	- 剩餘限額
+	
+	**響應示例:**
+	```json
+	{
+		"total_requests": 150,
+		"successful_requests": 145,
+		"failed_requests": 5,
+		"success_rate": 96.7,
+		"avg_response_time": 1.234,
+		"recent_requests": 5,
+		"hourly_requests": 45,
+		"daily_requests": 150,
+		"rate_limits": {
+			"requests_per_minute": 20,
+			"requests_per_hour": 200,
+			"requests_per_day": 2000
+		},
+		"usage_percentage": {
+			"minute": 25.0,
+			"hour": 22.5,
+			"day": 7.5
+		},
+		"remaining_quota": {
+			"minute": 15,
+			"hour": 155,
+			"day": 1850
+		}
+	}
+	```
+	"""
+	if not CACHE_AVAILABLE:
+		raise HTTPException(status_code=503, detail="快取服務未啟用")
+	
+	stats = quota_tracker.get_stats()
+	return stats
+
+@app.get(
+	"/api/stats/cache",
+	summary="獲取快取統計",
+	description="獲取內存快取的統計信息，包括快取鍵數量、快取大小等。",
+	tags=["統計"]
+)
+async def get_cache_stats_endpoint():
+	"""
+	獲取快取統計信息
+	
+	返回內存快取的統計信息，包括：
+	- 總快取鍵數
+	- 有效快取鍵數
+	- 過期快取鍵數
+	- 快取大小（MB）
+	
+	**響應示例:**
+	```json
+	{
+		"total_keys": 50,
+		"valid_keys": 45,
+		"expired_keys": 5,
+		"cache_size_mb": 2.5
+	}
+	```
+	"""
+	if not CACHE_AVAILABLE:
+		raise HTTPException(status_code=503, detail="快取服務未啟用")
+	
+	stats = get_cache_stats()
+	return stats
 
 if __name__ == "__main__":
 	import uvicorn

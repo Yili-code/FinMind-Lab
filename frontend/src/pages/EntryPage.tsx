@@ -7,7 +7,7 @@ function EntryPage() {
       {/* Hero Section */}
       <section className="hero-section">
         <div className="hero-content">
-          <h1 className="hero-title">InfoHub</h1>
+          <h1 className="hero-title">Finfo</h1>
           <p className="hero-tagline">用數據說話，讓投資更聰明。</p>
           <div className="hero-cta">
             <Link to="/function1" className="cta-button cta-primary">
@@ -52,7 +52,7 @@ function EntryPage() {
               我們相信「數據不該讓人望而卻步」。
             </p>
             <p>
-              InfoHub 由三位資工系學生開發，致力於讓股票分析變得更直覺、更高效。
+              Finfo 由三位資工系學生開發，致力於讓股票分析變得更直覺、更高效。
             </p>
             <p>
               我們希望透過簡潔的工具介面，幫助使用者更快掌握市場脈動，

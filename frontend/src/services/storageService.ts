@@ -1,6 +1,6 @@
 import type { StockBasic } from '../types/stock'
 
-const STORAGE_KEY = 'infohub_stock_basics'
+const STORAGE_KEY = 'finfo_stock_basics'
 
 // 模擬 SQLite 資料儲存介面（使用 localStorage）
 export const storageService = {

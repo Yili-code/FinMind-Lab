@@ -339,9 +339,9 @@ def get_financial_statements(stock_code: str) -> Optional[Dict]:
                 info = stock.info
                 if info:
                     stock_name = info.get('longName', info.get('shortName', stock_code))
-                    logger.info(f"[階段 4] ✅ 獲取股票名稱成功: {stock_name}")
+                    logger.info(f"[階段 4] 獲取股票名稱成功: {stock_name}")
         except Exception as info_error:
-            logger.warning(f"[階段 4] ⚠️ 無法獲取股票資訊，使用股票代號作為名稱: {str(info_error)}")
+            logger.warning(f"[階段 4] 無法獲取股票資訊，使用股票代號作為名稱: {str(info_error)}")
         
         # ========== 階段 4: 從 yfinance 抓取數據 ==========
         logger.info(f"[階段 4] 開始從 yfinance 抓取財務報表數據（優先使用季度報表）...")
@@ -398,10 +398,10 @@ def get_financial_statements(stock_code: str) -> Optional[Dict]:
         logger.info(f"  - 現金流量表: {'空' if cashflow.empty else f'{len(cashflow)} 行'}")
         
         if financials.empty and balance_sheet.empty and cashflow.empty:
-            logger.error(f"[階段 4] ❌ 錯誤: 無法從 yfinance 獲取任何財務報表數據")
+            logger.error(f"[階段 4] 錯誤: 無法從 yfinance 獲取任何財務報表數據")
             return None
         
-        logger.info(f"[階段 4] ✅ 數據抓取完成，至少有一個報表有數據")
+        logger.info(f"[階段 4] 數據抓取完成，至少有一個報表有數據")
         
         # 詳細記錄 DataFrame 的內容（用於調試）
         if not financials.empty:
@@ -433,6 +433,39 @@ def get_financial_statements(stock_code: str) -> Optional[Dict]:
                 return float(value)
             except (ValueError, TypeError):
                 return 0.0
+        
+        def format_period_to_quarter(period) -> str:
+            """將期間轉換為季度格式（例如：2025Q2）
+            
+            參數:
+                period: 可以是 Timestamp、字符串日期或其他格式
+                
+            返回:
+                格式化的季度字符串，例如：2025Q2
+            """
+            try:
+                # 處理不同的輸入類型
+                if hasattr(period, 'strftime'):
+                    # 如果是 Timestamp 或 datetime 對象
+                    date_obj = period
+                elif isinstance(period, str):
+                    # 如果是字符串，嘗試解析
+                    from datetime import datetime
+                    date_obj = pd.to_datetime(period)
+                else:
+                    # 嘗試轉換為 Timestamp
+                    date_obj = pd.to_datetime(period)
+                
+                # 獲取年份和季度
+                year = date_obj.year
+                quarter = (date_obj.month - 1) // 3 + 1
+                
+                return f"{year}Q{quarter}"
+            except Exception as e:
+                logger.warning(f"無法格式化期間 {period}，使用原始值: {str(e)}")
+                # 如果無法解析，返回原始字符串的前10個字符
+                period_str = str(period)[:10]
+                return period_str
         
         def safe_get_value(df, row_name, period, alternatives=None):
             """安全地從 DataFrame 獲取值"""
@@ -493,12 +526,21 @@ def get_financial_statements(stock_code: str) -> Optional[Dict]:
         try:
             logger.info(f"[階段 5] 處理損益表...")
             if not financials.empty and len(financials.columns) > 0:
-                # 從 DataFrame 的 columns（期間）中獲取最新一期
-                latest_period = financials.columns[0]  # yfinance 返回的 DataFrame columns 是期間（如 2024-12-31）
-                # 將期間轉換為字符串格式（用於返回給前端）
-                period_str = str(latest_period) if not hasattr(latest_period, 'strftime') else latest_period.strftime('%Y-%m-%d')
+                # 確保列按時間降序排列（最新的在前）
+                # yfinance 通常已經按時間降序排列，但我們確保一下
+                try:
+                    # 嘗試按日期排序（降序，最新的在前）
+                    sorted_cols = sorted(financials.columns, reverse=True, key=lambda x: pd.to_datetime(x) if pd.notna(pd.to_datetime(x, errors='coerce')) else pd.Timestamp.min)
+                    financials = financials[sorted_cols]
+                except Exception as e:
+                    logger.debug(f"無法對損益表列進行排序，使用原始順序: {str(e)}")
                 
-                logger.info(f"處理損益表，期間: {period_str}, 可用欄位: {list(financials.index)[:10]}")
+                # 從 DataFrame 的 columns（期間）中獲取最新一期（第一列）
+                latest_period = financials.columns[0]  # yfinance 返回的 DataFrame columns 是期間（如 2024-12-31）
+                # 將期間轉換為季度格式（例如：2025Q2）
+                period_str = format_period_to_quarter(latest_period)
+                
+                logger.info(f"處理損益表，期間: {period_str} (原始: {latest_period}), 可用欄位: {list(financials.index)[:10]}")
                 
                 # 從 financials DataFrame 中提取數據（使用期間作為列索引）
                 revenue = safe_get_value(financials, 'Total Revenue', latest_period, ['Revenue', 'Total Revenues'])
@@ -530,11 +572,11 @@ def get_financial_statements(stock_code: str) -> Optional[Dict]:
                         'netIncome': net_income,
                         'otherIncome': other_income,
                     }
-                    logger.info(f"[階段 5] ✅ 損益表轉換成功，收入: {revenue}, 淨利: {net_income}")
+                    logger.info(f"[階段 5] 損益表轉換成功，收入: {revenue}, 淨利: {net_income}")
                 else:
-                    logger.warning(f"[階段 5] ⚠️ 損益表數據無效，所有值為 0 或缺失")
+                    logger.warning(f"[階段 5] 損益表數據無效，所有值為 0 或缺失")
         except Exception as e:
-            logger.error(f"[階段 5] ❌ 處理損益表時發生錯誤: {str(e)}")
+            logger.error(f"[階段 5] 處理損益表時發生錯誤: {str(e)}")
             import traceback
             logger.error(f"[階段 5] 錯誤堆棧:\n{traceback.format_exc()}")
         
@@ -543,11 +585,19 @@ def get_financial_statements(stock_code: str) -> Optional[Dict]:
         try:
             logger.info(f"[階段 5] 處理資產負債表...")
             if not balance_sheet.empty and len(balance_sheet.columns) > 0:
-                # 從 DataFrame 的 columns（期間）中獲取最新一期
-                latest_period = balance_sheet.columns[0]
-                period_str = str(latest_period) if not hasattr(latest_period, 'strftime') else latest_period.strftime('%Y-%m-%d')
+                # 確保列按時間降序排列（最新的在前）
+                try:
+                    sorted_cols = sorted(balance_sheet.columns, reverse=True, key=lambda x: pd.to_datetime(x) if pd.notna(pd.to_datetime(x, errors='coerce')) else pd.Timestamp.min)
+                    balance_sheet = balance_sheet[sorted_cols]
+                except Exception as e:
+                    logger.debug(f"無法對資產負債表列進行排序，使用原始順序: {str(e)}")
                 
-                logger.info(f"處理資產負債表，期間: {period_str}, 可用欄位: {list(balance_sheet.index)[:10]}")
+                # 從 DataFrame 的 columns（期間）中獲取最新一期（第一列）
+                latest_period = balance_sheet.columns[0]
+                # 將期間轉換為季度格式（例如：2025Q2）
+                period_str = format_period_to_quarter(latest_period)
+                
+                logger.info(f"處理資產負債表，期間: {period_str} (原始: {latest_period}), 可用欄位: {list(balance_sheet.index)[:10]}")
                 
                 # 從 balance_sheet DataFrame 中提取數據（使用期間作為列索引）
                 total_assets = safe_get_value(balance_sheet, 'Total Assets', latest_period)
@@ -577,11 +627,11 @@ def get_financial_statements(stock_code: str) -> Optional[Dict]:
                         'currentLiabilities': current_liabilities,
                         'currentLiabilitiesRatio': round(current_liabilities_ratio, 1),
                     }
-                    logger.info(f"[階段 5] ✅ 資產負債表轉換成功，總資產: {total_assets}, 股東權益: {shareholders_equity}")
+                    logger.info(f"[階段 5] 資產負債表轉換成功，總資產: {total_assets}, 股東權益: {shareholders_equity}")
                 else:
-                    logger.warning(f"[階段 5] ⚠️ 資產負債表數據無效，總資產為 0 或缺失")
+                    logger.warning(f"[階段 5] 資產負債表數據無效，總資產為 0 或缺失")
         except Exception as e:
-            logger.error(f"[階段 5] ❌ 處理資產負債表時發生錯誤: {str(e)}")
+            logger.error(f"[階段 5] 處理資產負債表時發生錯誤: {str(e)}")
             import traceback
             logger.error(f"[階段 5] 錯誤堆棧:\n{traceback.format_exc()}")
         
@@ -590,11 +640,19 @@ def get_financial_statements(stock_code: str) -> Optional[Dict]:
         try:
             logger.info(f"[階段 5] 處理現金流量表...")
             if not cashflow.empty and len(cashflow.columns) > 0:
-                # 從 DataFrame 的 columns（期間）中獲取最新一期
-                latest_period = cashflow.columns[0]
-                period_str = str(latest_period) if not hasattr(latest_period, 'strftime') else latest_period.strftime('%Y-%m-%d')
+                # 確保列按時間降序排列（最新的在前）
+                try:
+                    sorted_cols = sorted(cashflow.columns, reverse=True, key=lambda x: pd.to_datetime(x) if pd.notna(pd.to_datetime(x, errors='coerce')) else pd.Timestamp.min)
+                    cashflow = cashflow[sorted_cols]
+                except Exception as e:
+                    logger.debug(f"無法對現金流量表列進行排序，使用原始順序: {str(e)}")
                 
-                logger.info(f"處理現金流量表，期間: {period_str}, 可用欄位: {list(cashflow.index)[:10]}")
+                # 從 DataFrame 的 columns（期間）中獲取最新一期（第一列）
+                latest_period = cashflow.columns[0]
+                # 將期間轉換為季度格式（例如：2025Q2）
+                period_str = format_period_to_quarter(latest_period)
+                
+                logger.info(f"處理現金流量表，期間: {period_str} (原始: {latest_period}), 可用欄位: {list(cashflow.index)[:10]}")
                 
                 # 從 cashflow DataFrame 中提取數據（使用期間作為列索引）
                 operating_cash_flow = safe_get_value(cashflow, 'Operating Cash Flow', latest_period, ['Total Cash From Operating Activities', 'Cash From Operating Activities'])
@@ -627,11 +685,11 @@ def get_financial_statements(stock_code: str) -> Optional[Dict]:
                         'netCashFlow': net_cash_flow,
                         'netCashFlowRatio': round(net_cash_flow_ratio, 1),
                     }
-                    logger.info(f"[階段 5] ✅ 現金流量表轉換成功，營業現金流: {operating_cash_flow}, 淨現金流: {net_cash_flow}")
+                    logger.info(f"[階段 5] 現金流量表轉換成功，營業現金流: {operating_cash_flow}, 淨現金流: {net_cash_flow}")
                 else:
-                    logger.warning(f"[階段 5] ⚠️ 現金流量表數據無效，所有值為 0 或缺失")
+                    logger.warning(f"[階段 5] 現金流量表數據無效，所有值為 0 或缺失")
         except Exception as e:
-            logger.error(f"[階段 5] ❌ 處理現金流量表時發生錯誤: {str(e)}")
+            logger.error(f"[階段 5] 處理現金流量表時發生錯誤: {str(e)}")
             import traceback
             logger.error(f"[階段 5] 錯誤堆棧:\n{traceback.format_exc()}")
         
@@ -645,10 +703,10 @@ def get_financial_statements(stock_code: str) -> Optional[Dict]:
         
         # 檢查是否至少有一個報表有數據
         if not income_data and not balance_data and not cashflow_data:
-            logger.warning(f"[階段 5] ❌ 錯誤: 股票 {stock_code} 的所有財務報表數據都為空或無效")
+            logger.warning(f"[階段 5] 錯誤: 股票 {stock_code} 的所有財務報表數據都為空或無效")
             return None
         
-        logger.info(f"[階段 5] ✅ 數據轉換完成，準備返回 JSON")
+        logger.info(f"[階段 5] 數據轉換完成，準備返回 JSON")
         logger.info(f"[階段 5] 最終結果: incomeStatement={'有數據' if income_data else 'null'}, "
                    f"balanceSheet={'有數據' if balance_data else 'null'}, "
                    f"cashFlow={'有數據' if cashflow_data else 'null'}")

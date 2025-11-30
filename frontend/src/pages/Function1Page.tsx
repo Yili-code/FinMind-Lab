@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import TradeDetailTable from '../components/Function1/TradeDetailTable'
 import DailyTradeTable from '../components/Function1/DailyTradeTable'
 import StockChartMatplotlib from '../components/Function1/StockChartMatplotlib'
+import ApiQuotaDisplay from '../components/Common/ApiQuotaDisplay'
 import type { TimeUnit } from '../components/Function1/StockChart'
 import { useStock } from '../contexts/StockContext'
 import { getIntradayData, getDailyTradeData, testBackendConnection } from '../services/stockApi'
@@ -65,7 +66,7 @@ function Function1Page() {
     const isConnected = await testBackendConnection()
     console.log('後端連接狀態:', isConnected)
     if (!isConnected) {
-      setError('無法連接到 InfoHub 後端服務器。\n\n請確認：\n1. 端口 8000 是否被其他專案占用\n2. 後端服務是否正在運行 (http://127.0.0.1:8000)\n\n啟動後端的方法：\n• Windows: 在 backend 目錄執行 start_server.bat\n• Linux/Mac: 在 backend 目錄執行 ./start_server.sh\n• 手動啟動: cd backend && python -m uvicorn main:app --reload --port 8000\n\n如果端口 8000 被占用，請先關閉占用該端口的程序。')
+      setError('無法連接到 Finfo 後端服務器。\n\n請確認：\n1. 端口 8000 是否被其他專案占用\n2. 後端服務是否正在運行 (http://127.0.0.1:8000)\n\n啟動後端的方法：\n• Windows: 在 backend 目錄執行 start_server.bat\n• Linux/Mac: 在 backend 目錄執行 ./start_server.sh\n• 手動啟動: cd backend && python -m uvicorn main:app --reload --port 8000\n\n如果端口 8000 被占用，請先關閉占用該端口的程序。')
       isLoadingRef.current = false
       setLoading(false)
       setTradeDetails([])
@@ -622,6 +623,8 @@ function Function1Page() {
           </div>
         </div>
 
+        <ApiQuotaDisplay />
+
         <div className="function1-info">
           <div className="info-card">
             <h4>Data Source & Scraper</h4>
@@ -637,8 +640,15 @@ function Function1Page() {
           </div>
           <div className="info-card">
             <h4>表格連動功能</h4>
-            <p>點擊 Table 1 或 Table 2 的任一列，可篩選兩個表格的資料</p>
+            <p>點擊成交明細或日交易檔的任一列，可篩選兩個表格的資料</p>
             <p className="info-note">圖表也會同步更新顯示選中的股票</p>
+          </div>
+          <div className="info-card">
+            <h4>快取與資料庫</h4>
+            <p>系統自動使用快取和資料庫優化性能</p>
+            <p className="info-note">
+              數據優先從快取和資料庫讀取，減少 API 請求次數，提升響應速度
+            </p>
           </div>
         </div>
       </div>

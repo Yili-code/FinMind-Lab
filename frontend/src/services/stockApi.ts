@@ -457,13 +457,13 @@ export async function getFinancialStatements(stockCode: string): Promise<Financi
       clearTimeout(timeoutId)
       
       if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-        console.error(`[階段 2] ❌ 錯誤: 請求超時（超過5分鐘）`)
+        console.error(`[階段 2] 錯誤: 請求超時（超過5分鐘）`)
         throw new Error(`請求超時：無法在5分鐘內連接到後端服務器。\n\n請確認：\n1. 後端服務是否正在運行 (http://127.0.0.1:8000)\n2. 網絡連接是否正常\n3. 後端服務是否響應緩慢`)
       }
       
       // 網絡錯誤
       if (fetchError instanceof TypeError) {
-        console.error(`[階段 2] ❌ 錯誤: 網絡連接失敗`)
+        console.error(`[階段 2] 錯誤: 網絡連接失敗`)
         console.error(`[階段 2] 錯誤詳情:`, fetchError)
         console.error(`[階段 2] 錯誤類型: ${fetchError.constructor.name}`)
         console.error(`[階段 2] 錯誤訊息: ${fetchError.message}`)
@@ -491,13 +491,13 @@ export async function getFinancialStatements(stockCode: string): Promise<Financi
       let errorText = ''
       try {
         errorText = await response.text()
-        console.error(`[階段 2] ❌ HTTP 錯誤響應`)
+        console.error(`[階段 2] HTTP 錯誤響應`)
         console.error(`[階段 2] 狀態碼: ${response.status} ${response.statusText}`)
         console.error(`[階段 2] 請求 URL: ${url}`)
         console.error(`[階段 2] 錯誤內容: ${errorText.substring(0, 500)}`)
       } catch (e) {
         errorText = `HTTP ${response.status}: ${response.statusText}`
-        console.error(`[階段 2] ❌ 無法讀取錯誤響應內容`)
+        console.error(`[階段 2] 無法讀取錯誤響應內容`)
       }
       
       // 根據狀態碼提供更具體的錯誤訊息
@@ -518,12 +518,12 @@ export async function getFinancialStatements(stockCode: string): Promise<Financi
         try {
           const testResponse = await fetch(testUrl, { method: 'GET' })
           if (testResponse.ok) {
-            console.log(`[階段 2] ✅ 後端連接正常，問題可能是財務報表端點路徑不正確`)
+            console.log(`[階段 2] 後端連接正常，問題可能是財務報表端點路徑不正確`)
           } else {
-            console.error(`[階段 2] ❌ 後端連接測試失敗: ${testResponse.status}`)
+            console.error(`[階段 2] 後端連接測試失敗: ${testResponse.status}`)
           }
         } catch (testError) {
-          console.error(`[階段 2] ❌ 無法連接到後端服務器`)
+          console.error(`[階段 2] 無法連接到後端服務器`)
         }
         
         throw new Error(`無法獲取股票 ${stockCode} 的財務報表數據 (404 未找到)。\n\n可能的原因：\n1. 後端服務未運行 - 請確認後端服務正在運行 (http://127.0.0.1:8000)\n2. 路徑不正確 - 請檢查後端路由配置\n3. 股票代號不存在或該股票沒有可用的財務數據\n4. yfinance 無法獲取該股票的財務報表\n\n診斷信息：\n- 請求 URL: ${url}\n- 錯誤詳情: ${errorText.substring(0, 200)}\n\n請嘗試：\n1. 在瀏覽器訪問 http://127.0.0.1:8000/api/hello 測試後端是否運行\n2. 查看後端日誌獲取詳細錯誤信息`)
@@ -534,7 +534,7 @@ export async function getFinancialStatements(stockCode: string): Promise<Financi
       }
     }
     
-    console.log(`[階段 2] ✅ HTTP 請求成功`)
+    console.log(`[階段 2] HTTP 請求成功`)
     
     // ========== 階段 6: 前端接收 JSON 響應 ==========
     console.log('========== [階段 6: 前端接收 JSON 響應] ==========')
@@ -548,7 +548,7 @@ export async function getFinancialStatements(stockCode: string): Promise<Financi
     console.log(`[階段 6] 響應文本預覽: ${text.substring(0, 200)}...`)
     
     if (!contentType || !contentType.includes('application/json')) {
-      console.error(`[階段 6] ❌ 錯誤: Content-Type 不是 application/json`)
+      console.error(`[階段 6] 錯誤: Content-Type 不是 application/json`)
       throw new Error(`後端返回了非 JSON 格式的數據: ${text.substring(0, 100)}`)
     }
     
@@ -556,30 +556,30 @@ export async function getFinancialStatements(stockCode: string): Promise<Financi
     try {
       console.log(`[階段 6] 開始解析 JSON...`)
       data = JSON.parse(text)
-      console.log(`[階段 6] ✅ JSON 解析成功`)
+      console.log(`[階段 6] JSON 解析成功`)
     } catch (parseError) {
-      console.error(`[階段 6] ❌ JSON 解析失敗:`, parseError)
+      console.error(`[階段 6] JSON 解析失敗:`, parseError)
       throw new Error(`解析後端返回的 JSON 數據時發生錯誤: ${parseError instanceof Error ? parseError.message : String(parseError)}`)
     }
     
     // 驗證數據結構
     if (!data || (typeof data !== 'object') || Array.isArray(data)) {
-      console.error(`[階段 6] ❌ 錯誤: 數據格式不正確，類型: ${typeof data}, 是數組: ${Array.isArray(data)}`)
+      console.error(`[階段 6] 錯誤: 數據格式不正確，類型: ${typeof data}, 是數組: ${Array.isArray(data)}`)
       throw new Error('後端返回的數據格式不正確')
     }
     
     // 類型守衛：驗證是否為 FinancialStatementsResponse
     const typedData = data as FinancialStatementsResponse
-    console.log(`[階段 6] ✅ 數據結構驗證通過`)
+    console.log(`[階段 6] 數據結構驗證通過`)
     console.log(`[階段 6] 返回的數據:`, typedData)
     
     // 確保至少有一個報表數據存在
     if (!typedData.incomeStatement && !typedData.balanceSheet && !typedData.cashFlow) {
-      console.error(`[階段 6] ❌ 錯誤: 所有財務報表數據都為空`)
+      console.error(`[階段 6] 錯誤: 所有財務報表數據都為空`)
       throw new Error(`股票 ${stockCode} 的財務報表數據為空，可能是該股票沒有可用的財務數據`)
     }
     
-    console.log(`[階段 6] ✅ 成功接收並驗證 JSON 數據`)
+    console.log(`[階段 6] 成功接收並驗證 JSON 數據`)
     return typedData
   } catch (error) {
     // 錯誤已在上面處理，這裡只是確保所有錯誤都被正確拋出

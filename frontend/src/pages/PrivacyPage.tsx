@@ -11,7 +11,7 @@ function PrivacyPage() {
           <section className="privacy-section">
             <h2>1. 概述</h2>
             <p>
-              InfoHub 重視您的隱私權。本政策說明我們如何收集、使用和保護您的個人資料。使用本平台即表示您同意本政策。
+              Finfo 重視您的隱私權。本政策說明我們如何收集、使用和保護您的個人資料。使用本平台即表示您同意本政策。
             </p>
           </section>
 

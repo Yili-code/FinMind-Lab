@@ -6,7 +6,7 @@ import type { IncomeStatementItem, BalanceSheetItem, CashFlowItem } from '../typ
 // 初始化資料 - 為每個 Table 生成兩組資料
 export function initializeData() {
   // 檢查是否已經初始化過
-  const initialized = localStorage.getItem('infohub_data_initialized')
+  const initialized = localStorage.getItem('finfo_data_initialized')
   if (initialized === 'true') {
     return // 已經初始化過，不再重複
   }
@@ -174,6 +174,6 @@ export function initializeData() {
   })
 
   // 標記為已初始化
-  localStorage.setItem('infohub_data_initialized', 'true')
+  localStorage.setItem('finfo_data_initialized', 'true')
 }
 

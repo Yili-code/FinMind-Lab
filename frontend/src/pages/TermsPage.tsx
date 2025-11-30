@@ -11,14 +11,14 @@ function TermsPage() {
           <section className="terms-section">
             <h2>1. 接受條款</h2>
             <p>
-              使用 InfoHub（以下簡稱「本平台」）即表示您同意遵守本使用條款。如不同意，請勿使用本平台。
+              使用 Finfo（以下簡稱「本平台」）即表示您同意遵守本使用條款。如不同意，請勿使用本平台。
             </p>
           </section>
 
           <section className="terms-section">
             <h2>2. 服務說明</h2>
             <p>
-              InfoHub 提供金融數據分析與研究工具。我們保留隨時修改、暫停或終止服務的權利。
+              Finfo 提供金融數據分析與研究工具。我們保留隨時修改、暫停或終止服務的權利。
             </p>
           </section>
 
@@ -36,7 +36,7 @@ function TermsPage() {
           <section className="terms-section">
             <h2>4. 智慧財產權</h2>
             <p>
-              本平台的所有內容均為 InfoHub 或其授權方的財產，受著作權法保護。您提交的內容仍為您所有，但您授予我們使用該內容以提供和改善服務的權利。
+              本平台的所有內容均為 Finfo 或其授權方的財產，受著作權法保護。您提交的內容仍為您所有，但您授予我們使用該內容以提供和改善服務的權利。
             </p>
           </section>
 

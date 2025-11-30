@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import IncomeStatementTable from '../components/Financial/IncomeStatementTable'
 import BalanceSheetTable from '../components/Financial/BalanceSheetTable'
 import CashFlowTable from '../components/Financial/CashFlowTable'
-import LoadingSpinner from '../components/Common/LoadingSpinner'
 import { getFinancialStatements, type FinancialStatementsResponse } from '../services/stockApi'
 import type { IncomeStatementItem, BalanceSheetItem, CashFlowItem } from '../types/financial'
 import './FinancialReportsPage.css'
@@ -221,7 +220,7 @@ function FinancialReportsPage() {
       console.log(`  - cashFlow: ${financialData.cashFlow ? '有數據' : 'null'}`)
       
       if (!financialData.incomeStatement && !financialData.balanceSheet && !financialData.cashFlow) {
-        console.error('[階段 7] ❌ 錯誤: 所有財務報表數據都為空')
+        console.error('[階段 7] 錯誤: 所有財務報表數據都為空')
         const errorMsg = `無法獲取股票 ${stockCode} 的財務報表數據。\n\n可能的原因：\n1. 該股票代號不存在\n2. yfinance 無法獲取該股票的財務數據\n3. 該股票可能已下市或暫停交易\n\n請嘗試其他股票代號，例如：2330 (台積電)、2317 (鴻海)`
         setError(errorMsg)
         setLoading(false)
@@ -247,7 +246,7 @@ function FinancialReportsPage() {
 
       // 檢查是否至少轉換了一個報表
       if (!incomeStatement && !balanceSheet && !cashFlow) {
-        console.error('[階段 7] ❌ 錯誤: 所有數據轉換都失敗')
+        console.error('[階段 7] 錯誤: 所有數據轉換都失敗')
         const errorMsg = `股票 ${stockCode} 的財務報表數據格式無效，無法轉換。\n\n請檢查後端日誌獲取詳細信息。`
         setError(errorMsg)
         setLoading(false)
@@ -273,7 +272,7 @@ function FinancialReportsPage() {
       const updatedGroups = [...stockGroups, newGroup]
       saveGroups(updatedGroups)
       setInputStockCode('')
-      console.log(`[階段 8] ✅ 股票 ${stockCode} 已成功添加到群組並顯示在界面上`)
+      console.log(`[階段 8] 股票 ${stockCode} 已成功添加到群組並顯示在界面上`)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : `獲取股票 ${stockCode} 的財務報表數據失敗`
       console.error(`[錯誤] ${errorMessage}`, err)
@@ -283,7 +282,7 @@ function FinancialReportsPage() {
       if (errorMessage.includes('無法連接到後端服務器')) {
         detailedError = `無法連接到後端服務器。\n\n請確認：\n1. 後端服務是否正在運行 (http://127.0.0.1:8000)\n2. 端口 8000 是否被其他程序占用\n\n啟動後端的方法：\n• Windows: 在 backend 目錄執行 start_server.bat\n• Linux/Mac: 在 backend 目錄執行 ./start_server.sh\n• 手動啟動: cd backend && python -m uvicorn main:app --reload --port 8000`
       } else if (errorMessage.includes('404') || errorMessage.includes('無法獲取')) {
-        detailedError = `${errorMessage}\n\n重要提示：\n⚠️ yfinance 對台股財務報表的支持可能有限\n\n可能的原因：\n1. yfinance 對台股 (.TW) 財務報表數據支持不完整\n2. Yahoo Finance 數據源可能沒有該股票的財務報表數據\n3. 股票代號不存在或格式錯誤\n4. 該股票可能已下市或暫停交易\n\n建議：\n• 請查看後端日誌獲取詳細錯誤信息\n• 嘗試使用美股代號測試（例如：AAPL, MSFT）\n• 如果確實需要台股財務數據，可能需要使用其他數據源\n\n請嘗試其他股票代號，例如：\n• 美股：AAPL (蘋果), MSFT (微軟), TSLA (特斯拉)\n• 台股：2330 (台積電), 2317 (鴻海) - 但可能無法獲取財務報表`
+        detailedError = `${errorMessage}\n\n重要提示：\nyfinance 對台股財務報表的支持可能有限\n\n可能的原因：\n1. yfinance 對台股 (.TW) 財務報表數據支持不完整\n2. Yahoo Finance 數據源可能沒有該股票的財務報表數據\n3. 股票代號不存在或格式錯誤\n4. 該股票可能已下市或暫停交易\n\n建議：\n• 請查看後端日誌獲取詳細錯誤信息\n• 嘗試使用美股代號測試（例如：AAPL, MSFT）\n• 如果確實需要台股財務數據，可能需要使用其他數據源\n\n請嘗試其他股票代號，例如：\n• 美股：AAPL (蘋果), MSFT (微軟), TSLA (特斯拉)\n• 台股：2330 (台積電), 2317 (鴻海) - 但可能無法獲取財務報表`
       }
       
       setError(detailedError)
@@ -427,11 +426,6 @@ function FinancialReportsPage() {
               {loading ? '載入中...' : '+ 加入群組'}
             </button>
           </div>
-          {loading && (
-            <div className="loading-section">
-              <LoadingSpinner message="正在獲取財務報表數據，請稍候..." size="medium" />
-            </div>
-          )}
           {error && (
             <div className="error-message">
               {error.split('\n').map((line, index) => (

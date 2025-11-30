@@ -70,7 +70,7 @@ REM 設置環境變數以避免 Windows multiprocessing 問題
 set PYTHONUNBUFFERED=1
 
 REM 在新的終端窗口中啟動前端
-start "InfoHub - Frontend" cmd /k "cd /d %~dp0\..\frontend && npm run dev"
+start "Finfo - Frontend" cmd /k "cd /d %~dp0\..\frontend && npm run dev"
 
 REM 啟動後端服務器
 REM 在 Windows 上，使用 --reload-dir 限制監視目錄可以避免 multiprocessing 問題
